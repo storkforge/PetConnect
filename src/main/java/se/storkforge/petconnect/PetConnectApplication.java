@@ -1,4 +1,4 @@
-package se.storkforge.petconnect.controller;
+package se.storkforge.petconnect;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
