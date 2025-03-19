@@ -1,4 +1,4 @@
-package se.storkforge.petconnect.petconnect;
+package se.storkforge.petconnect.controller;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
