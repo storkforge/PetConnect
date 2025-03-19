@@ -18,5 +18,10 @@ jobs:
           java-version: '23'
           distribution: 'temurin'
           cache: maven
-      - name: Build with Maven
-        run: mvn clean install -Dmaven.test.failure.ignore=true
+      - name: Build and Run Tests
+        run: mvn clean install
+      - name: Upload JAR Artifact  # Uploads the built JAR file for later use
+        uses: actions/upload-artifact@v3
+        with:
+          name: application-jar
+          path: target/*.jar
