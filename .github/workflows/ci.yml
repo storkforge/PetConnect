@@ -19,7 +19,7 @@ jobs:
           distribution: 'temurin'
           cache: maven
       - name: Build and Run Tests
-        run: mvn clean install
+        run: mvn clean install - # keeps test in to prevent failure
       - name: Upload JAR Artifact  # Uploads the built JAR file for later use
         uses: actions/upload-artifact@v3
         with:
