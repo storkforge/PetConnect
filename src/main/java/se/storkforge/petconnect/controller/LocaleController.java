@@ -16,8 +16,8 @@ public class LocaleController {
     public String changeLanguage(HttpServletRequest request, HttpServletResponse response, String lang) {
         LocaleResolver localeResolver = RequestContextUtils.getLocaleResolver(request);
         if (localeResolver != null) {
-            localeResolver.setLocale(request, response, new Locale(lang));
+            localeResolver.setLocale(request, response, Locale.of(lang)); // Use Locale.of()
         }
-        return "redirect:/home"; // Redirect back to home page after language change
+        return "redirect:/home";
     }
 }
