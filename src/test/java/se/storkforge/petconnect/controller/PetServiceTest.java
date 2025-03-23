@@ -1,4 +1,5 @@
 package se.storkforge.petconnect.controller;
+
 import entity.Pet;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -54,6 +55,16 @@ public class PetServiceTest {
 
         assertTrue(result.isPresent());
         assertEquals("Buddy", result.get().getName());
+        verify(petRepository, times(1)).findById(1L);
+    }
+
+    @Test
+    public void testGetPetByIdNotFound() {
+        when(petRepository.findById(1L)).thenReturn(Optional.empty());
+
+        Optional<Pet> result = petService.getPetById(1L);
+
+        assertFalse(result.isPresent());
         verify(petRepository, times(1)).findById(1L);
     }
 
