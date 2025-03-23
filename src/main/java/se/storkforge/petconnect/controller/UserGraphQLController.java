@@ -22,17 +22,18 @@ public class UserGraphQLController {
 
     @QueryMapping
     public User getUser(@Argument Long id) {
-        return userService.findById(id);
+        return userService.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
     }
 
     @MutationMapping
     public User createUser(@Argument String username,
                            @Argument String email,
-                           @Argument String password) {
+                           @Argument String password) { // Password is now stored as plain text
         User user = new User();
         user.setUsername(username);
         user.setEmail(email);
-        user.setPassword(password);
+        user.setPassword(password); // Storing plain text password
         return userService.save(user);
     }
 
@@ -40,9 +41,10 @@ public class UserGraphQLController {
     public User updateUser(@Argument Long id,
                            @Argument String username,
                            @Argument String email) {
-        User user = userService.findById(id);
-        if(username != null) user.setUsername(username);
-        if(email != null) user.setEmail(email);
+        User user = userService.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+        if (username != null) user.setUsername(username);
+        if (email != null) user.setEmail(email);
         return userService.save(user);
     }
 

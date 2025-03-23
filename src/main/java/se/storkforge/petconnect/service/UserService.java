@@ -3,7 +3,8 @@ package se.storkforge.petconnect.service;
 import entity.User;
 import se.storkforge.petconnect.repository.UserRepository;
 import org.springframework.stereotype.Service;
-import java.util.List;
+
+import java.util.Optional;
 
 @Service
 public class UserService {
@@ -13,12 +14,16 @@ public class UserService {
         this.userRepository = userRepository;
     }
 
-    public List<User> findAll() {
+    public Iterable<User> findAll() {
         return userRepository.findAll();
     }
 
-    public User findById(Long id) {
-        return userRepository.findById(id).orElse(null);
+    public Optional<User> findById(Long id) {
+        return userRepository.findById(id);
+    }
+
+    public User findByUsername(String username) {
+        return userRepository.findByUsername(username);
     }
 
     public User save(User user) {
@@ -27,9 +32,5 @@ public class UserService {
 
     public void delete(Long id) {
         userRepository.deleteById(id);
-    }
-
-    public User findByUsername(String username) {
-        return userRepository.findByUsername(username);
     }
 }
