@@ -1,32 +1,39 @@
-package entity;
+package se.storkforge.petconnect.entity;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 import java.util.Objects;
 
 @Entity
 public class Pet {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotBlank(message = "Name is required")
+    @Size(min = 2, max = 50, message = "Name must be between 2 and 50 characters")
     private String name;
+
+    @NotBlank(message = "Species is required")
+    @Size(max = 50, message = "Species cannot exceed 50 characters")
     private String species;
-    private boolean pedigree;
+
+    private boolean available; // Corrected field name
     private int age;
     private String owner;
     private String location;
 
     public Pet() {}
 
-    public Pet(String name, String species, boolean pedigree, int age, String owner, String location) {
+    public Pet(String name, String species, boolean available, int age, String owner, String location) {
         this.name = name;
         this.species = species;
-        this.pedigree = pedigree;
+        this.available = available; // Corrected field name
         this.age = age;
         this.owner = owner;
         this.location = location;
@@ -56,12 +63,12 @@ public class Pet {
         this.species = species;
     }
 
-    public boolean getPedigree() {
-        return pedigree;
+    public boolean isAvailable() { // Corrected getter
+        return available;
     }
 
-    public void setPedigree(boolean pedigree) {
-        this.pedigree = pedigree;
+    public void setAvailable(boolean available) { // Corrected setter
+        this.available = available;
     }
 
     public int getAge() {
@@ -94,7 +101,7 @@ public class Pet {
                 "id=" + id +
                 ", name='" + name + '\'' +
                 ", species='" + species + '\'' +
-                ", pedigree=" + (pedigree ? "Yes" : "No") +
+                ", available=" + (available ? "Yes" : "No") + // Corrected field name
                 ", age=" + age +
                 ", owner='" + owner + '\'' +
                 ", location='" + location + '\'' +
