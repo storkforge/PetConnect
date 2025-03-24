@@ -1,11 +1,13 @@
 package se.storkforge.petconnect.controller;
 
 import se.storkforge.petconnect.entity.Pet;
+import se.storkforge.petconnect.exeption.PetNotFoundException;
+import se.storkforge.petconnect.service.PetService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import se.storkforge.petconnect.service.PetService;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Optional;
@@ -43,16 +45,17 @@ public class PetController {
     @PutMapping("/{id}")
     public ResponseEntity<Pet> updatePet(@PathVariable Long id, @RequestBody Pet updatedPet) {
         Pet updated = petService.updatePet(id, updatedPet);
-        if (updated != null) {
-            return new ResponseEntity<>(updated, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+        return ResponseEntity.ok(updated);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletePet(@PathVariable Long id) {
         petService.deletePet(id);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        return ResponseEntity.noContent().build();
+    }
+
+    @ExceptionHandler(PetNotFoundException.class)
+    public ResponseEntity<Void> handlePetNotFound(PetNotFoundException ex) {
+        return ResponseEntity.notFound().build();
     }
 }

@@ -11,12 +11,15 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import se.storkforge.petconnect.controller.PetController;
 import se.storkforge.petconnect.entity.Pet;
+import se.storkforge.petconnect.exeption.PetNotFoundException;
 import se.storkforge.petconnect.service.PetService;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -122,18 +125,27 @@ public class PetControllerIntegrationTest {
     }
 
     @Test
-    public void testUpdatePetNotFoundEndpoint() throws Exception {
+    void testUpdatePetNotFoundEndpoint() throws Exception {
         // Given
-        String petJson = objectMapper.writeValueAsString(testPet);
-        when(petService.updatePet(eq(1L), any(Pet.class))).thenReturn(null);
+        Long notFoundId = 999L;
+        Pet updatedPet = new Pet("Updated Name", "Updated Species", true, 6, "New Owner", "New Location");
+        String updatedPetJson = objectMapper.writeValueAsString(updatedPet);
+        PetNotFoundException expectedException = new PetNotFoundException("Pet with id " + notFoundId + " not found");
+
+        when(petService.updatePet(eq(notFoundId), any(Pet.class)))
+                .thenThrow(expectedException);
 
         // When & Then
-        mockMvc.perform(put("/pets/1")
+        mockMvc.perform(put("/pets/{id}", notFoundId)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(petJson))
-                .andExpect(status().isNotFound());
+                        .content(updatedPetJson))
+                .andExpect(status().isNotFound())
+                .andExpect(result -> {
+                    assertEquals(PetNotFoundException.class, Objects.requireNonNull(result.getResolvedException()).getClass());
+                    assertEquals(expectedException.getMessage(), result.getResolvedException().getMessage());
+                });
 
-        verify(petService, times(1)).updatePet(eq(1L), any(Pet.class));
+        verify(petService, times(1)).updatePet(eq(notFoundId), any(Pet.class));
     }
 
     @Test

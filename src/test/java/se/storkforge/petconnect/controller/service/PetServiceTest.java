@@ -1,13 +1,14 @@
 package se.storkforge.petconnect.controller.service;
 
 import se.storkforge.petconnect.entity.Pet;
+import se.storkforge.petconnect.exeption.PetNotFoundException;
+import se.storkforge.petconnect.repository.PetRepository;
+import se.storkforge.petconnect.service.PetService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import se.storkforge.petconnect.repository.PetRepository;
-import se.storkforge.petconnect.service.PetService;
 
 import java.util.Arrays;
 import java.util.List;
@@ -40,7 +41,7 @@ public class PetServiceTest {
         List<Pet> result = petService.getAllPets();
 
         assertEquals(2, result.size());
-        assertEquals("Buddy", result.get(0).getName());
+        assertEquals("Buddy", result.getFirst().getName());
         verify(petRepository, times(1)).findAll();
     }
 
@@ -98,7 +99,28 @@ public class PetServiceTest {
 
     @Test
     public void testDeletePet() {
-        petService.deletePet(1L);
-        verify(petRepository, times(1)).deleteById(1L);
+        Long petIdToDelete = 1L;
+        // Given
+        when(petRepository.existsById(petIdToDelete)).thenReturn(true);
+        doNothing().when(petRepository).deleteById(petIdToDelete);
+
+        // When
+        petService.deletePet(petIdToDelete);
+
+        // Then
+        verify(petRepository, times(1)).existsById(petIdToDelete);
+        verify(petRepository, times(1)).deleteById(petIdToDelete);
+    }
+
+    @Test
+    public void testDeletePetNotFound() {
+        Long notFoundId = 999L;
+        // Given
+        when(petRepository.existsById(notFoundId)).thenReturn(false);
+
+        // When & Then
+        assertThrows(PetNotFoundException.class, () -> petService.deletePet(notFoundId));
+        verify(petRepository, times(1)).existsById(notFoundId);
+        verify(petRepository, never()).deleteById(notFoundId);
     }
 }
