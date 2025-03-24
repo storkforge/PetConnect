@@ -6,7 +6,7 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 @SpringBootApplication
-@EntityScan("entity")
+@EntityScan("se.storkforge.petconnect.entity")
 @EnableJpaRepositories("se.storkforge.petconnect.repository")
 public class PetConnectApplication {
 

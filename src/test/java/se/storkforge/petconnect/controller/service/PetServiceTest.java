@@ -1,4 +1,4 @@
-package se.storkforge.petconnect.controller;
+package se.storkforge.petconnect.controller.service;
 
 import se.storkforge.petconnect.entity.Pet;
 import org.junit.jupiter.api.BeforeEach;
