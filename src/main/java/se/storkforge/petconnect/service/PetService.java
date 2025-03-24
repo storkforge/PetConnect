@@ -1,7 +1,8 @@
 package se.storkforge.petconnect.service;
 
-import entity.Pet;
+import se.storkforge.petconnect.entity.Pet;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 import se.storkforge.petconnect.repository.PetRepository;
 
@@ -39,6 +40,10 @@ public class PetService {
     }
 
     public void deletePet(Long id) {
-        petRepository.deleteById(id);
+        try {
+            petRepository.deleteById(id);
+        } catch (EmptyResultDataAccessException e) {
+            throw new IllegalArgumentException("Pet with id " + id + " not found", e);
+        }
     }
 }

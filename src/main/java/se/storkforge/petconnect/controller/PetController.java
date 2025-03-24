@@ -1,6 +1,6 @@
 package se.storkforge.petconnect.controller;
 
-import entity.Pet;
+import se.storkforge.petconnect.entity.Pet;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

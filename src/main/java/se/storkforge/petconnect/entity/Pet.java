@@ -1,4 +1,4 @@
-package entity;
+package se.storkforge.petconnect.entity;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;

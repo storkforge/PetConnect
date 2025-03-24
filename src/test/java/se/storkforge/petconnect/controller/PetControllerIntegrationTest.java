@@ -1,7 +1,7 @@
 package se.storkforge.petconnect.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import entity.Pet;
+import se.storkforge.petconnect.entity.Pet;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;

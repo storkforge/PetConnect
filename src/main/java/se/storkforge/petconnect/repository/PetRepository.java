@@ -1,6 +1,6 @@
 package se.storkforge.petconnect.repository;
 
-import entity.Pet;
+import se.storkforge.petconnect.entity.Pet;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

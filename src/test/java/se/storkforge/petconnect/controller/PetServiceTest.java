@@ -1,6 +1,6 @@
 package se.storkforge.petconnect.controller;
 
-import entity.Pet;
+import se.storkforge.petconnect.entity.Pet;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
