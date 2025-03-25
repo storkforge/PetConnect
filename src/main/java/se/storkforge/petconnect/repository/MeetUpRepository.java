@@ -10,6 +10,6 @@ import java.util.List;
 @Repository
 public interface MeetUpRepository extends JpaRepository<MeetUp, Long> {
 
-//    List<MeetUp> findByLocationContaining(String location);
-//    List<MeetUp> findByDateTimeBetween(LocalDateTime start, LocalDateTime end);
+    List<MeetUp> findByLocationContaining(String location);
+    List<MeetUp> findByDateTimeBetween(LocalDateTime start, LocalDateTime end);
 }
