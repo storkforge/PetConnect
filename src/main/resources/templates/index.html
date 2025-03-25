@@ -4,17 +4,9 @@
   <title th:text="#{home.title}">Fallback Title</title>
 </head>
 <body>
-<h1 th:text="#{greeting}">Fallback Greeting</h1>
+<h1 th:text="#{greeting}">Welcome to our site!</h1>
 
-<p>
-  <span th:text="#{language.switch}">Change Language</span>:
-  <a href="/change-language?lang=en">English</a> |
-  <a href="/change-language?lang=sv">Svenska</a> |
-  <a href="/change-language?lang=fr">Français</a> |
-  <a href="/change-language?lang=es">Español</a> |
-  <a href="/change-language?lang=hi">हिन्दी</a> |
-  <a href="/change-language?lang=ar">العربية</a>
-</p>
+<p th:text="#{language.switch}">Your language is automatically detected based on your browser settings.</p>
 
 
 <button th:text="#{login.button}">Login</button>
