@@ -1,15 +1,13 @@
-package se.storkforge.petconnect.controller.service;
+package se.storkforge.petconnect.service;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.dao.DataIntegrityViolationException;
 import se.storkforge.petconnect.entity.User;
-import se.storkforge.petconnect.exeption.UserNotFoundException;
+import se.storkforge.petconnect.exception.UserNotFoundException;
 import se.storkforge.petconnect.repository.UserRepository;
-import se.storkforge.petconnect.service.UserService;
 
 import java.util.Arrays;
 import java.util.List;
@@ -26,14 +24,24 @@ class UserServiceTest {
     @InjectMocks
     private UserService userService;
 
+    private User createUser(String username, String email, String password) {
+        User user = new User();
+        user.setUsername(username);
+        user.setEmail(email);
+        user.setPassword(password);
+        return user;
+    }
+
+    private User createUserWithId(Long id, String username, String email, String password) {
+        User user = createUser(username, email, password);
+        user.setId(id);
+        return user;
+    }
+
     @Test
     void createUser_validUser_shouldSaveUser() {
         // Arrange
-        User userToCreate = new User();
-        userToCreate.setUsername("testuser");
-        userToCreate.setEmail("test@example.com");
-        // Assuming your User entity has a setPassword method
-        userToCreate.setPassword("password");
+        User userToCreate = createUser("testuser", "test@example.com", "password");
         when(userRepository.findByUsername(userToCreate.getUsername())).thenReturn(Optional.empty());
         when(userRepository.findByEmail(userToCreate.getEmail())).thenReturn(Optional.empty());
         when(userRepository.save(userToCreate)).thenReturn(userToCreate);
@@ -53,10 +61,7 @@ class UserServiceTest {
     @Test
     void createUser_usernameExists_shouldThrowIllegalArgumentException() {
         // Arrange
-        User userToCreate = new User();
-        userToCreate.setUsername("existinguser");
-        userToCreate.setEmail("new@example.com");
-        userToCreate.setPassword("password");
+        User userToCreate = createUser("existinguser", "new@example.com", "password");
         when(userRepository.findByUsername(userToCreate.getUsername())).thenReturn(Optional.of(new User()));
 
         // Act & Assert
@@ -69,10 +74,7 @@ class UserServiceTest {
     @Test
     void createUser_emailExists_shouldThrowIllegalArgumentException() {
         // Arrange
-        User userToCreate = new User();
-        userToCreate.setUsername("newuser");
-        userToCreate.setEmail("existing@example.com");
-        userToCreate.setPassword("password");
+        User userToCreate = createUser("newuser", "existing@example.com", "password");
         when(userRepository.findByUsername(userToCreate.getUsername())).thenReturn(Optional.empty());
         when(userRepository.findByEmail(userToCreate.getEmail())).thenReturn(Optional.of(new User()));
 
@@ -87,11 +89,7 @@ class UserServiceTest {
     void getUserById_existingId_shouldReturnUser() {
         // Arrange
         Long userId = 1L;
-        User expectedUser = new User();
-        expectedUser.setId(userId);
-        expectedUser.setUsername("testuser");
-        expectedUser.setEmail("test@example.com");
-        expectedUser.setPassword("password");
+        User expectedUser = createUserWithId(userId, "testuser", "test@example.com", "password");
         when(userRepository.findById(userId)).thenReturn(Optional.of(expectedUser));
 
         // Act
@@ -119,10 +117,7 @@ class UserServiceTest {
     void getUserByUsername_existingUsername_shouldReturnOptionalUser() {
         // Arrange
         String username = "testuser";
-        User expectedUser = new User();
-        expectedUser.setUsername(username);
-        expectedUser.setEmail("test@example.com");
-        expectedUser.setPassword("password");
+        User expectedUser = createUser(username, "test@example.com", "password");
         when(userRepository.findByUsername(username)).thenReturn(Optional.of(expectedUser));
 
         // Act
@@ -152,10 +147,7 @@ class UserServiceTest {
     void getUserByEmail_existingEmail_shouldReturnOptionalUser() {
         // Arrange
         String email = "test@example.com";
-        User expectedUser = new User();
-        expectedUser.setUsername("testuser");
-        expectedUser.setEmail(email);
-        expectedUser.setPassword("password");
+        User expectedUser = createUser("testuser", email, "password");
         when(userRepository.findByEmail(email)).thenReturn(Optional.of(expectedUser));
 
         // Act
@@ -203,12 +195,15 @@ class UserServiceTest {
     void updateUser_existingId_shouldUpdateUser() {
         // Arrange
         Long userId = 1L;
-        User existingUser = createUser("olduser", "old@example.com", "oldpass");
-        existingUser.setId(userId);
-        User updatedUser = createUser("newuser", "new@example.com", "newpass");
-        updatedUser.setId(userId);
+        User existingUser = createUserWithId(userId, "olduser", "old@example.com", "oldpass");
+        User updatedUser = createUserWithId(userId, "newuser", "new@example.com", "newpass");
         when(userRepository.findById(userId)).thenReturn(Optional.of(existingUser));
-        when(userRepository.save(any(User.class))).thenReturn(updatedUser);
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
+            User userToSave = invocation.getArgument(0);
+            assertEquals(updatedUser.getUsername(), userToSave.getUsername());
+            assertEquals(updatedUser.getEmail(), userToSave.getEmail());
+            return updatedUser;
+        });
 
         // Act
         User result = userService.updateUser(userId, updatedUser);
@@ -290,15 +285,34 @@ class UserServiceTest {
         verify(userRepository, times(1)).existsById(userId);
     }
 
-    private User createUser(String username, String email, String password) {
-        User user = new User();
-        user.setUsername(username);
-        user.setEmail(email);
-        // Assuming your User entity has a setPassword method
-        user.setPassword(password);
-        return user;
+    @Test
+    void createUser_invalidEmailFormat_shouldThrowIllegalArgumentException() {
+        // Arrange
+        User userToCreate = createUser("testuser", "invalid-email", "password");
+        when(userRepository.findByUsername(userToCreate.getUsername())).thenReturn(Optional.empty());
+        when(userRepository.findByEmail(userToCreate.getEmail())).thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThrows(IllegalArgumentException.class, () -> userService.createUser(userToCreate));
+        verify(userRepository, times(1)).findByUsername(userToCreate.getUsername());
+        verify(userRepository, times(1)).findByEmail(userToCreate.getEmail());
+        verify(userRepository, never()).save(any(User.class));
     }
 
-    // Add more test cases to cover edge cases, error scenarios, and more complex scenarios.
-    // For example, testing the updateUser method with specific field updates.
+    @Test
+    void testCreateDuplicateEmail() {
+        // Arrange
+        String existingEmail = "existing@example.com";
+        User userToCreate = createUser("newuser", existingEmail, "password");
+        User existingUser = createUser("existinguser", existingEmail, "oldpassword");
+
+        when(userRepository.findByUsername(userToCreate.getUsername())).thenReturn(Optional.empty());
+        when(userRepository.findByEmail(existingEmail)).thenReturn(Optional.of(existingUser));
+
+        // Act & Assert
+        assertThrows(IllegalArgumentException.class, () -> userService.createUser(userToCreate));
+        verify(userRepository, times(1)).findByUsername(userToCreate.getUsername());
+        verify(userRepository, times(1)).findByEmail(existingEmail);
+        verify(userRepository, never()).save(any(User.class));
+    }
 }

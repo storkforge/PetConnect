@@ -5,7 +5,7 @@ import org.springframework.graphql.data.method.annotation.MutationMapping;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
 import org.springframework.stereotype.Controller;
 import se.storkforge.petconnect.entity.User;
-import se.storkforge.petconnect.exeption.UserNotFoundException;
+import se.storkforge.petconnect.exception.UserNotFoundException;
 import se.storkforge.petconnect.service.UserService;
 
 import java.util.List;

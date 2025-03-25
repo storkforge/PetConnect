@@ -1,4 +1,4 @@
-package se.storkforge.petconnect.controller.controller;
+package se.storkforge.petconnect.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -9,9 +9,8 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import se.storkforge.petconnect.controller.UserController;
 import se.storkforge.petconnect.entity.User;
-import se.storkforge.petconnect.exeption.UserNotFoundException;
+import se.storkforge.petconnect.exception.UserNotFoundException;
 import se.storkforge.petconnect.service.UserService;
 
 import java.util.Arrays;
@@ -23,8 +22,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -51,6 +48,7 @@ public class UserControllerIntegrationTest {
     void setUp() {
         MockitoAnnotations.openMocks(this);
         mockMvc = MockMvcBuilders.standaloneSetup(userController)
+                .setControllerAdvice(new ExceptionHandlerController())
                 .build();
 
         testUser = new User();
@@ -156,12 +154,33 @@ public class UserControllerIntegrationTest {
     }
     @Test
     void testCreateDuplicateUser() throws Exception {
+        String errorMessage = "Username already exists";
         when(userService.createUser(any(User.class)))
-                .thenThrow(new IllegalArgumentException("Username already exists"));
+                .thenThrow(new IllegalArgumentException(errorMessage));
 
         mockMvc.perform(post("/api/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(testUser)))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string(errorMessage));
+    }
+
+    @Test
+    void testCreateDuplicateEmail() throws Exception {
+        String errorMessage = "Email already exists.";
+        User userWithDuplicateEmail = new User();
+        userWithDuplicateEmail.setUsername("newuser");
+        userWithDuplicateEmail.setEmail(testUser.getEmail()); // Use the existing test user's email
+        userWithDuplicateEmail.setPassword("someSecurePassword"); // Add a valid password
+        userWithDuplicateEmail.setId(null); // Explicitly set ID to null
+
+        when(userService.createUser(any(User.class)))
+                .thenThrow(new IllegalArgumentException(errorMessage));
+
+        mockMvc.perform(post("/api/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(userWithDuplicateEmail)))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string(errorMessage));
     }
 }

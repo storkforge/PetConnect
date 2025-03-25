@@ -1,11 +1,12 @@
 package se.storkforge.petconnect.controller;
 
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import se.storkforge.petconnect.entity.User;
-import se.storkforge.petconnect.exeption.UserNotFoundException;
+import se.storkforge.petconnect.exception.UserNotFoundException;
 import se.storkforge.petconnect.service.UserService;
 
 import java.util.List;
@@ -36,12 +37,12 @@ public class UserController {
     }
 
     @PostMapping
-    public ResponseEntity<User> createUser(@RequestBody User user) {
+    public ResponseEntity<?> createUser(@Valid @RequestBody User user) {
         try {
             User createdUser = userService.createUser(user);
             return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
@@ -51,7 +52,8 @@ public class UserController {
             User updated = userService.updateUser(id, updatedUser);
             return ResponseEntity.ok(updated);
         } catch (UserNotFoundException e) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(null);
         }
     }
 

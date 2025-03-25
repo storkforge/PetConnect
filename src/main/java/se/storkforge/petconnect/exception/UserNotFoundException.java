@@ -1,4 +1,4 @@
-package se.storkforge.petconnect.exeption;
+package se.storkforge.petconnect.exception;
 
 public class UserNotFoundException extends RuntimeException {
 

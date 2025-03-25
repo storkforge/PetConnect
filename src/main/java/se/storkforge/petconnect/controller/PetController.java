@@ -1,7 +1,7 @@
 package se.storkforge.petconnect.controller;
 
 import se.storkforge.petconnect.entity.Pet;
-import se.storkforge.petconnect.exeption.PetNotFoundException;
+import se.storkforge.petconnect.exception.PetNotFoundException;
 import se.storkforge.petconnect.service.PetService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -30,9 +30,9 @@ public class PetController {
 
     @GetMapping("/{id}")
     public ResponseEntity<Pet> getPetById(@PathVariable Long id) {
-        Optional<Pet> pet = petService.getPetById(id);
-        return pet.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
-                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+        Optional<Pet> optionalPet = petService.getPetById(id);
+        return optionalPet.map(pet -> new ResponseEntity<>(pet, HttpStatus.OK))
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PostMapping
@@ -42,19 +42,21 @@ public class PetController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Pet> updatePet(@PathVariable Long id, @RequestBody Pet updatedPet) {
-        Pet updated = petService.updatePet(id, updatedPet);
-        return ResponseEntity.ok(updated);
+    public ResponseEntity<?> updatePet(@PathVariable Long id, @RequestBody Pet updatedPet) {
+        try {
+            Pet updated = petService.updatePet(id, updatedPet);
+            return ResponseEntity.ok(updated);
+        } catch (PetNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
-
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletePet(@PathVariable Long id) {
-        petService.deletePet(id);
-        return ResponseEntity.noContent().build();
-    }
-
-    @ExceptionHandler(PetNotFoundException.class)
-    public ResponseEntity<Void> handlePetNotFound(PetNotFoundException ex) {
-        return ResponseEntity.notFound().build();
+        try {
+            petService.deletePet(id);
+            return ResponseEntity.noContent().build();
+        } catch (PetNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 }

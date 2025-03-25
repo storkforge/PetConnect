@@ -4,7 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import se.storkforge.petconnect.entity.User;
-import se.storkforge.petconnect.exeption.UserNotFoundException;
+import se.storkforge.petconnect.exception.UserNotFoundException;
 import se.storkforge.petconnect.repository.UserRepository;
 
 import java.util.List;
@@ -32,7 +32,7 @@ public class UserService {
         if (userRepository.findByEmail(user.getEmail()).isPresent()) {
             throw new IllegalArgumentException("Email already exists.");
         }
-        if (isValidEmail(user.getEmail())) {
+        if (isInvalidEmail(user.getEmail())) { // Renamed method
             throw new IllegalArgumentException("Invalid email format.");
         }
         return userRepository.save(user);
@@ -65,7 +65,7 @@ public class UserService {
             existingUser.setUsername(userInput.getUsername());
         }
         if (userInput.getEmail() != null && !userInput.getEmail().isEmpty()) {
-            if (isValidEmail(userInput.getEmail())) {
+            if (isInvalidEmail(userInput.getEmail())) { // Updated to use isInvalidEmail
                 throw new IllegalArgumentException("Invalid email format.");
             }
             if (!existingUser.getEmail().equals(userInput.getEmail()) && userRepository.findByEmail(userInput.getEmail()).isPresent()) {
@@ -91,7 +91,7 @@ public class UserService {
         return userRepository.existsById(id);
     }
 
-    private boolean isValidEmail(String email) {
+    private boolean isInvalidEmail(String email) {
         if (email == null || email.trim().isEmpty()) {
             return true;
         }
