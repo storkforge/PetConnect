@@ -1,6 +1,8 @@
 package se.storkforge.petconnect.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import se.storkforge.petconnect.entity.User;
@@ -17,30 +19,36 @@ import java.util.regex.Pattern;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
     private static final String EMAIL_REGEX = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
     private final Pattern emailPattern = Pattern.compile(EMAIL_REGEX);
 
-    @Autowired
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public User createUser(User user) {
+        validateNewUser(user);
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        return userRepository.save(user);
+    }
+
+    private void validateNewUser(User user) {
         if (userRepository.findByUsername(user.getUsername()).isPresent()) {
             throw new IllegalArgumentException("Username already exists.");
         }
         if (userRepository.findByEmail(user.getEmail()).isPresent()) {
             throw new IllegalArgumentException("Email already exists.");
         }
-        if (isInvalidEmail(user.getEmail())) { // Renamed method
+        if (isInvalidEmail(user.getEmail())) {
             throw new IllegalArgumentException("Invalid email format.");
         }
-        return userRepository.save(user);
     }
 
     public User getUserById(Long id) {
-        Optional<User> userOptional = userRepository.findById(id);
-        return userOptional.orElseThrow(() -> new UserNotFoundException("User with id " + id + " not found"));
+        return userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException("User with id " + id + " not found"));
     }
 
     public Optional<User> getUserByUsername(String username) {
@@ -51,33 +59,51 @@ public class UserService {
         return userRepository.findByEmail(email);
     }
 
+    public Page<User> getAllUsers(Pageable pageable) {
+        return userRepository.findAll(pageable);
+    }
+
     public List<User> getAllUsers() {
         return userRepository.findAll();
     }
 
-    public User updateUser(Long id, User userInput) {
+    public User updateUser(Long id, User updatedUser) {
         User existingUser = getUserById(id);
-
-        if (userInput.getUsername() != null && !userInput.getUsername().isEmpty()) {
-            if (!existingUser.getUsername().equals(userInput.getUsername()) && userRepository.findByUsername(userInput.getUsername()).isPresent()) {
-                throw new IllegalArgumentException("Username already exists.");
-            }
-            existingUser.setUsername(userInput.getUsername());
-        }
-        if (userInput.getEmail() != null && !userInput.getEmail().isEmpty()) {
-            if (isInvalidEmail(userInput.getEmail())) { // Updated to use isInvalidEmail
-                throw new IllegalArgumentException("Invalid email format.");
-            }
-            if (!existingUser.getEmail().equals(userInput.getEmail()) && userRepository.findByEmail(userInput.getEmail()).isPresent()) {
-                throw new IllegalArgumentException("Email already exists.");
-            }
-            existingUser.setEmail(userInput.getEmail());
-        }
-        if (userInput.getPassword() != null && !userInput.getPassword().isEmpty()) {
-            existingUser.setPassword(userInput.getPassword());
-        }
-
+        updateUserFields(existingUser, updatedUser);
         return userRepository.save(existingUser);
+    }
+
+    private void updateUserFields(User existingUser, User updatedUser) {
+        if (updatedUser.getUsername() != null && !updatedUser.getUsername().isEmpty()) {
+            validateUsernameUpdate(existingUser, updatedUser.getUsername());
+            existingUser.setUsername(updatedUser.getUsername());
+        }
+
+        if (updatedUser.getEmail() != null && !updatedUser.getEmail().isEmpty()) {
+            validateEmailUpdate(existingUser, updatedUser.getEmail());
+            existingUser.setEmail(updatedUser.getEmail());
+        }
+
+        if (updatedUser.getPassword() != null && !updatedUser.getPassword().isEmpty()) {
+            existingUser.setPassword(passwordEncoder.encode(updatedUser.getPassword()));
+        }
+    }
+
+    private void validateUsernameUpdate(User existingUser, String newUsername) {
+        if (!existingUser.getUsername().equals(newUsername) &&
+                userRepository.findByUsername(newUsername).isPresent()) {
+            throw new IllegalArgumentException("Username already exists.");
+        }
+    }
+
+    private void validateEmailUpdate(User existingUser, String newEmail) {
+        if (isInvalidEmail(newEmail)) {
+            throw new IllegalArgumentException("Invalid email format.");
+        }
+        if (!existingUser.getEmail().equals(newEmail) &&
+                userRepository.findByEmail(newEmail).isPresent()) {
+            throw new IllegalArgumentException("Email already exists.");
+        }
     }
 
     public void deleteUser(Long id) {

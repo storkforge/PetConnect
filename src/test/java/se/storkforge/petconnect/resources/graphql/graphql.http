@@ -1,0 +1,162 @@
+### 1. Basic Connectivity Test
+GET http://localhost:8080/graphql?query={__typename}
+Accept: application/json
+
+### 2. Introspection (Schema Validation)
+POST http://localhost:8080/graphql
+Content-Type: application/json
+
+{
+  "query": "query { __schema { queryType { name } mutationType { name } types { name } }"
+}
+
+### 3. Get all users with pagination (Happy Path)
+POST http://localhost:8080/graphql
+Content-Type: application/json
+
+{
+  "query": "query { getAllUsers(page: 0, size: 2) { content { id username email } pageInfo { totalElements } } }"
+}
+
+### 4. Pagination Edge Case (Large page size)
+POST http://localhost:8080/graphql
+Content-Type: application/json
+
+{
+  "query": "query { getAllUsers(page: 0, size: 1000) { content { id } } }"
+}
+
+### 5. Get single user (Happy Path)
+POST http://localhost:8080/graphql
+Content-Type: application/json
+
+{
+  "query": "query { getUserById(id: 1) { id username email } }"
+}
+
+### 6. Get non-existent user (Error Case)
+POST http://localhost:8080/graphql
+Content-Type: application/json
+
+{
+  "query": "query { getUserById(id: 9999) { id } }"
+}
+
+### 7. Create user mutation (Happy Path)
+POST http://localhost:8080/graphql
+Content-Type: application/json
+
+{
+  "query": "mutation { createUser(user: { username: \"testuser\", email: \"test@example.com\", password: \"password\" }) { id username email } }"
+}
+
+### 8. Create invalid user (Error Case - Missing required fields)
+POST http://localhost:8080/graphql
+Content-Type: application/json
+
+{
+  "query": "mutation { createUser(user: { username: \"\" }) { id } }"
+}
+
+### 9. Create user with existing email (Error Case - Duplicate)
+POST http://localhost:8080/graphql
+Content-Type: application/json
+
+{
+  "query": "mutation { createUser(user: { username: \"duplicateuser\", email: \"test@example.com\", password: \"password\" }) { id } }"
+}
+
+### 10. Partial update mutation (Happy Path)
+POST http://localhost:8080/graphql
+Content-Type: application/json
+
+{
+  "query": "mutation { updateUser(id: 1, user: { email: \"new@example.com\" }) { id email } }"
+}
+
+### 11. Update non-existent user (Error Case)
+POST http://localhost:8080/graphql
+Content-Type: application/json
+
+{
+  "query": "mutation { updateUser(id: 9999, user: { email: \"nonexistent@example.com\" }) { id } }"
+}
+
+### 12. Get user by username (Happy Path)
+POST http://localhost:8080/graphql
+Content-Type: application/json
+
+{
+  "query": "query { getUserByUsername(username: \"testuser\") { id username email } }"
+}
+
+### 13. Create test user for deletion
+POST http://localhost:8080/graphql
+Content-Type: application/json
+
+{
+  "query": "mutation { createUser(user: { username: \"todelete\", email: \"todelete@example.com\", password: \"password\" }) { id } }"
+}
+
+### 14. Delete user (Happy Path) - Replace ID with actual value from previous response
+POST http://localhost:8080/graphql
+Content-Type: application/json
+
+{
+  "query": "mutation { deleteUser(id: 3) }"
+}
+
+### 15. Delete already deleted user (Error Case)
+POST http://localhost:8080/graphql
+Content-Type: application/json
+
+{
+  "query": "mutation { deleteUser(id: 3) }"
+}
+
+### 16. Malformed Query Test (Syntax Error)
+POST http://localhost:8080/graphql
+Content-Type: application/json
+
+{
+  "query": "query { getUserById(id: 1 { id }"
+
+}
+
+### 17. Invalid Field Test
+POST http://localhost:8080/graphql
+Content-Type: application/json
+
+{
+  "query": "query { getUserById(id: 1) { id nonExistentField } }"
+}
+
+### 18. Deep Nested Query Test
+POST http://localhost:8080/graphql
+Content-Type: application/json
+
+{
+  "query": "query { getAllUsers(page: 0, size: 1) { content { id username relatedUsers { id friends { id } } } } }"
+}
+
+### 19. Batch Query Test
+POST http://localhost:8080/graphql
+Content-Type: application/json
+
+[
+  {
+    "query": "query { getUserById(id: 1) { id } }"
+  },
+  {
+    "query": "query { getUserByUsername(username: \"testuser\") { email } }"
+  }
+]
+
+### 20. Query with Variables
+POST http://localhost:8080/graphql
+Content-Type: application/json
+
+{
+  "query": "query GetUser($userId: ID!) { getUserById(id: $userId) { id username } }",
+  "variables": { "userId": 1 }
+}
