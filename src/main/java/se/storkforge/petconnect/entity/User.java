@@ -6,7 +6,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import java.util.Objects;
 
-@Entity
+@Entity(name = "user_table")
 public class User {
 
     @Id

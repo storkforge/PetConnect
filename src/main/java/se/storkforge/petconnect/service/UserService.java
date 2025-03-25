@@ -4,16 +4,21 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import se.storkforge.petconnect.entity.User;
-import se.storkforge.petconnect.exeption.UserNotFoundException; // Import the new exception
+import se.storkforge.petconnect.exeption.UserNotFoundException;
 import se.storkforge.petconnect.repository.UserRepository;
+
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 @Transactional
 public class UserService {
 
     private final UserRepository userRepository;
+    private static final String EMAIL_REGEX = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
+    private final Pattern emailPattern = Pattern.compile(EMAIL_REGEX);
 
     @Autowired
     public UserService(UserRepository userRepository) {
@@ -26,6 +31,9 @@ public class UserService {
         }
         if (userRepository.findByEmail(user.getEmail()).isPresent()) {
             throw new IllegalArgumentException("Email already exists.");
+        }
+        if (isValidEmail(user.getEmail())) {
+            throw new IllegalArgumentException("Invalid email format.");
         }
         return userRepository.save(user);
     }
@@ -47,15 +55,29 @@ public class UserService {
         return userRepository.findAll();
     }
 
-    public User updateUser(Long id, User updatedUser) {
-        Optional<User> existingUserOptional = userRepository.findById(id);
-        if (existingUserOptional.isPresent()) {
-            User existingUser = existingUserOptional.get();
-            // Update fields...
-            return userRepository.save(existingUser);
-        } else {
-            throw new UserNotFoundException("User with id " + id + " not found");
+    public User updateUser(Long id, User userInput) {
+        User existingUser = getUserById(id);
+
+        if (userInput.getUsername() != null && !userInput.getUsername().isEmpty()) {
+            if (!existingUser.getUsername().equals(userInput.getUsername()) && userRepository.findByUsername(userInput.getUsername()).isPresent()) {
+                throw new IllegalArgumentException("Username already exists.");
+            }
+            existingUser.setUsername(userInput.getUsername());
         }
+        if (userInput.getEmail() != null && !userInput.getEmail().isEmpty()) {
+            if (isValidEmail(userInput.getEmail())) {
+                throw new IllegalArgumentException("Invalid email format.");
+            }
+            if (!existingUser.getEmail().equals(userInput.getEmail()) && userRepository.findByEmail(userInput.getEmail()).isPresent()) {
+                throw new IllegalArgumentException("Email already exists.");
+            }
+            existingUser.setEmail(userInput.getEmail());
+        }
+        if (userInput.getPassword() != null && !userInput.getPassword().isEmpty()) {
+            existingUser.setPassword(userInput.getPassword());
+        }
+
+        return userRepository.save(existingUser);
     }
 
     public void deleteUser(Long id) {
@@ -67,5 +89,13 @@ public class UserService {
 
     public boolean existsById(Long id) {
         return userRepository.existsById(id);
+    }
+
+    private boolean isValidEmail(String email) {
+        if (email == null || email.trim().isEmpty()) {
+            return true;
+        }
+        Matcher matcher = emailPattern.matcher(email);
+        return !matcher.matches();
     }
 }
