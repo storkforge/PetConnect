@@ -1,16 +1,12 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
 <head>
   <title th:text="#{home.title}">Fallback Title</title>
 </head>
 <body>
-<h1 th:text="#{greeting}">Fallback Greeting</h1>
+<h1 th:text="#{greeting}">Welcome to our site!</h1>
 
-<p>
-  <a href="/change-language?lang=en" th:text="#{language.switch} + ' (English)'">Change Language</a> |
-  <a href="/change-language?lang=sv" th:text="#{language.switch} + ' (Svenska)'">Change Language</a> |
-  <a href="/change-language?lang=fr" th:text="#{language.switch} + ' (Français)'">Change Language</a>
-</p>
+<p th:text="#{language.switch}">Your language is automatically detected based on your browser settings.</p>
 
 
 <button th:text="#{login.button}">Login</button>
