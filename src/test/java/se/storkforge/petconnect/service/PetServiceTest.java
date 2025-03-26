@@ -1,7 +1,7 @@
-package se.storkforge.petconnect.controller.service;
+package se.storkforge.petconnect.service;
 
 import se.storkforge.petconnect.entity.Pet;
-import se.storkforge.petconnect.exeption.PetNotFoundException;
+import se.storkforge.petconnect.exception.PetNotFoundException;
 import se.storkforge.petconnect.repository.PetRepository;
 import se.storkforge.petconnect.service.PetService;
 import org.junit.jupiter.api.BeforeEach;

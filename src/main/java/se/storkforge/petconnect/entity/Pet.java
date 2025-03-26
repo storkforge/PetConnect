@@ -113,7 +113,7 @@ public class Pet {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Pet pet = (Pet) o;
-        return id != null && id.equals(pet.id);
+        return Objects.equals(id, pet.id);
     }
 
     @Override

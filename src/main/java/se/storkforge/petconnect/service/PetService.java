@@ -3,11 +3,10 @@ package se.storkforge.petconnect.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import se.storkforge.petconnect.entity.Pet;
-import se.storkforge.petconnect.exeption.PetNotFoundException;
+import se.storkforge.petconnect.exception.PetNotFoundException;
 import se.storkforge.petconnect.repository.PetRepository;
 
 import java.util.List;
