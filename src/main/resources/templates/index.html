@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout}" th:lang="${#locale.language}">
 <head>
   <title th:text="#{home.title}">Fallback Title</title>
 </head>
