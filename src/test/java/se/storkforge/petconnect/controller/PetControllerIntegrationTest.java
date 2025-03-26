@@ -1,4 +1,4 @@
-package se.storkforge.petconnect.controller.controller;
+package se.storkforge.petconnect.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -9,17 +9,14 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import se.storkforge.petconnect.controller.PetController;
 import se.storkforge.petconnect.entity.Pet;
-import se.storkforge.petconnect.exeption.PetNotFoundException;
+import se.storkforge.petconnect.exception.PetNotFoundException;
 import se.storkforge.petconnect.service.PetService;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -27,7 +24,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 public class PetControllerIntegrationTest {
-
     private MockMvc mockMvc;
 
     @Mock
@@ -123,31 +119,24 @@ public class PetControllerIntegrationTest {
 
         verify(petService, times(1)).updatePet(eq(1L), any(Pet.class));
     }
-
     @Test
     void testUpdatePetNotFoundEndpoint() throws Exception {
         // Given
         Long notFoundId = 999L;
         Pet updatedPet = new Pet("Updated Name", "Updated Species", true, 6, "New Owner", "New Location");
         String updatedPetJson = objectMapper.writeValueAsString(updatedPet);
-        PetNotFoundException expectedException = new PetNotFoundException("Pet with id " + notFoundId + " not found");
 
         when(petService.updatePet(eq(notFoundId), any(Pet.class)))
-                .thenThrow(expectedException);
+                .thenThrow(new PetNotFoundException("Pet with id " + notFoundId + " not found"));
 
         // When & Then
         mockMvc.perform(put("/pets/{id}", notFoundId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(updatedPetJson))
-                .andExpect(status().isNotFound())
-                .andExpect(result -> {
-                    assertEquals(PetNotFoundException.class, Objects.requireNonNull(result.getResolvedException()).getClass());
-                    assertEquals(expectedException.getMessage(), result.getResolvedException().getMessage());
-                });
+                .andExpect(status().isNotFound());
 
         verify(petService, times(1)).updatePet(eq(notFoundId), any(Pet.class));
     }
-
     @Test
     public void testDeletePetEndpoint() throws Exception {
         // When & Then

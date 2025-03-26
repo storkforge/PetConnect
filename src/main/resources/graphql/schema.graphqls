@@ -1,0 +1,42 @@
+# src/main/resources/graphql/schema.graphqls
+type PageInfo {
+    totalElements: Int!
+    totalPages: Int!
+    currentPage: Int!
+    pageSize: Int!
+}
+
+type UserPage {
+    content: [User]!
+    pageInfo: PageInfo!
+}
+
+type User {
+    id: ID!
+    username: String!
+    email: String!
+}
+
+input UserInput {
+    username: String!
+    email: String!
+    password: String!
+}
+
+input UserUpdateInput {
+    username: String
+    email: String
+    password: String
+}
+
+type Query {
+    getAllUsers(page: Int = 0, size: Int = 10): UserPage
+    getUserById(id: ID!): User
+    getUserByUsername(username: String!): User
+}
+
+type Mutation {
+    createUser(user: UserInput!): User
+    updateUser(id: ID!, user: UserUpdateInput!): User
+    deleteUser(id: ID!): Boolean
+}
