@@ -4,10 +4,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -45,7 +48,7 @@ public class FileStorageService {
         try {
             //Validation
             if (file.isEmpty()) {
-                throw new RuntimeException("Failed to store empty file.");
+                throw new RuntimeException("Unable to store empty file.");
             }
 
             if (file.getSize() > maxFileSize) {
@@ -62,7 +65,6 @@ public class FileStorageService {
 
             //Save file
             Path destination = this.root.resolve(Paths.get(filename)).normalize().toAbsolutePath();
-
             Files.copy(file.getInputStream(), destination);
 
             LOG.info("Stored file: {}", destination);
@@ -85,4 +87,28 @@ public class FileStorageService {
     }
 
 
+    public void delete(String filename) {
+        try {
+            Path file = root.resolve(filename);
+            Files.deleteIfExists(file);
+        } catch (IOException e) {
+            throw new RuntimeException("Could not delete file: " + filename, e);
+        }
+    }
+
+    //Does not return the actual file, just the path to the file
+    public Resource loadFile(String filename) {
+        try {
+            Path file = root.resolve(filename);
+            Resource resource = new UrlResource(file.toUri());
+
+            if (resource.exists() || resource.isReadable()) {
+                return resource;
+            } else {
+                throw new RuntimeException("Could not read file: " + filename);
+            }
+        } catch (MalformedURLException e) {
+            throw new RuntimeException("Could not read file: " + filename, e);
+        }
+    }
 }
