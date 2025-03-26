@@ -1,18 +1,15 @@
+
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout}">
+<html xmlns:th="http://www.thymeleaf.org" th:replace="layout :: layout" th:lang="${#locale.language}">
 <head>
   <title>Home</title> <!-- Ignored because layout handles the title -->
 </head>
 <body>
-<th:block th:fragment="content">
+<main th:fragment="content">
   <h1 th:text="#{greeting}">Welcome to our site!</h1>
-
-  <p th:text="#{language.switch}">
-    Your language is automatically detected based on your browser settings.
-  </p>
-
+  <p th:text="#{language.switch}">Your language is automatically detected based on your browser settings.</p>
   <button th:text="#{login.button}">Login</button>
   <button th:text="#{logout.button}">Logout</button>
-</th:block>
+</main>
 </body>
 </html>
