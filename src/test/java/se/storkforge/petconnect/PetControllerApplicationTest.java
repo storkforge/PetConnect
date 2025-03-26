@@ -1,4 +1,4 @@
-package se.storkforge.petconnect.controller;
+package se.storkforge.petconnect;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,8 +11,9 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import se.storkforge.petconnect.controller.PetController;
 import se.storkforge.petconnect.entity.Pet;
-import se.storkforge.petconnect.exeption.PetNotFoundException;
+import se.storkforge.petconnect.exception.PetNotFoundException;
 import se.storkforge.petconnect.service.PetService;
 
 import java.util.Arrays;
