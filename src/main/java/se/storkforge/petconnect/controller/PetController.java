@@ -3,7 +3,6 @@ package se.storkforge.petconnect.controller;
 import org.springframework.web.multipart.MultipartFile;
 import se.storkforge.petconnect.entity.Pet;
 import se.storkforge.petconnect.exception.PetNotFoundException;
-import se.storkforge.petconnect.exeption.PetNotFoundException;
 import se.storkforge.petconnect.repository.PetRepository;
 import se.storkforge.petconnect.service.PetService;
 import org.springframework.beans.factory.annotation.Autowired;

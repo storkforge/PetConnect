@@ -1,4 +1,4 @@
-package se.storkforge.petconnect.controller.service;
+package se.storkforge.petconnect.service;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

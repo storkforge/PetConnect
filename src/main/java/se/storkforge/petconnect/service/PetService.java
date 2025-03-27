@@ -19,12 +19,12 @@ public class PetService {
     private static final Logger logger = LoggerFactory.getLogger(PetService.class);
 
     private final PetRepository petRepository;
-    private FileStorageService storageService;
+    private final FileStorageService fileStorageService;
 
     @Autowired
     public PetService(PetRepository petRepository, FileStorageService storageService) {
         this.petRepository = petRepository;
-        this.storageService = storageService;
+        this.fileStorageService = storageService;
     }
 
     @Transactional(readOnly = true)
@@ -80,10 +80,10 @@ public class PetService {
         }
 
         if (pet.get().getProfilePicturePath() != null) {
-            storageService.delete(pet.get().getProfilePicturePath());
+            fileStorageService.delete(pet.get().getProfilePicturePath());
         }
 
-        String filename = storageService.store(file);
+        String filename = fileStorageService.store(file);
         pet.get().setProfilePicturePath(filename);
         petRepository.save(pet.get());
     }
