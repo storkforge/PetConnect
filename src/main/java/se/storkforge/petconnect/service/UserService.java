@@ -24,11 +24,6 @@ public class UserService {
     private static final String EMAIL_REGEX = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
     private final Pattern emailPattern = Pattern.compile(EMAIL_REGEX);
 
-    public boolean isUserAvailable(User user, LocalDateTime dateTime) {
-        return user.getMeetUps().stream()
-                .noneMatch(meetUp -> meetUp.getDateTime().equals(dateTime));
-    }
-
     public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;

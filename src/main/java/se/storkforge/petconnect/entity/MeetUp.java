@@ -4,8 +4,8 @@ import jakarta.persistence.*;
 import org.hibernate.proxy.HibernateProxy;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 @Entity
 public class MeetUp {
@@ -17,7 +17,7 @@ public class MeetUp {
     private LocalDateTime dateTime;
 
     @ManyToMany
-    private Set<User> participants;
+    private List<User> participants;
 
     private String status; // "PLANNED", "CONFIRMED", "CANCELED"
 
@@ -45,11 +45,11 @@ public class MeetUp {
         this.dateTime = dateTime;
     }
 
-    public Set<User> getParticipants() {
+    public List<User> getParticipants() {
         return participants;
     }
 
-    public void setParticipants(Set<User> participants) {
+    public void setParticipants(List<User> participants) {
         this.participants = participants;
     }
 
