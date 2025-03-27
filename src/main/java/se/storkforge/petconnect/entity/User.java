@@ -1,10 +1,10 @@
 package se.storkforge.petconnect.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
+
 import java.util.Objects;
+import java.util.Set;
+
 import jakarta.validation.constraints.*;
 
 
@@ -26,6 +26,14 @@ public class User {
     @NotBlank(message = "Password is required")
     @Size(min = 8, message = "Password must be at least 8 characters")
     private String password;
+
+    @ManyToMany
+    @JoinTable(
+            name = "user_meetup",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "meetup_id")
+    )
+    private Set<MeetUp> meetUps;
 
     public User() {
     }
@@ -66,6 +74,14 @@ public class User {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public Set<MeetUp> getMeetUps() {
+        return meetUps;
+    }
+
+    public void setMeetUps(Set<MeetUp> meetUps) {
+        this.meetUps = meetUps;
     }
 
     @Override
