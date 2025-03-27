@@ -1,7 +1,6 @@
 package se.storkforge.petconnect.service;
 
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.stereotype.Service;
@@ -18,8 +17,8 @@ public class RecommendationService {
     private final ChatClient chatClient;
     private final PetService petService;
 
-    public RecommendationService(ChatModel chatClient, PetService petService) {
-        this.chatClient = (ChatClient) chatClient;
+    public RecommendationService(ChatClient chatClient, PetService petService) {
+        this.chatClient = chatClient;
         this.petService = petService;
     }
 
@@ -32,22 +31,32 @@ public class RecommendationService {
         promptVariables.put("user", user);
         promptVariables.put("pets", availablePets);
 
-        PromptTemplate promptTemplate = new PromptTemplate("""
+        // Using simple variable substitution without loops
+        String template = """
             Based on the following user information and available pets, provide a personalized pet recommendation.
 
             User Details:
-            - Username: {user.username}
-            - Email: {user.email}
+            - Username: {username}
+            - Email: {email}
 
             Available Pets:
-            {#each pets}
-            - {name} ({species}), Age: {age}, Location: {location}
-            {/each}
+            {pets}
 
-            Please recommend the most suitable pet for this user, considering factors like species, age, and location proximity.
+            Please recommend the most suitable pet for this user.
             Provide a brief explanation for your recommendation.
-            """);
+            """;
 
+        // Pre-format the pets list
+        String petsFormatted = availablePets.stream()
+                .map(pet -> String.format("- %s (%s), Age: %d, Location: %s",
+                        pet.getName(), pet.getSpecies(), pet.getAge(), pet.getLocation()))
+                .reduce("", (a, b) -> a + "\n" + b);
+
+        promptVariables.put("username", user.getUsername());
+        promptVariables.put("email", user.getEmail());
+        promptVariables.put("pets", petsFormatted);
+
+        PromptTemplate promptTemplate = new PromptTemplate(template);
         Prompt prompt = promptTemplate.create(promptVariables);
         return chatClient.prompt(prompt).call().content();
     }

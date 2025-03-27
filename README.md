@@ -30,3 +30,35 @@ Using generated security password: 38915130-c6d6-46d3-93f7-1f93ad77dc1d
 
 
 Using generated security password: 38915130-c6d6-46d3-93f7-1f93ad77dc1d
+
+
+
+
+
+
+
+
+
+## Environment Setup
+
+This project requires an OpenAI API key to run certain features.
+
+
+
+
+    * **Important:** Never commit the `.env` file to version control. It is already included in `.gitignore`.
+
+1.  **Create `.env` file:**
+
+2.  **Add your API key:**
+    * Open the `.env` file and add:
+    
+    
+    OPENAI_API_KEY=sk-your-real-api-key
+
+3.  **Run the application:**
+
+## Running Tests
+
+Some tests require a valid OpenAI API key. Please follow the environment setup instructions above.
+
