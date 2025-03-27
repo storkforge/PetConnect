@@ -1,9 +1,11 @@
 package se.storkforge.petconnect.service;
 
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import se.storkforge.petconnect.entity.MeetUp;
+import se.storkforge.petconnect.entity.MeetUpStatus;
 import se.storkforge.petconnect.entity.User;
 import se.storkforge.petconnect.repository.MeetUpRepository;
 
@@ -38,8 +40,16 @@ public class MeetUpService {
         meetUp.setLocation(location);
         meetUp.setDateTime(dateTime);
         meetUp.setParticipants(participants);
-        meetUp.setStatus("PLANNED");
+        meetUp.setStatus(String.valueOf(MeetUpStatus.PLANNED));
 
         return meetUpRepository.save(meetUp);
+    }
+
+    public void updateMeetUpStatus(Long meetUpId, MeetUpStatus newStatus) {
+        MeetUp meetUp = meetUpRepository.findById(meetUpId)
+                .orElseThrow(() -> new EntityNotFoundException("Meet-up not found"));
+
+        meetUp.setStatus(String.valueOf(newStatus));
+        meetUpRepository.save(meetUp);
     }
 }
