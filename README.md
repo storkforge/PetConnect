@@ -58,7 +58,7 @@ This project requires an OpenAI API key to run certain features.
 
 3.  **Run the application:**
 
-## Running Tests
+## Running Test
 
 Some tests require a valid OpenAI API key. Please follow the environment setup instructions above.
 
