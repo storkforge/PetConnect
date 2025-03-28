@@ -1,20 +1,43 @@
-# src/main/resources/graphql/schema.graphqls
-type PageInfo {
-    totalElements: Int!
-    totalPages: Int!
-    currentPage: Int!
-    pageSize: Int!
+type Query {
+    # User queries
+    getAllUsers(page: Int, size: Int): UserPage!
+    getUserById(id: ID!): User
+    getUserByUsername(username: String!): User
+
+    # Pet queries
+    getAllPets: [Pet!]!
+    getPetById(id: ID!): Pet
 }
 
-type UserPage {
-    content: [User]!
-    pageInfo: PageInfo!
+type Mutation {
+    # User mutations
+    createUser(user: UserInput!): User!
+    updateUser(id: ID!, user: UserUpdateInput!): User!
+    deleteUser(id: ID!): Boolean!
+
+    # Pet mutations
+    createPet(pet: PetInput!): Pet!
+    updatePet(id: ID!, pet: PetUpdateInput!): Pet!
+    deletePet(id: ID!): Boolean!
 }
 
+# User types
 type User {
     id: ID!
     username: String!
     email: String!
+}
+
+type UserPage {
+    content: [User!]!
+    pageInfo: PaginationInfo!
+}
+
+type PaginationInfo {
+    totalElements: Int!
+    totalPages: Int!
+    currentPage: Int!
+    pageSize: Int!
 }
 
 input UserInput {
@@ -29,14 +52,31 @@ input UserUpdateInput {
     password: String
 }
 
-type Query {
-    getAllUsers(page: Int = 0, size: Int = 10): UserPage
-    getUserById(id: ID!): User
-    getUserByUsername(username: String!): User
+# Pet types
+type Pet {
+    id: ID!
+    name: String!
+    species: String!
+    available: Boolean!
+    age: Int!
+    owner: String
+    location: String
 }
 
-type Mutation {
-    createUser(user: UserInput!): User
-    updateUser(id: ID!, user: UserUpdateInput!): User
-    deleteUser(id: ID!): Boolean
+input PetInput {
+    name: String!
+    species: String!
+    available: Boolean!
+    age: Int!
+    owner: String
+    location: String
+}
+
+input PetUpdateInput {
+    name: String
+    species: String
+    available: Boolean
+    age: Int
+    owner: String
+    location: String
 }

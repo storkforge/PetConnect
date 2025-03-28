@@ -1,0 +1,163 @@
+### 1. Basic Pet Connectivity Test
+GET http://localhost:8080/graphql?query={__typename}
+Accept: application/json
+
+### 2. Pet Schema Validation (Introspection)
+POST http://localhost:8080/graphql
+Content-Type: application/json
+
+{
+  "query": "query { __type(name: \"Pet\") { name fields { name type { name } } } }"
+}
+
+### 3. Get all pets (Happy Path)
+POST http://localhost:8080/graphql
+Content-Type: application/json
+
+{
+  "query": "query { getAllPets { id name species available age owner location } }"
+}
+
+### 4. Get single pet (Happy Path)
+POST http://localhost:8080/graphql
+Content-Type: application/json
+
+{
+  "query": "query { getPetById(id: 1) { id name species available } }"
+}
+
+### 5. Get non-existent pet (Error Case)
+POST http://localhost:8080/graphql
+Content-Type: application/json
+
+{
+  "query": "query { getPetById(id: 9999) { id } }"
+}
+
+### 6. Create pet mutation (Happy Path)
+POST http://localhost:8080/graphql
+Content-Type: application/json
+
+{
+  "query": "mutation { createPet(pet: { name: \"Fluffy\", species: \"Cat\", available: true, age: 3, owner: \"John Doe\", location: \"Stockholm\" }) { id name species available } }"
+}
+
+### 7. Create invalid pet (Error Case - Missing required fields)
+POST http://localhost:8080/graphql
+Content-Type: application/json
+
+{
+  "query": "mutation { createPet(pet: { name: \"\" }) { id } }"
+}
+
+### 8. Partial update mutation (Happy Path)
+POST http://localhost:8080/graphql
+Content-Type: application/json
+
+{
+  "query": "mutation { updatePet(id: 1, pet: { available: false, location: \"Gothenburg\" }) { id available location } }"
+}
+
+### 9. Update non-existent pet (Error Case)
+POST http://localhost:8080/graphql
+Content-Type: application/json
+
+{
+  "query": "mutation { updatePet(id: 9999, pet: { name: \"Ghost\" }) { id } }"
+}
+
+### 10. Create test pet for deletion
+POST http://localhost:8080/graphql
+Content-Type: application/json
+
+{
+  "query": "mutation { createPet(pet: { name: \"ToDelete\", species: \"Dog\", available: true, age: 5 }) { id } }"
+}
+
+### 11. Delete pet (Happy Path) - Replace ID with actual value from previous response
+POST http://localhost:8080/graphql
+Content-Type: application/json
+
+{
+  "query": "mutation { deletePet(id: 3) }"
+}
+
+### 12. Delete already deleted pet (Error Case)
+POST http://localhost:8080/graphql
+Content-Type: application/json
+
+{
+  "query": "mutation { deletePet(id: 3) }"
+}
+
+### 13. Malformed Pet Query Test (Syntax Error)
+POST http://localhost:8080/graphql
+Content-Type: application/json
+
+{
+  "query": "query { getPetById(id: 1 { id }"
+}
+
+### 14. Invalid Pet Field Test
+POST http://localhost:8080/graphql
+Content-Type: application/json
+
+{
+  "query": "query { getPetById(id: 1) { id nonExistentField } }"
+}
+
+### 15. Batch Pet Query Test
+POST http://localhost:8080/graphql
+Content-Type: application/json
+
+[
+  {
+    "query": "query { getPetById(id: 1) { name } }"
+  },
+  {
+    "query": "query { getAllPets { species } }"
+  }
+]
+
+### 16. Query Pet with Variables
+POST http://localhost:8080/graphql
+Content-Type: application/json
+
+{
+  "query": "query GetPet($petId: ID!) { getPetById(id: $petId) { name species } }",
+  "variables": { "petId": 1 }
+}
+
+### 17. Complex Pet Query with Filtering (if implemented)
+POST http://localhost:8080/graphql
+Content-Type: application/json
+
+{
+  "query": "query { getAllPets { name species available owner location } }"
+}
+
+### 18. Create Pet with Minimum Required Fields
+POST http://localhost:8080/graphql
+Content-Type: application/json
+
+{
+  "query": "mutation { createPet(pet: { name: \"Minimal\", species: \"Rabbit\", available: true, age: 1 }) { id } }"
+}
+
+### 19. Update All Pet Fields
+POST http://localhost:8080/graphql
+Content-Type: application/json
+
+{
+  "query": "mutation { updatePet(id: 1, pet: { name: \"Updated\", species: \"Updated\", available: false, age: 10, owner: \"New Owner\", location: \"New Location\" }) { id name species available age owner location } }"
+}
+
+### 20. Performance Test - Multiple Pet Queries
+POST http://localhost:8080/graphql
+Content-Type: application/json
+
+{
+  "query": "query { pet1: getPetById(id: 1) { name }, pet2: getPetById(id: 2) { name }, allPets: getAllPets { id } }"
+}
+
+
