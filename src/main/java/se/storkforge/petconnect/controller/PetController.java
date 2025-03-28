@@ -1,5 +1,6 @@
 package se.storkforge.petconnect.controller;
 
+import org.springframework.core.io.Resource;
 import org.springframework.web.multipart.MultipartFile;
 import se.storkforge.petconnect.entity.Pet;
 import se.storkforge.petconnect.exception.PetNotFoundException;
@@ -66,10 +67,17 @@ public class PetController {
         }
     }
 
-    @PostMapping("/{id}")
+    @PostMapping("/{id}/PFP")
     public ResponseEntity<String> uploadPetProfilePicture(
             @PathVariable Long id, @RequestParam("file") MultipartFile file) {
         petService.uploadProfilePicture(id, file);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/{id}/PFP")
+    public ResponseEntity<Resource> getPetProfilePicture(
+            @PathVariable Long id) {
+        Resource resource = petService.getProfilePicture(id);
+        return new ResponseEntity<>(resource, HttpStatus.OK);
     }
 }

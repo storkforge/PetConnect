@@ -3,6 +3,7 @@ package se.storkforge.petconnect.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -86,5 +87,16 @@ public class PetService {
         String filename = fileStorageService.store(file);
         pet.get().setProfilePicturePath(filename);
         petRepository.save(pet.get());
+    }
+
+    public Resource getProfilePicture(Long id) {
+        Optional<Pet> pet = petRepository.findById(id);
+        if (pet.isEmpty()) {
+            logger.error("Pet not found with ID: {}", id);
+            throw new PetNotFoundException("Pet with id " + id + " not found");
+        }
+        String filename = pet.get().getProfilePicturePath();
+        return fileStorageService.loadFile(filename);
+
     }
 }

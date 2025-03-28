@@ -27,6 +27,8 @@ public class User {
     @Size(min = 8, message = "Password must be at least 8 characters")
     private String password;
 
+    private String profilePicturePath;
+
     public User() {
     }
 
@@ -67,6 +69,10 @@ public class User {
     public void setPassword(String password) {
         this.password = password;
     }
+
+    public String getProfilePicturePath() { return profilePicturePath; }
+
+    public void setProfilePicturePath(String profilePicturePath) { this.profilePicturePath = profilePicturePath; }
 
     @Override
     public boolean equals(Object o) {
