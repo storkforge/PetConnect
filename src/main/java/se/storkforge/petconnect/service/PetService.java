@@ -3,13 +3,14 @@ package se.storkforge.petconnect.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import se.storkforge.petconnect.entity.Pet;
 import se.storkforge.petconnect.exception.PetNotFoundException;
 import se.storkforge.petconnect.repository.PetRepository;
 
-import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -25,9 +26,9 @@ public class PetService {
     }
 
     @Transactional(readOnly = true)
-    public List<Pet> getAllPets() {
-        logger.info("Retrieving all pets");
-        return petRepository.findAll();
+    public Page<Pet> getAllPets(Pageable pageable) {
+        logger.info("Retrieving all pets with pagination, page: {}, size: {}", pageable.getPageNumber(), pageable.getPageSize());
+        return petRepository.findAll(pageable);
     }
 
     @Transactional(readOnly = true)
