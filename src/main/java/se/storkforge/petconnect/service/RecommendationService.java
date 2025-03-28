@@ -35,51 +35,51 @@ public class RecommendationService {
      Please recommend the most suitable pet for this user.
      Provide a brief explanation for your recommendation.
      """;
-
-         public String generateRecommendation(User user) {
+    public String generateRecommendation(User user) {
             try {
-                  List<Pet> availablePets = getAvailablePets();
+               List<Pet> availablePets = getAvailablePets();
+                if (availablePets.isEmpty()) {
+                    return "No available pets to recommend at this time.";
+                }
 
-                         if (availablePets.isEmpty()) {
-                             return "No available pets to recommend at this time.";
-                      }
-
-                           Map<String, Object> promptVariables = createPromptVariables(user, availablePets);
-                     Prompt prompt = createPrompt(promptVariables);
-                     return chatClient.prompt(prompt).call().content();
-                 } catch (Exception e) {
-                    // Log the error
-                            return "Unable to generate recommendation at this time. Please try again later.";
-             }
-         }
-
-         private List<Pet> getAvailablePets() {
-             return petService.getAllPets().stream()
-                             .filter(Pet::isAvailable)
-                             .toList();
-         }
-
-         private Map<String, Object> createPromptVariables(User user, List<Pet> availablePets) {
-             Map<String, Object> promptVariables = new HashMap<>();
-
-                    String petsFormatted = formatPetsList(availablePets);
-
-                   promptVariables.put("username", user.getUsername());
-    promptVariables.put("email", user.getEmail());
-     promptVariables.put("pets", petsFormatted);
-
-   return promptVariables;
- }
-
- private String formatPetsList(List<Pet> pets) {
-     return pets.stream()
-             .map(pet -> String.format("- %s (%s), Age: %d, Location: %s",
-                     pet.getName(), pet.getSpecies(), pet.getAge(), pet.getLocation()))
-             .reduce("", (a, b) -> a + "\n" + b);
- }
-
-         private Prompt createPrompt(Map<String, Object> promptVariables) {
-             PromptTemplate promptTemplate = new PromptTemplate(RECOMMENDATION_TEMPLATE);
-             return promptTemplate.create(promptVariables);
+                Map<String, Object> promptVariables = createPromptVariables(user, availablePets);
+                Prompt prompt = createPrompt(promptVariables);
+                return chatClient.prompt(prompt).call().content();
+           } catch (Exception e) {
+                // Log the error
+                // Import org.slf4j.Logger and org.slf4j.LoggerFactory to use this
+                // private static final Logger logger = LoggerFactory.getLogger(RecommendationService.class);
+                // logger.error("Error generating pet recommendation", e);
+                return "Unable to generate recommendation at this time. Please try again later.";
+            }
         }
+
+    private List<Pet> getAvailablePets() {
+             return petService.getAllPets().stream()
+                        .filter(Pet::isAvailable)
+                        .toList();
+           }
+
+    private Map<String, Object> createPromptVariables(User user, List<Pet> availablePets) {
+               Map<String, Object> promptVariables = new HashMap<>();
+
+                String petsFormatted = formatPetsList(availablePets);
+
+                promptVariables.put("username", user.getUsername());
+                promptVariables.put("email", user.getEmail());
+                promptVariables.put("pets", petsFormatted);
+
+                return promptVariables;
+            }
+    private String formatPetsList(List<Pet> pets) {
+               return pets.stream()
+                        .map(pet -> String.format("- %s (%s), Age: %d, Location: %s",
+                                pet.getName(), pet.getSpecies(), pet.getAge(), pet.getLocation()))
+                        .reduce("", (a, b) -> a + "\n" + b);
+            }
+
+    private Prompt createPrompt(Map<String, Object> promptVariables) {
+        PromptTemplate promptTemplate = new PromptTemplate(RECOMMENDATION_TEMPLATE);
+        return promptTemplate.create(promptVariables);
+    }
 }
