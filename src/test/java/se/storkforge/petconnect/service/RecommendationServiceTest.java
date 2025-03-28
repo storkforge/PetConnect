@@ -1,5 +1,6 @@
 package se.storkforge.petconnect.service;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -37,10 +38,9 @@ class RecommendationServiceTest {
     @InjectMocks
     private RecommendationService recommendationService;
 
+    // Ta bort stubbningarna från setUp()
     @BeforeEach
     void setUp() {
-        when(chatClient.prompt(any(Prompt.class))).thenReturn(requestSpec);
-        when(requestSpec.call()).thenReturn(responseSpec);
     }
 
     @Test
@@ -67,6 +67,10 @@ class RecommendationServiceTest {
         List<Pet> availablePets = List.of(pet1, pet2);
 
         when(petService.getAllPets()).thenReturn(availablePets);
+
+        // Lägg till stubbningar direkt i testet
+        when(chatClient.prompt(any(Prompt.class))).thenReturn(requestSpec);
+        when(requestSpec.call()).thenReturn(responseSpec);
         when(responseSpec.content()).thenReturn("I recommend Fluffy the Cat, as they match your lifestyle...");
 
         // Act
@@ -100,6 +104,10 @@ class RecommendationServiceTest {
         List<Pet> allPets = List.of(availablePet, unavailablePet);
 
         when(petService.getAllPets()).thenReturn(allPets);
+
+        // Lägg till stubbningar direkt i testet
+        when(chatClient.prompt(any(Prompt.class))).thenReturn(requestSpec);
+        when(requestSpec.call()).thenReturn(responseSpec);
         when(responseSpec.content()).thenReturn("I recommend Fluffy the Cat...");
 
         // Act
@@ -107,5 +115,23 @@ class RecommendationServiceTest {
 
         // Assert
         assertEquals("I recommend Fluffy the Cat...", recommendation);
+    }
+
+    @Test
+    void generateRecommendation_ShouldHandleNoPetsAvailable() {
+        // Arrange
+        User testUser = new User();
+        testUser.setUsername("testuser");
+        testUser.setEmail("test@example.com");
+
+        // No available pets
+        List<Pet> noPets = List.of();
+        when(petService.getAllPets()).thenReturn(noPets);
+
+        // Act
+        String actualResult = recommendationService.generateRecommendation(testUser);
+
+        // Assert
+        Assertions.assertEquals("No available pets to recommend at this time.", actualResult);
     }
 }

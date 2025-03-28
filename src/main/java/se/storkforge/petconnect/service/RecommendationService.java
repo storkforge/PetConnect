@@ -22,42 +22,64 @@ public class RecommendationService {
         this.petService = petService;
     }
 
-    public String generateRecommendation(User user) {
-        List<Pet> availablePets = petService.getAllPets().stream()
-                .filter(Pet::isAvailable)
-                .toList();
+    private static final String RECOMMENDATION_TEMPLATE = """
+     Based on the following user information and available pets, provide a personalized pet recommendation.
 
-        Map<String, Object> promptVariables = new HashMap<>();
-        promptVariables.put("user", user);
-        promptVariables.put("pets", availablePets);
+     User Details:
+     - Username: {username}
+     - Email: {email}
 
-        // Using simple variable substitution without loops
-        String template = """
-            Based on the following user information and available pets, provide a personalized pet recommendation.
+     Available Pets:
+     {pets}
 
-            User Details:
-            - Username: {username}
-            - Email: {email}
+     Please recommend the most suitable pet for this user.
+     Provide a brief explanation for your recommendation.
+     """;
 
-            Available Pets:
-            {pets}
+         public String generateRecommendation(User user) {
+            try {
+                  List<Pet> availablePets = getAvailablePets();
 
-            Please recommend the most suitable pet for this user.
-            Provide a brief explanation for your recommendation.
-            """;
+                         if (availablePets.isEmpty()) {
+                             return "No available pets to recommend at this time.";
+                      }
 
-        // Pre-format the pets list
-        String petsFormatted = availablePets.stream()
-                .map(pet -> String.format("- %s (%s), Age: %d, Location: %s",
-                        pet.getName(), pet.getSpecies(), pet.getAge(), pet.getLocation()))
-                .reduce("", (a, b) -> a + "\n" + b);
+                           Map<String, Object> promptVariables = createPromptVariables(user, availablePets);
+                     Prompt prompt = createPrompt(promptVariables);
+                     return chatClient.prompt(prompt).call().content();
+                 } catch (Exception e) {
+                    // Log the error
+                            return "Unable to generate recommendation at this time. Please try again later.";
+             }
+         }
 
-        promptVariables.put("username", user.getUsername());
-        promptVariables.put("email", user.getEmail());
-        promptVariables.put("pets", petsFormatted);
+         private List<Pet> getAvailablePets() {
+             return petService.getAllPets().stream()
+                             .filter(Pet::isAvailable)
+                             .toList();
+         }
 
-        PromptTemplate promptTemplate = new PromptTemplate(template);
-        Prompt prompt = promptTemplate.create(promptVariables);
-        return chatClient.prompt(prompt).call().content();
-    }
+         private Map<String, Object> createPromptVariables(User user, List<Pet> availablePets) {
+             Map<String, Object> promptVariables = new HashMap<>();
+
+                    String petsFormatted = formatPetsList(availablePets);
+
+                   promptVariables.put("username", user.getUsername());
+    promptVariables.put("email", user.getEmail());
+     promptVariables.put("pets", petsFormatted);
+
+   return promptVariables;
+ }
+
+ private String formatPetsList(List<Pet> pets) {
+     return pets.stream()
+             .map(pet -> String.format("- %s (%s), Age: %d, Location: %s",
+                     pet.getName(), pet.getSpecies(), pet.getAge(), pet.getLocation()))
+             .reduce("", (a, b) -> a + "\n" + b);
+ }
+
+         private Prompt createPrompt(Map<String, Object> promptVariables) {
+             PromptTemplate promptTemplate = new PromptTemplate(RECOMMENDATION_TEMPLATE);
+             return promptTemplate.create(promptVariables);
+        }
 }
