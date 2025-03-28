@@ -35,6 +35,8 @@ class FileStorageServiceTest {
     private FileStorageService fileStorageService;
     private PetService petService;
 
+    private Path testDir = Path.of("uploads");
+
     @Mock
     private PetRepository petRepository;
 
@@ -50,7 +52,7 @@ class FileStorageServiceTest {
     void petProfilePicturePathNotNull() throws Exception {
         ReflectionTestUtils.setField(fileStorageService, "maxFileSize", 100L); // 100 bytes
         ReflectionTestUtils.setField(fileStorageService, "allowedTypes", List.of("image/jpeg"));
-        ReflectionTestUtils.setField(fileStorageService, "root", Path.of("/Users/alex/IdeaProjects/PetConnect/uploads"));
+        ReflectionTestUtils.setField(fileStorageService, "root", testDir);
         when(petRepository.findById(1L)).thenReturn(optionalPet);
         petService.uploadProfilePicture(1L, file);
         assertThat(pet.getProfilePicturePath()).isNotNull();
@@ -61,7 +63,8 @@ class FileStorageServiceTest {
     void uploadFileEvenIfOldFileIsGone() throws Exception {
         ReflectionTestUtils.setField(fileStorageService, "maxFileSize", 100L);
         ReflectionTestUtils.setField(fileStorageService, "allowedTypes", List.of("image/jpeg"));
-        ReflectionTestUtils.setField(fileStorageService, "root", Path.of("/Users/alex/IdeaProjects/PetConnect/uploads"));
+        ReflectionTestUtils.setField(fileStorageService, "root", testDir);
+
 
     }
 }
