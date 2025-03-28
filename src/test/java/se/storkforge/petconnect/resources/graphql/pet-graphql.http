@@ -159,5 +159,3 @@ Content-Type: application/json
 {
   "query": "query { pet1: getPetById(id: 1) { name }, pet2: getPetById(id: 2) { name }, allPets: getAllPets { id } }"
 }
-
-

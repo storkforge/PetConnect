@@ -1,3 +1,5 @@
+directive @min(value: Int!) on INPUT_FIELD_DEFINITION
+
 type Query {
     # User queries
     getAllUsers(page: Int, size: Int): UserPage!
@@ -5,8 +7,20 @@ type Query {
     getUserByUsername(username: String!): User
 
     # Pet queries
-    getAllPets: [Pet!]!
+    getAllPets(page: Int, size: Int): PetPage!
     getPetById(id: ID!): Pet
+    getPetsBySpecies(species: String!): [Pet!]!
+}
+input PetFilter {
+    species: String
+    available: Boolean
+    minAge: Int
+    maxAge: Int
+}
+
+type PetPage {
+    content: [Pet!]!
+    pageInfo: PaginationInfo!
 }
 
 type Mutation {
@@ -59,7 +73,7 @@ type Pet {
     species: String!
     available: Boolean!
     age: Int!
-    owner: String
+    owner: User
     location: String
 }
 
@@ -68,7 +82,7 @@ input PetInput {
     species: String!
     available: Boolean!
     age: Int!
-    owner: String
+    ownerId: ID
     location: String
 }
 
@@ -76,7 +90,7 @@ input PetUpdateInput {
     name: String
     species: String
     available: Boolean
-    age: Int
+    age: Int @min(value: 0)
     owner: String
     location: String
 }
