@@ -79,7 +79,7 @@ POST http://localhost:8080/graphql
 Content-Type: application/json
 
 {
-  "query": "mutation { deletePet(id: 3) }"
+  "query": "mutation { deletePet(id: REPLACE_WITH_ACTUAL_ID) }"
 }
 
 ### 12. Delete already deleted pet (Error Case)
@@ -128,15 +128,59 @@ Content-Type: application/json
   "variables": { "petId": 1 }
 }
 
-### 17. Complex Pet Query with Filtering (if implemented)
+### 17. Complex Pet Query with Filtering
 POST http://localhost:8080/graphql
 Content-Type: application/json
 
 {
-  "query": "query { getAllPets { name species available owner location } }"
+  "query": "query($filter: PetFilter) { getAllPets(filter: $filter) { content { name species available age } pageInfo { totalElements } } }",
+  "variables": {
+    "filter": {
+      "species": "Dog",
+      "available": true,
+      "minAge": 1,
+      "maxAge": 10
+    }
+  }
+}
+### 18. Filter Pets by Species Only
+POST http://localhost:8080/graphql
+Content-Type: application/json
+
+{
+  "query": "query { getAllPets(filter: { species: \"Cat\" }) { content { name species } } }"
 }
 
-### 18. Create Pet with Minimum Required Fields
+### 19. Filter Available Pets
+POST http://localhost:8080/graphql
+Content-Type: application/json
+
+{
+  "query": "query { getAllPets(filter: { available: true }) { content { name available } }"
+}
+
+### 20. Filter Pets by Age Range
+POST http://localhost:8080/graphql
+Content-Type: application/json
+
+{
+  "query": "query { getAllPets(filter: { minAge: 2, maxAge: 5 }) { content { name age } } }"
+}
+### 21. Filter with Pagination
+POST http://localhost:8080/graphql
+Content-Type: application/json
+
+{
+  "query": "query { getAllPets(filter: { species: \"Dog\" }, page: 1, size: 5) { content { name } pageInfo { totalElements currentPage } } }"
+}
+### 22. Invalid Filter (Negative Age)
+POST http://localhost:8080/graphql
+Content-Type: application/json
+
+{
+  "query": "query { getAllPets(filter: { minAge: -1 }) { content { name } } }"
+}
+### 23. Create Pet with Minimum Required Fields
 POST http://localhost:8080/graphql
 Content-Type: application/json
 
@@ -144,7 +188,7 @@ Content-Type: application/json
   "query": "mutation { createPet(pet: { name: \"Minimal\", species: \"Rabbit\", available: true, age: 1 }) { id } }"
 }
 
-### 19. Update All Pet Fields
+### 24. Update All Pet Fields
 POST http://localhost:8080/graphql
 Content-Type: application/json
 
@@ -152,7 +196,7 @@ Content-Type: application/json
   "query": "mutation { updatePet(id: 1, pet: { name: \"Updated\", species: \"Updated\", available: false, age: 10, owner: \"New Owner\", location: \"New Location\" }) { id name species available age owner location } }"
 }
 
-### 20. Performance Test - Multiple Pet Queries
+### 25. Performance Test - Multiple Pet Queries
 POST http://localhost:8080/graphql
 Content-Type: application/json
 

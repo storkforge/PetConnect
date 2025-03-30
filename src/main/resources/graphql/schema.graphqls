@@ -91,6 +91,6 @@ input PetUpdateInput {
     species: String
     available: Boolean
     age: Int @min(value: 0)
-    owner: String
+    ownerId: ID
     location: String
 }

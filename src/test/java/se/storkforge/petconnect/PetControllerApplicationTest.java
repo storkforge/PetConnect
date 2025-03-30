@@ -59,10 +59,10 @@ public class PetControllerApplicationTest {
                 testPet,
                 new Pet("Misty", "Cat", false, 2, "Sarah", "Boston")
         );
-        Pageable pageable = PageRequest.of(0, 10); // Använd PageRequest
-        Page<Pet> petPage = new PageImpl<>(pets, pageable, pets.size()); // Använd alla argument
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Pet> petPage = new PageImpl<>(pets, pageable, pets.size());
 
-        when(petService.getAllPets(any(Pageable.class))).thenReturn(petPage);
+        when(petService.getAllPets(pageable)).thenReturn(petPage);
 
         // When & Then
         mockMvc.perform(get("/pets"))
@@ -72,7 +72,7 @@ public class PetControllerApplicationTest {
                 .andExpect(jsonPath("$.content[0].name").value("Buddy"))
                 .andExpect(jsonPath("$.content[1].name").value("Misty"));
 
-        verify(petService, times(1)).getAllPets(any(Pageable.class));
+        verify(petService, times(1)).getAllPets(pageable);
     }
 
     @Test

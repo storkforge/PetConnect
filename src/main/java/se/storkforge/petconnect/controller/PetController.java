@@ -36,11 +36,11 @@ public class PetController {
 
     @GetMapping("/{id}")
     public ResponseEntity<Pet> getPetById(@PathVariable Long id) {
-        Optional<Pet> optionalPet = petService.getPetById(id);
-        if (optionalPet.isPresent()) {
-            return new ResponseEntity<>(optionalPet.get(), HttpStatus.OK);
-        } else {
-            return ResponseEntity.notFound().build();
+        try {
+            Optional<Pet> optionalPet = petService.getPetById(id);
+            return optionalPet.map(pet -> new ResponseEntity<>(pet, HttpStatus.OK)).orElseGet(() -> ResponseEntity.notFound().build());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
         }
     }
 

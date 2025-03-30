@@ -43,34 +43,35 @@ public class PetGraphQLController {
         pet.setLocation(petInput.location());
         return petService.createPet(pet);
     }
-
     @MutationMapping
     public Pet updatePet(@Argument Long id, @Argument("pet") PetUpdateInputDTO petInput) {
         Pet existingPet = petService.getPetById(id)
                 .orElseThrow(() -> new PetNotFoundException("Pet not found with id: " + id));
 
-        if (petInput.name() != null) {
-            existingPet.setName(petInput.name());
-        }
-        if (petInput.species() != null) {
-            existingPet.setSpecies(petInput.species());
-        }
-        if (petInput.available() != null) {
-            existingPet.setAvailable(petInput.available());
-        }
-        if (petInput.age() != null) {
-            existingPet.setAge(petInput.age());
-        }
-        if (petInput.owner() != null) {
-            existingPet.setOwner(petInput.owner());
-        }
-        if (petInput.location() != null) {
-            existingPet.setLocation(petInput.location());
-        }
+         updateNonNullFields(existingPet, petInput);
 
         return petService.updatePet(id, existingPet);
     }
-
+private void updateNonNullFields(Pet existingPet, PetUpdateInputDTO petInput) {
+     if (petInput.name() != null) {
+         existingPet.setName(petInput.name());
+     }
+     if (petInput.species() != null) {
+         existingPet.setSpecies(petInput.species());
+     }
+    if (petInput.available() != null) {
+         existingPet.setAvailable(petInput.available());
+     }
+     if (petInput.age() != null) {
+         existingPet.setAge(petInput.age());
+     }
+    if (petInput.owner() != null) {
+         existingPet.setOwner(petInput.owner());
+     }
+     if (petInput.location() != null) {
+         existingPet.setLocation(petInput.location());
+     }
+ }
     @MutationMapping
     public Boolean deletePet(@Argument Long id) {
           // Check if pet exists first
