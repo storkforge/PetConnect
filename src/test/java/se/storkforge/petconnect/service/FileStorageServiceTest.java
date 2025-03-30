@@ -13,6 +13,8 @@ import se.storkforge.petconnect.repository.PetRepository;
 import se.storkforge.petconnect.service.FileStorageService;
 import se.storkforge.petconnect.service.PetService;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
@@ -36,17 +38,24 @@ class FileStorageServiceTest {
     private FileStorageService fileStorageService;
     private PetService petService;
 
-    private Path testDir = Path.of("uploads");
+    private Path testDir;
 
     @Mock
     private PetRepository petRepository;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws IOException {
+        this.testDir = Files.createTempDirectory("test-uploads");
         this.optionalPet = Optional.of(pet);
         this.file = new MockMultipartFile("file", "test.jpg", "image/jpeg", "test".getBytes());
         this.fileStorageService = new FileStorageService();
         this.petService = new PetService(petRepository, fileStorageService);
+        // Ensure directory exists
+        try {
+            Files.createDirectories(testDir);
+        } catch (IOException e) {
+            throw new RuntimeException("Could not create test directory", e);
+        }
         ReflectionTestUtils.setField(fileStorageService, "maxFileSize", 100L);
         ReflectionTestUtils.setField(fileStorageService, "allowedTypes", List.of("image/jpeg"));
         ReflectionTestUtils.setField(fileStorageService, "root", testDir);
@@ -77,5 +86,6 @@ class FileStorageServiceTest {
         petService.uploadProfilePicture(1L, file);
         Resource pfp = petService.getProfilePicture(1L);
         assertThat(pfp.getURL()).isNotNull();
+        fileStorageService.delete(pet.getProfilePicturePath());
     }
 }

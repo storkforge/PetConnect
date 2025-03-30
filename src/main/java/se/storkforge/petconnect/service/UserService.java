@@ -129,6 +129,9 @@ public class UserService {
     }
 
     public void uploadProfilePicture(Long id, MultipartFile file) {
+        if (file == null) {
+            throw new IllegalArgumentException("File cannot be null");
+        }
         Optional<User> user = userRepository.findById(id);
         if (user.isEmpty()) {
             throw new UserNotFoundException("User with id " + id + " not found");
@@ -143,12 +146,16 @@ public class UserService {
         userRepository.save(user.get());
     }
 
+    @Transactional(readOnly = true)
     public Resource getProfilePicture(Long id) {
         Optional<User> user = userRepository.findById(id);
         if (user.isEmpty()) {
             throw new UserNotFoundException("User with id " + id + " not found");
         }
         String filename = user.get().getProfilePicturePath();
+        if (filename == null) {
+            throw new RuntimeException("User does not have a profile picture");
+        }
         return fileStorageService.loadFile(filename);
     }
 }

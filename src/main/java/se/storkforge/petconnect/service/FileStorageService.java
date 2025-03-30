@@ -65,8 +65,12 @@ public class FileStorageService {
 
             //Save file
             Path destination = this.root.resolve(Paths.get(filename)).normalize().toAbsolutePath();
-            Files.copy(file.getInputStream(), destination);
-
+            if (!destination.startsWith(this.root.toAbsolutePath())) {
+                 throw new RuntimeException("Invalid path outside upload directory.");
+            }
+            try (var inputStream = file.getInputStream()) {
+                Files.copy(inputStream, destination);
+            }
             LOG.info("Stored file: {}", destination);
             return filename;
         } catch (IOException e) {
@@ -88,21 +92,26 @@ public class FileStorageService {
 
 
     public void delete(String filename) {
+        if (filename == null) {
+            LOG.warn("Attempted to delete a null filename");
+            return;
+        }
         try {
             Path file = root.resolve(filename);
             Files.deleteIfExists(file);
+            LOG.info("Deleted file: {}", filename);
         } catch (IOException e) {
             throw new RuntimeException("Could not delete file: " + filename, e);
         }
     }
 
-    //Does not return the actual file, just the path to the file
+    //Returns a Resource representing the file
     public Resource loadFile(String filename) {
         try {
             Path file = root.resolve(filename);
             Resource resource = new UrlResource(file.toUri());
 
-            if (resource.exists() || resource.isReadable()) {
+            if (resource.exists() && resource.isReadable()) {
                 return resource;
             } else {
                 throw new RuntimeException("Could not read file: " + filename);

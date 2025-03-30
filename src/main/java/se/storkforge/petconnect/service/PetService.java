@@ -73,6 +73,9 @@ public class PetService {
     }
 
     public void uploadProfilePicture(Long id, MultipartFile file) {
+        if (file == null) {
+            throw new IllegalArgumentException("File cannot be null");
+        }
         logger.info("Uploading profile picture to pet with ID: {}", id);
         Optional<Pet> pet = petRepository.findById(id);
         if (pet.isEmpty()) {
@@ -89,6 +92,7 @@ public class PetService {
         petRepository.save(pet.get());
     }
 
+    @Transactional(readOnly = true)
     public Resource getProfilePicture(Long id) {
         Optional<Pet> pet = petRepository.findById(id);
         if (pet.isEmpty()) {
@@ -96,6 +100,10 @@ public class PetService {
             throw new PetNotFoundException("Pet with id " + id + " not found");
         }
         String filename = pet.get().getProfilePicturePath();
+        if (filename == null) {
+            logger.error("Profile picture path is null for pet ID: {}", id);
+            throw new RuntimeException("Pet does not have a profile picture");
+        }
         return fileStorageService.loadFile(filename);
 
     }
