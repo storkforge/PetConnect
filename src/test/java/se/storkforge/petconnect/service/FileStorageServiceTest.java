@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.core.io.Resource;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
 import se.storkforge.petconnect.entity.Pet;
@@ -46,13 +47,13 @@ class FileStorageServiceTest {
         this.file = new MockMultipartFile("file", "test.jpg", "image/jpeg", "test".getBytes());
         this.fileStorageService = new FileStorageService();
         this.petService = new PetService(petRepository, fileStorageService);
+        ReflectionTestUtils.setField(fileStorageService, "maxFileSize", 100L);
+        ReflectionTestUtils.setField(fileStorageService, "allowedTypes", List.of("image/jpeg"));
+        ReflectionTestUtils.setField(fileStorageService, "root", testDir);
     }
 
     @Test
     void petProfilePicturePathNotNull() throws Exception {
-        ReflectionTestUtils.setField(fileStorageService, "maxFileSize", 100L); // 100 bytes
-        ReflectionTestUtils.setField(fileStorageService, "allowedTypes", List.of("image/jpeg"));
-        ReflectionTestUtils.setField(fileStorageService, "root", testDir);
         when(petRepository.findById(1L)).thenReturn(optionalPet);
         petService.uploadProfilePicture(1L, file);
         assertThat(pet.getProfilePicturePath()).isNotNull();
@@ -61,10 +62,20 @@ class FileStorageServiceTest {
 
     @Test
     void uploadFileEvenIfOldFileIsGone() throws Exception {
-        ReflectionTestUtils.setField(fileStorageService, "maxFileSize", 100L);
-        ReflectionTestUtils.setField(fileStorageService, "allowedTypes", List.of("image/jpeg"));
-        ReflectionTestUtils.setField(fileStorageService, "root", testDir);
+        when(petRepository.findById(1L)).thenReturn(optionalPet);
+        petService.uploadProfilePicture(1L, file);
+        fileStorageService.delete(pet.getProfilePicturePath());
+        petService.uploadProfilePicture(1L, file);
+        assertThat(pet.getProfilePicturePath()).isNotNull();
+        fileStorageService.delete(pet.getProfilePicturePath());
 
+    }
 
+    @Test
+    void returnFile() throws Exception {
+        when(petRepository.findById(1L)).thenReturn(optionalPet);
+        petService.uploadProfilePicture(1L, file);
+        Resource pfp = petService.getProfilePicture(1L);
+        assertThat(pfp.getURL()).isNotNull();
     }
 }
