@@ -156,7 +156,7 @@ POST http://localhost:8080/graphql
 Content-Type: application/json
 
 {
-  "query": "query { getAllPets(filter: { available: true }) { content { name available } }"
+   "query": "query { getAllPets(filter: { available: true }) { content { name available } } }"
 }
 
 ### 20. Filter Pets by Age Range
