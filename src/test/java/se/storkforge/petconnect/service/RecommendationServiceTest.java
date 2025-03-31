@@ -147,4 +147,15 @@ class RecommendationServiceTest {
         assertEquals("User information is missing. Cannot generate recommendation.", result);
     }
 
+    @Test
+    void fallback_ShouldReturnFallbackMessage() {
+        User user = new User();
+        user.setUsername("testuser");
+
+        RuntimeException ex = new RuntimeException("Simulated failure");
+        String result = recommendationService.fallback(ex, user);
+
+        assertEquals("Our recommendation engine is currently unavailable. Please try again later.", result);
+    }
+
 }
