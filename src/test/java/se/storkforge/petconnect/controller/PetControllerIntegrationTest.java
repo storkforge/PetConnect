@@ -6,6 +6,10 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -44,22 +48,22 @@ public class PetControllerIntegrationTest {
 
     @Test
     public void testGetAllPetsEndpoint() throws Exception {
-        // Given
         List<Pet> pets = Arrays.asList(
                 testPet,
                 new Pet("Misty", "Cat", false, 2, "Sarah", "Boston")
         );
-        when(petService.getAllPets()).thenReturn(pets);
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Pet> petPage = new PageImpl<>(pets, pageable, pets.size());
+        when(petService.getAllPets(pageable)).thenReturn(petPage);
 
-        // When & Then
         mockMvc.perform(get("/pets"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[0].name").value("Buddy"))
-                .andExpect(jsonPath("$[1].species").value("Cat"));
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.content[0].name").value("Buddy"))
+                .andExpect(jsonPath("$.content[1].species").value("Cat"));
 
-        verify(petService, times(1)).getAllPets();
+        verify(petService, times(1)).getAllPets(pageable);
     }
 
     @Test

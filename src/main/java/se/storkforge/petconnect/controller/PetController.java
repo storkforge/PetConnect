@@ -4,11 +4,13 @@ import se.storkforge.petconnect.entity.Pet;
 import se.storkforge.petconnect.exception.PetNotFoundException;
 import se.storkforge.petconnect.service.PetService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -23,16 +25,23 @@ public class PetController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Pet>> getAllPets() {
-        List<Pet> pets = petService.getAllPets();
+    public ResponseEntity<Page<Pet>> getAllPets(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Pet> pets = petService.getAllPets(pageable);
         return new ResponseEntity<>(pets, HttpStatus.OK);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Pet> getPetById(@PathVariable Long id) {
-        Optional<Pet> optionalPet = petService.getPetById(id);
-        return optionalPet.map(pet -> new ResponseEntity<>(pet, HttpStatus.OK))
-                .orElseGet(() -> ResponseEntity.notFound().build());
+        try {
+            Optional<Pet> optionalPet = petService.getPetById(id);
+            return optionalPet.map(pet -> new ResponseEntity<>(pet, HttpStatus.OK)).orElseGet(() -> ResponseEntity.notFound().build());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        }
     }
 
     @PostMapping
@@ -50,6 +59,7 @@ public class PetController {
             return ResponseEntity.notFound().build();
         }
     }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletePet(@PathVariable Long id) {
         try {
