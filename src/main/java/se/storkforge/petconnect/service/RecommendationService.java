@@ -58,11 +58,12 @@ public class RecommendationService {
         }
 
     private List<Pet> getAvailablePets() {
-             Pageable pageable = PageRequest.of(0, 100);
-             return petService.getAllPets().stream()
-                        .filter(Pet::isAvailable)
-                        .toList();
-           }
+        Pageable pageable = PageRequest.of(0, 100); // Fetch first 100 pets
+        return petService.getAllPets(pageable)
+                .stream()
+                .filter(Pet::isAvailable)
+                .toList();
+    }
 
     private Map<String, Object> createPromptVariables(User user, List<Pet> availablePets) {
                Map<String, Object> promptVariables = new HashMap<>();
