@@ -1,7 +1,10 @@
 package se.storkforge.petconnect.controller;
 
+import org.springframework.core.io.Resource;
+import org.springframework.web.multipart.MultipartFile;
 import se.storkforge.petconnect.entity.Pet;
 import se.storkforge.petconnect.exception.PetNotFoundException;
+import se.storkforge.petconnect.repository.PetRepository;
 import se.storkforge.petconnect.service.PetService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -18,10 +21,13 @@ import java.util.Optional;
 public class PetController {
 
     private final PetService petService;
+    private final PetRepository petRepository;
 
     @Autowired
-    public PetController(PetService petService) {
+    public PetController(PetService petService,
+                         PetRepository petRepository) {
         this.petService = petService;
+        this.petRepository = petRepository;
     }
 
     @GetMapping
@@ -68,5 +74,19 @@ public class PetController {
         } catch (PetNotFoundException e) {
             return ResponseEntity.notFound().build();
         }
+    }
+
+    @PostMapping("/{id}/PFP")
+    public ResponseEntity<String> uploadPetProfilePicture(
+            @PathVariable Long id, @RequestParam("file") MultipartFile file) {
+        petService.uploadProfilePicture(id, file);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/{id}/PFP")
+    public ResponseEntity<Resource> getPetProfilePicture(
+            @PathVariable Long id) {
+        Resource resource = petService.getProfilePicture(id);
+        return new ResponseEntity<>(resource, HttpStatus.OK);
     }
 }
