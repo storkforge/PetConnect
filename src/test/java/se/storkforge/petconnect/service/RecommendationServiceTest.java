@@ -161,18 +161,17 @@ class RecommendationServiceTest {
 
     @Test
     void shouldFallbackAfterRetries() {
-        // Setup
+        // Arrange
         User user = new User();
         user.setUsername("testuser");
         user.setEmail("test@example.com");
 
         Pet pet = new Pet("Fluffy", "Cat", true, 2, "Owner", "Stockholm");
-        Pageable pageable = PageRequest.of(0, 10);
-
+        Pageable pageable = PageRequest.of(0, 100);
         when(petService.getAllPets(pageable)).thenReturn(new PageImpl<>(List.of(pet)));
 
-        when(chatClient.prompt(any(Prompt.class)))
-                .thenThrow(new RuntimeException("AI down"));
+        // Simulate AI failure
+        when(chatClient.prompt(any(Prompt.class))).thenThrow(new RuntimeException("AI down"));
 
         // Act
         String result = recommendationService.generateRecommendation(user);
@@ -180,5 +179,4 @@ class RecommendationServiceTest {
         // Assert
         assertEquals("Our recommendation engine is currently unavailable. Please try again later.", result);
     }
-
 }
