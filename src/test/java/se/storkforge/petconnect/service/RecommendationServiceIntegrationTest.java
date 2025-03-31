@@ -12,6 +12,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import se.storkforge.petconnect.entity.Pet;
 import se.storkforge.petconnect.entity.User;
 
@@ -28,10 +29,10 @@ class RecommendationServiceIntegrationTest {
     @InjectMocks
     private RecommendationService recommendationService;
 
-    @Mock
+    @MockitoBean
     private ChatClient chatClient;
 
-    @Mock
+    @MockitoBean
     private PetService petService;
 
     @Test
