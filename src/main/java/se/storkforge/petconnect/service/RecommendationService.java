@@ -45,10 +45,14 @@ public class RecommendationService {
      Provide a brief explanation for your recommendation.
      """;
     @Retryable(
-            value = { RuntimeException.class },
             maxAttempts = 3,
             backoff = @Backoff(delay = 2000, multiplier = 2))
     public String generateRecommendation(User user) {
+        if (user == null) {
+            logger.warn("Attempted to generate recommendation for a null user");
+            return "User information is missing. Cannot generate recommendation.";
+        }
+
         logger.info("Generating AI recommendation for user {}", user.getUsername());
         List<Pet> availablePets = getAvailablePets();
         if (availablePets.isEmpty()) {

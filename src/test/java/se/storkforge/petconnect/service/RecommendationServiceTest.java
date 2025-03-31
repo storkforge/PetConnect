@@ -140,4 +140,11 @@ class RecommendationServiceTest {
         // Assert
         Assertions.assertEquals("No available pets to recommend at this time.", actualResult);
     }
+
+    @Test
+    void generateRecommendation_ShouldHandleNullUser() {
+        String result = recommendationService.generateRecommendation(null);
+        assertEquals("User information is missing. Cannot generate recommendation.", result);
+    }
+
 }
