@@ -2,16 +2,11 @@ package se.storkforge.petconnect.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.chat.prompt.PromptTemplate;
-import org.springframework.retry.annotation.Backoff;
-import org.springframework.retry.annotation.Recover;
-import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-
 import se.storkforge.petconnect.entity.Pet;
 import se.storkforge.petconnect.entity.User;
 
@@ -23,12 +18,13 @@ import java.util.Map;
 public class RecommendationService {
 
     private static final Logger logger = LoggerFactory.getLogger(RecommendationService.class);
-    private final ChatClient chatClient;
-    private final PetService petService;
 
-    public RecommendationService(ChatClient chatClient, PetService petService) {
-        this.chatClient = chatClient;
+    private final PetService petService;
+    private final AiRecommendationExecutor aiExecutor;
+
+    public RecommendationService(PetService petService, AiRecommendationExecutor aiExecutor) {
         this.petService = petService;
+        this.aiExecutor = aiExecutor;
     }
 
     private static final String RECOMMENDATION_TEMPLATE = """
@@ -44,9 +40,7 @@ public class RecommendationService {
      Please recommend the most suitable pet for this user.
      Provide a brief explanation for your recommendation.
      """;
-    @Retryable(
-            maxAttempts = 3,
-            backoff = @Backoff(delay = 2000, multiplier = 2))
+
     public String generateRecommendation(User user) {
         if (user == null) {
             logger.warn("Attempted to generate recommendation for a null user");
@@ -61,7 +55,7 @@ public class RecommendationService {
 
         Map<String, Object> promptVariables = createPromptVariables(user, availablePets);
         Prompt prompt = createPrompt(promptVariables);
-        return chatClient.prompt(prompt).call().content();
+        return aiExecutor.callAi(prompt); // <-- uses the executor here
     }
 
     private List<Pet> getAvailablePets() {
@@ -73,31 +67,31 @@ public class RecommendationService {
     }
 
     private Map<String, Object> createPromptVariables(User user, List<Pet> availablePets) {
-               Map<String, Object> promptVariables = new HashMap<>();
+        Map<String, Object> promptVariables = new HashMap<>();
 
-                String petsFormatted = formatPetsList(availablePets);
+        String petsFormatted = formatPetsList(availablePets);
 
-                promptVariables.put("username", user.getUsername());
-                promptVariables.put("email", user.getEmail());
-                promptVariables.put("pets", petsFormatted);
+        promptVariables.put("username", user.getUsername());
+        promptVariables.put("email", user.getEmail());
+        promptVariables.put("pets", petsFormatted);
 
-                return promptVariables;
-            }
+        return promptVariables;
+    }
+
     private String formatPetsList(List<Pet> pets) {
-               return pets.stream()
-                        .map(pet -> String.format("- %s (%s), Age: %d, Location: %s",
-                                pet.getName(), pet.getSpecies(), pet.getAge(), pet.getLocation()))
-                        .reduce("", (a, b) -> a + "\n" + b);
-            }
+        return pets.stream()
+                .map(pet -> String.format("- %s (%s), Age: %d, Location: %s",
+                        pet.getName(), pet.getSpecies(), pet.getAge(), pet.getLocation()))
+                .reduce("", (a, b) -> a + "\n" + b);
+    }
 
     private Prompt createPrompt(Map<String, Object> promptVariables) {
         PromptTemplate promptTemplate = new PromptTemplate(RECOMMENDATION_TEMPLATE);
         return promptTemplate.create(promptVariables);
     }
 
-    @Recover
     public String fallback(RuntimeException e, User user) {
-        logger.error("AI recommendation failed after retries. User: {}", user.getUsername(), e);
+        logger.error("AI recommendation failed after retries. User: {}", user != null ? user.getUsername() : "null", e);
         return "Our recommendation engine is currently unavailable. Please try again later.";
     }
 }
