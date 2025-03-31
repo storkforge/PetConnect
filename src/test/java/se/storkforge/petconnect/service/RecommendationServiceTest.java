@@ -86,11 +86,11 @@ class RecommendationServiceTest {
     }
 
     @Test
-    void fallback_ShouldReturnFallbackMessage() {
+    void fallback_ShouldReturnExpectedMessageWhenCalledManually() {
         Prompt prompt = new Prompt("...");
         RuntimeException ex = new RuntimeException("Simulated failure");
 
-        AiRecommendationExecutor executor = new AiRecommendationExecutor(null); // null ChatClient is okay for this test
+        AiRecommendationExecutor executor = new AiRecommendationExecutor(null); // okay here
         String result = executor.fallback(ex, prompt);
 
         assertEquals("Our recommendation engine is currently unavailable. Please try again later.", result);
