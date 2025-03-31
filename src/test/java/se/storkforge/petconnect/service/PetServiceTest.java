@@ -1,14 +1,17 @@
 package se.storkforge.petconnect.service;
 
-import se.storkforge.petconnect.entity.Pet;
-import se.storkforge.petconnect.exception.PetNotFoundException;
-import se.storkforge.petconnect.repository.PetRepository;
-import se.storkforge.petconnect.service.PetService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import se.storkforge.petconnect.entity.Pet;
+import se.storkforge.petconnect.exception.PetNotFoundException;
+import se.storkforge.petconnect.repository.PetRepository;
 
 import java.util.Arrays;
 import java.util.List;
@@ -35,14 +38,16 @@ public class PetServiceTest {
         Pet pet1 = new Pet("Buddy", "Dog", true, 3, "John", "New York");
         Pet pet2 = new Pet("Whiskers", "Cat", false, 5, "Jane", "London");
         List<Pet> pets = Arrays.asList(pet1, pet2);
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Pet> petPage = new PageImpl<>(pets, pageable, pets.size());
 
-        when(petRepository.findAll()).thenReturn(pets);
+        when(petRepository.findAll(pageable)).thenReturn(petPage);
 
-        List<Pet> result = petService.getAllPets();
+        Page<Pet> result = petService.getAllPets(pageable);
 
-        assertEquals(2, result.size());
-        assertEquals("Buddy", result.getFirst().getName());
-        verify(petRepository, times(1)).findAll();
+        assertEquals(2, result.getContent().size());
+        assertEquals("Buddy", result.getContent().getFirst().getName());
+        verify(petRepository, times(1)).findAll(pageable);
     }
 
     @Test

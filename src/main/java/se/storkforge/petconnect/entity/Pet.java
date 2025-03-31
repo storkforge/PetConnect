@@ -28,6 +28,8 @@ public class Pet {
     private String owner;
     private String location;
 
+    private String profilePicturePath;
+
     public Pet() {}
 
     public Pet(String name, String species, boolean available, int age, String owner, String location) {
@@ -94,6 +96,10 @@ public class Pet {
     public void setLocation(String location) {
         this.location = location;
     }
+
+    public String getProfilePicturePath() { return profilePicturePath; }
+
+    public void setProfilePicturePath(String profilePicturePath) { this.profilePicturePath = profilePicturePath; }
 
     @Override
     public String toString() {
