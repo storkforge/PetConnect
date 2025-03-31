@@ -4,6 +4,9 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
 import se.storkforge.petconnect.entity.Pet;
 import se.storkforge.petconnect.entity.User;
 
@@ -55,6 +58,7 @@ public class RecommendationService {
         }
 
     private List<Pet> getAvailablePets() {
+             Pageable pageable = PageRequest.of(0, 100);
              return petService.getAllPets().stream()
                         .filter(Pet::isAvailable)
                         .toList();
