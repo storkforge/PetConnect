@@ -5,6 +5,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.chat.prompt.PromptTemplate;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Recover;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -41,21 +44,21 @@ public class RecommendationService {
      Please recommend the most suitable pet for this user.
      Provide a brief explanation for your recommendation.
      """;
+    @Retryable(
+            value = { RuntimeException.class },
+            maxAttempts = 3,
+            backoff = @Backoff(delay = 2000, multiplier = 2))
     public String generateRecommendation(User user) {
-            try {
-               List<Pet> availablePets = getAvailablePets();
-                if (availablePets.isEmpty()) {
-                    return "No available pets to recommend at this time.";
-                }
-
-                Map<String, Object> promptVariables = createPromptVariables(user, availablePets);
-                Prompt prompt = createPrompt(promptVariables);
-                return chatClient.prompt(prompt).call().content();
-           } catch (Exception e) {
-                logger.error("Error generating pet recommendation", e);
-                return "Unable to generate recommendation at this time. Please try again later.";
-            }
+        logger.info("Generating AI recommendation for user {}", user.getUsername());
+        List<Pet> availablePets = getAvailablePets();
+        if (availablePets.isEmpty()) {
+            return "No available pets to recommend at this time.";
         }
+
+        Map<String, Object> promptVariables = createPromptVariables(user, availablePets);
+        Prompt prompt = createPrompt(promptVariables);
+        return chatClient.prompt(prompt).call().content();
+    }
 
     private List<Pet> getAvailablePets() {
         Pageable pageable = PageRequest.of(0, 100); // Fetch first 100 pets
@@ -86,5 +89,11 @@ public class RecommendationService {
     private Prompt createPrompt(Map<String, Object> promptVariables) {
         PromptTemplate promptTemplate = new PromptTemplate(RECOMMENDATION_TEMPLATE);
         return promptTemplate.create(promptVariables);
+    }
+
+    @Recover
+    public String fallback(RuntimeException e, User user) {
+        logger.error("AI recommendation failed after retries. User: {}", user.getUsername(), e);
+        return "Our recommendation engine is currently unavailable. Please try again later.";
     }
 }
