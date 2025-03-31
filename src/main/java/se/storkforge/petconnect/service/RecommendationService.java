@@ -1,5 +1,7 @@
 package se.storkforge.petconnect.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.chat.prompt.PromptTemplate;
@@ -17,6 +19,7 @@ import java.util.Map;
 @Service
 public class RecommendationService {
 
+    private static final Logger logger = LoggerFactory.getLogger(RecommendationService.class);
     private final ChatClient chatClient;
     private final PetService petService;
 
@@ -49,10 +52,7 @@ public class RecommendationService {
                 Prompt prompt = createPrompt(promptVariables);
                 return chatClient.prompt(prompt).call().content();
            } catch (Exception e) {
-                // Log the error
-                // Import org.slf4j.Logger and org.slf4j.LoggerFactory to use this
-                // private static final Logger logger = LoggerFactory.getLogger(RecommendationService.class);
-                // logger.error("Error generating pet recommendation", e);
+                logger.error("Error generating pet recommendation", e);
                 return "Unable to generate recommendation at this time. Please try again later.";
             }
         }
