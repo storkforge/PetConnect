@@ -11,10 +11,15 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.ChatClient.ChatClientRequestSpec;
 import org.springframework.ai.chat.client.ChatClient.CallResponseSpec;
 import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+
 import se.storkforge.petconnect.entity.Pet;
 import se.storkforge.petconnect.entity.User;
 
 import java.util.List;
+
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -65,8 +70,8 @@ class RecommendationServiceTest {
         pet2.setAvailable(true);
 
         List<Pet> availablePets = List.of(pet1, pet2);
-
-        when(petService.getAllPets()).thenReturn(availablePets);
+        Page<Pet> mockPage = new PageImpl<>(availablePets);
+        when(petService.getAllPets(any(Pageable.class))).thenReturn(mockPage);
 
         // Lägg till stubbningar direkt i testet
         when(chatClient.prompt(any(Prompt.class))).thenReturn(requestSpec);
@@ -102,8 +107,8 @@ class RecommendationServiceTest {
         unavailablePet.setAvailable(false);
 
         List<Pet> allPets = List.of(availablePet, unavailablePet);
-
-        when(petService.getAllPets()).thenReturn(allPets);
+        Page<Pet> mockPage = new PageImpl<>(allPets);
+        when(petService.getAllPets(any(Pageable.class))).thenReturn(mockPage);
 
         // Lägg till stubbningar direkt i testet
         when(chatClient.prompt(any(Prompt.class))).thenReturn(requestSpec);
@@ -126,7 +131,8 @@ class RecommendationServiceTest {
 
         // No available pets
         List<Pet> noPets = List.of();
-        when(petService.getAllPets()).thenReturn(noPets);
+        Page<Pet> mockPage = new PageImpl<>(noPets);
+        when(petService.getAllPets(any(Pageable.class))).thenReturn(mockPage);
 
         // Act
         String actualResult = recommendationService.generateRecommendation(testUser);
