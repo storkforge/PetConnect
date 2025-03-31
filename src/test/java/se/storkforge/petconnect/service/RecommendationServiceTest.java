@@ -13,6 +13,7 @@ import org.springframework.ai.chat.client.ChatClient.CallResponseSpec;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import se.storkforge.petconnect.entity.Pet;
@@ -155,6 +156,28 @@ class RecommendationServiceTest {
         RuntimeException ex = new RuntimeException("Simulated failure");
         String result = recommendationService.fallback(ex, user);
 
+        assertEquals("Our recommendation engine is currently unavailable. Please try again later.", result);
+    }
+
+    @Test
+    void shouldFallbackAfterRetries() {
+        // Setup
+        User user = new User();
+        user.setUsername("testuser");
+        user.setEmail("test@example.com");
+
+        Pet pet = new Pet("Fluffy", "Cat", true, 2, "Owner", "Stockholm");
+        Pageable pageable = PageRequest.of(0, 10);
+
+        when(petService.getAllPets(pageable)).thenReturn(new PageImpl<>(List.of(pet)));
+
+        when(chatClient.prompt(any(Prompt.class)))
+                .thenThrow(new RuntimeException("AI down"));
+
+        // Act
+        String result = recommendationService.generateRecommendation(user);
+
+        // Assert
         assertEquals("Our recommendation engine is currently unavailable. Please try again later.", result);
     }
 
