@@ -2,6 +2,7 @@ package se.storkforge.petconnect.entity;
 
 import jakarta.persistence.*;
 
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
@@ -33,7 +34,7 @@ public class User {
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "meetup_id")
     )
-    private Set<MeetUp> meetUps;
+    private Set<MeetUp> meetUps = new HashSet<>();
 
     public User() {
     }

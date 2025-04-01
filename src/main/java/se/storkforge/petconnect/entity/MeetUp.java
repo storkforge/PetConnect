@@ -19,7 +19,6 @@ public class MeetUp {
     @ManyToMany
     private List<User> participants;
 
-    @Enumerated(EnumType.STRING)
     private String status; // "PLANNED", "CONFIRMED", "CANCELED"
 
     public Long getId() {
