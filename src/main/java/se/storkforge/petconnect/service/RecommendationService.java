@@ -55,12 +55,17 @@ public class RecommendationService {
 
         Map<String, Object> promptVariables = createPromptVariables(user, availablePets);
         Prompt prompt = createPrompt(promptVariables);
-        return aiExecutor.callAi(prompt); // <-- uses the executor here
+
+        try {
+            return aiExecutor.callAi(prompt); // <-- uses the executor here
+        } catch (RuntimeException e) {
+            return fallback(e, user); // Call fallback on exception
+        }
     }
 
     private List<Pet> getAvailablePets() {
         Pageable pageable = PageRequest.of(0, 100); // Fetch first 100 pets
-        return petService.getAllPets(pageable)
+        return petService.getAllPets(pageable, null) // Pass null for PetFilter
                 .stream()
                 .filter(Pet::isAvailable)
                 .toList();

@@ -11,6 +11,7 @@ import se.storkforge.petconnect.dto.PetInputDTO;
 import se.storkforge.petconnect.dto.PetUpdateInputDTO;
 import se.storkforge.petconnect.entity.Pet;
 import se.storkforge.petconnect.exception.PetNotFoundException;
+import se.storkforge.petconnect.service.PetFilter;
 import se.storkforge.petconnect.service.PetService;
 
 @Controller
@@ -23,8 +24,13 @@ public class PetGraphQLController {
     }
 
     @QueryMapping
-    public Page<Pet> getAllPets(@Argument int page, @Argument int size) {
-        return petService.getAllPets(PageRequest.of(page, size));
+    public Page<Pet> getAllPets(@Argument int page, @Argument int size, @Argument("filter") PetFilter filter) {
+        return petService.getAllPets(PageRequest.of(page, size), filter);
+    }
+
+    @QueryMapping
+    public java.util.List<Pet> getPetsByFilter(@Argument("filter") PetFilter filter) {
+        return petService.getPetsByFilter(filter);
     }
 
     @QueryMapping
@@ -34,8 +40,8 @@ public class PetGraphQLController {
     }
 
     @MutationMapping
-    public Pet createPet(@Argument("pet") PetInputDTO petInput) {
-        return petService.createPet(petInput);
+    public Pet createPet(@Argument("pet") PetInputDTO petInput, Authentication authentication) {
+        return petService.createPet(petInput, authentication.getName());
     }
 
     @MutationMapping

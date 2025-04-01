@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -15,7 +16,7 @@ import se.storkforge.petconnect.entity.Pet;
 import se.storkforge.petconnect.entity.User;
 import se.storkforge.petconnect.exception.PetNotFoundException;
 import se.storkforge.petconnect.repository.PetRepository;
-
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -28,26 +29,87 @@ public class PetService {
     private final UserService userService;
 
     @Autowired
-    public PetService(PetRepository petRepository, FileStorageService storageService, UserService userService) {
+    public PetService(PetRepository petRepository,
+                      FileStorageService fileStorageService,
+                      UserService userService) {
         this.petRepository = petRepository;
-        this.fileStorageService = storageService;
+        this.fileStorageService = fileStorageService;
         this.userService = userService;
     }
 
     @Transactional(readOnly = true)
-    public Page<Pet> getAllPets(Pageable pageable) {
-        logger.info("Retrieving all pets with pagination, page: {}, size: {}", pageable.getPageNumber(), pageable.getPageSize());
-        return petRepository.findAll(pageable);
+    public Page<Pet> getAllPets(Pageable pageable, PetFilter filter) {
+        logger.info("Retrieving all pets with pagination, page: {}, size: {}, filter: {}",
+                pageable.getPageNumber(), pageable.getPageSize(), filter);
+
+        Specification<Pet> spec = buildSpecificationFromFilter(filter);
+        return petRepository.findAll(spec, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Pet> getPetsByFilter(PetFilter filter) {
+        logger.info("Retrieving pets by filter: {}", filter);
+        Specification<Pet> spec = buildSpecificationFromFilter(filter);
+        return petRepository.findAll(spec);
+    }
+
+    private Specification<Pet> buildSpecificationFromFilter(PetFilter filter) {
+        if (filter == null || filter.isEmpty()) {
+            return Specification.where(null);
+        }
+
+        Specification<Pet> spec = Specification.where(null);
+
+        if (filter.getSpecies() != null) {
+            spec = spec.and((root, query, cb) ->
+                    cb.equal(root.get("species"), filter.getSpecies()));
+        }
+
+        if (filter.getAvailable() != null) {
+            spec = spec.and((root, query, cb) ->
+                    cb.equal(root.get("available"), filter.getAvailable()));
+        }
+
+        if (filter.getMinAge() != null) {
+            spec = spec.and((root, query, cb) ->
+                    cb.greaterThanOrEqualTo(root.get("age"), filter.getMinAge()));
+        }
+
+        if (filter.getMaxAge() != null) {
+            spec = spec.and((root, query, cb) ->
+                    cb.lessThanOrEqualTo(root.get("age"), filter.getMaxAge()));
+        }
+
+        if (filter.getLocation() != null) {
+            spec = spec.and((root, query, cb) ->
+                    cb.like(cb.lower(root.get("location")),
+                            "%" + filter.getLocation().toLowerCase() + "%"));
+        }
+
+        if (filter.getNameContains() != null) {
+            spec = spec.and((root, query, cb) ->
+                    cb.like(cb.lower(root.get("name")),
+                            "%" + filter.getNameContains().toLowerCase() + "%"));
+        }
+
+        return spec;
     }
 
     @Transactional(readOnly = true)
     public Optional<Pet> getPetById(Long id) {
         logger.info("Retrieving pet by ID: {}", id);
+        if (id == null || id <= 0) {
+            throw new IllegalArgumentException("Invalid pet ID");
+        }
         return petRepository.findById(id);
     }
 
     @Transactional
-    public Pet createPet(PetInputDTO petInput) {
+    public Pet createPet(PetInputDTO petInput, String currentUsername) {
+        logger.info("Creating new pet for user: {}", currentUsername);
+
+        validatePetInput(petInput);
+
         Pet pet = new Pet();
         pet.setName(petInput.name());
         pet.setSpecies(petInput.species());
@@ -55,95 +117,144 @@ public class PetService {
         pet.setAge(petInput.age());
         pet.setLocation(petInput.location());
 
-        if (petInput.ownerId() != null) {
-            User owner = userService.getUserById(petInput.ownerId());
-            pet.setOwner(owner);
-            owner.addPet(pet);
-        }
+        setPetOwner(pet, petInput.ownerId(), currentUsername);
 
         return petRepository.save(pet);
     }
 
+    private void validatePetInput(PetInputDTO petInput) {
+        if (petInput.name() == null || petInput.name().trim().isEmpty()) {
+            throw new IllegalArgumentException("Pet name cannot be empty");
+        }
+        if (petInput.species() == null || petInput.species().trim().isEmpty()) {
+            throw new IllegalArgumentException("Pet species cannot be empty");
+        }
+        if (petInput.age() < 0) {  // Removed null check since age is primitive int
+            throw new IllegalArgumentException("Pet age cannot be negative");
+        }
+    }
+
+    private void setPetOwner(Pet pet, Long ownerId, String currentUsername) {
+        if (ownerId != null) {
+            Optional<User> ownerOptional = Optional.ofNullable(userService.getUserById(ownerId));
+            User owner = ownerOptional.orElseThrow(() ->
+                    new IllegalArgumentException("Owner not found with ID: " + ownerId));
+
+            if (!owner.getUsername().equals(currentUsername)) {
+                throw new SecurityException("You can only create pets for yourself");
+            }
+
+            pet.setOwner(owner);
+            owner.addPet(pet);
+        }
+    }
+
     @Transactional
     public Pet updatePet(Long id, PetUpdateInputDTO petUpdate, String currentUsername) {
+        logger.info("Updating pet with ID: {} for user: {}", id, currentUsername);
+
         Pet existingPet = petRepository.findById(id)
                 .orElseThrow(() -> new PetNotFoundException("Pet with id " + id + " not found"));
 
-        // Check if current user is the owner
-        if (existingPet.getOwner() != null &&
-                !existingPet.getOwner().getUsername().equals(currentUsername)) {
-            throw new SecurityException("You can only update your own pets");
-        }
+        validateOwnership(existingPet, currentUsername);
 
-        if (petUpdate.name() != null) existingPet.setName(petUpdate.name());
-        if (petUpdate.species() != null) existingPet.setSpecies(petUpdate.species());
-        if (petUpdate.available() != null) existingPet.setAvailable(petUpdate.available());
-        if (petUpdate.age() != null) existingPet.setAge(petUpdate.age());
-        if (petUpdate.location() != null) existingPet.setLocation(petUpdate.location());
-
-        if (petUpdate.ownerId() != null) {
-            User newOwner = userService.getUserById(petUpdate.ownerId());
-            if (existingPet.getOwner() != null) {
-                existingPet.getOwner().removePet(existingPet);
-            }
-            existingPet.setOwner(newOwner);
-            newOwner.addPet(existingPet);
-        }
+        applyPetUpdates(existingPet, petUpdate, currentUsername);
 
         return petRepository.save(existingPet);
     }
 
+    private void validateOwnership(Pet pet, String currentUsername) {
+        if (pet.getOwner() == null || !pet.getOwner().getUsername().equals(currentUsername)) {
+            throw new SecurityException("You can only modify your own pets");
+        }
+    }
+
+    private void applyPetUpdates(Pet pet, PetUpdateInputDTO petUpdate, String currentUsername) {
+        if (petUpdate.name() != null) {
+            pet.setName(petUpdate.name());
+        }
+        if (petUpdate.species() != null) {
+            pet.setSpecies(petUpdate.species());
+        }
+        if (petUpdate.available() != null) {
+            pet.setAvailable(petUpdate.available());
+        }
+        if (petUpdate.age() != null) {
+            pet.setAge(petUpdate.age());
+        }
+        if (petUpdate.location() != null) {
+            pet.setLocation(petUpdate.location());
+        }
+
+        if (petUpdate.ownerId() != null) {
+            updatePetOwner(pet, petUpdate.ownerId(), currentUsername);
+        }
+    }
+
+    private void updatePetOwner(Pet pet, Long newOwnerId, String currentUsername) {
+        Optional<User> newOwnerOptional = Optional.ofNullable(userService.getUserById(newOwnerId));
+        User newOwner = newOwnerOptional.orElseThrow(() ->
+                new IllegalArgumentException("New owner not found with ID: " + newOwnerId));
+
+        if (pet.getOwner() != null) {
+            pet.getOwner().getPets().remove(pet);
+        }
+
+        pet.setOwner(newOwner);
+        newOwner.addPet(pet);
+    }
+
     @Transactional
     public void deletePet(Long id, String currentUsername) {
+        logger.info("Deleting pet with ID: {} for user: {}", id, currentUsername);
+
         Pet pet = petRepository.findById(id)
                 .orElseThrow(() -> new PetNotFoundException("Pet with id " + id + " not found"));
 
-        // Check ownership
-        if (pet.getOwner() == null || !pet.getOwner().getUsername().equals(currentUsername)) {
-            throw new SecurityException("You can only delete your own pets");
-        }
+        validateOwnership(pet, currentUsername);
 
-        // Clear the bidirectional relationship
         if (pet.getOwner() != null) {
-            pet.getOwner().getPets().remove(pet); // Remove from owner's collection
+            pet.getOwner().getPets().remove(pet);
         }
 
-        // Delete the pet (owner reference will be automatically removed by JPA)
+        if (pet.getProfilePicturePath() != null) {
+            fileStorageService.delete(pet.getProfilePicturePath());
+        }
+
         petRepository.delete(pet);
     }
 
+    @Transactional
     public void uploadProfilePicture(Long id, MultipartFile file) {
-        if (file == null) {
-            throw new IllegalArgumentException("File cannot be null");
-        }
-        logger.info("Uploading profile picture to pet with ID: {}", id);
-        Optional<Pet> pet = petRepository.findById(id);
-        if (pet.isEmpty()) {
-            logger.error("Pet not found with ID: {}", id);
-            throw new PetNotFoundException("Pet with id " + id + " not found");
+        logger.info("Uploading profile picture for pet with ID: {}", id);
+
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("File cannot be null or empty");
         }
 
-        if (pet.get().getProfilePicturePath() != null) {
-            fileStorageService.delete(pet.get().getProfilePicturePath());
+        Pet pet = petRepository.findById(id)
+                .orElseThrow(() -> new PetNotFoundException("Pet with id " + id + " not found"));
+
+        if (pet.getProfilePicturePath() != null) {
+            fileStorageService.delete(pet.getProfilePicturePath());
         }
 
         String filename = fileStorageService.store(file);
-        pet.get().setProfilePicturePath(filename);
-        petRepository.save(pet.get());
+        pet.setProfilePicturePath(filename);
+        petRepository.save(pet);
     }
 
     @Transactional(readOnly = true)
     public Resource getProfilePicture(Long id) {
-        Optional<Pet> pet = petRepository.findById(id);
-        if (pet.isEmpty()) {
-            logger.error("Pet not found with ID: {}", id);
-            throw new PetNotFoundException("Pet with id " + id + " not found");
-        }
-        String filename = pet.get().getProfilePicturePath();
-        if (filename == null) {
-            logger.error("Profile picture path is null for pet ID: {}", id);
+        logger.info("Retrieving profile picture for pet with ID: {}", id);
+
+        Pet pet = petRepository.findById(id)
+                .orElseThrow(() -> new PetNotFoundException("Pet with id " + id + " not found"));
+
+        if (pet.getProfilePicturePath() == null) {
             throw new RuntimeException("Pet does not have a profile picture");
         }
-        return fileStorageService.loadFile(filename);
+
+        return fileStorageService.loadFile(pet.getProfilePicturePath());
     }
 }

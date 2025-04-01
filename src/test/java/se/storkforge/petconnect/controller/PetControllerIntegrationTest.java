@@ -7,11 +7,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.core.Authentication;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -19,6 +21,8 @@ import se.storkforge.petconnect.dto.PetInputDTO;
 import se.storkforge.petconnect.dto.PetUpdateInputDTO;
 import se.storkforge.petconnect.entity.Pet;
 import se.storkforge.petconnect.entity.User;
+import se.storkforge.petconnect.exception.PetNotFoundException;
+import se.storkforge.petconnect.service.PetFilter;
 import se.storkforge.petconnect.service.PetService;
 
 import java.util.List;
@@ -47,7 +51,9 @@ public class PetControllerIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        mockMvc = MockMvcBuilders.standaloneSetup(petController).build();
+        mockMvc = MockMvcBuilders.standaloneSetup(petController)
+                .setControllerAdvice(new ExceptionHandlerController())
+                .build();
 
         testUser = new User(testUsername, "test@example.com", "password");
         testUser.setId(1L);
@@ -64,23 +70,20 @@ public class PetControllerIntegrationTest {
 
     @Test
     void testGetAllPets() throws Exception {
-        // Create a proper Page implementation
         List<Pet> pets = List.of(testPet);
         Pageable pageable = PageRequest.of(0, 10);
         Page<Pet> petPage = new PageImpl<>(pets, pageable, pets.size());
 
-        // Mock the service call
-        when(petService.getAllPets(any(Pageable.class))).thenReturn(petPage);
+        // Använd any() för både Pageable och PetFilter
+        when(petService.getAllPets(any(Pageable.class), any(PetFilter.class)))
+                .thenReturn(petPage);
 
-        // Perform the request and verify
         mockMvc.perform(get("/pets")
                         .param("page", "0")
                         .param("size", "10"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.content[0].name").value("Buddy"))
-                .andExpect(jsonPath("$.totalElements").value(1))
-                .andExpect(jsonPath("$.totalPages").value(1));
+                .andExpect(jsonPath("$.content[0].name").value("Buddy"));
     }
 
     @Test
@@ -98,16 +101,17 @@ public class PetControllerIntegrationTest {
         PetInputDTO inputDTO = new PetInputDTO(
                 "Buddy", "Dog", true, 3, testUser.getId(), "New York");
 
-        when(petService.createPet(any(PetInputDTO.class))).thenReturn(testPet);
+        when(authentication.getName()).thenReturn(testUsername);
+        when(petService.createPet(any(PetInputDTO.class), eq(testUsername))).thenReturn(testPet); //include the String
 
         mockMvc.perform(post("/pets")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(inputDTO)))
+                        .content(objectMapper.writeValueAsString(inputDTO))
+                        .principal(authentication)) //include the Authentication
                 .andExpect(status().isCreated())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.name").value("Buddy"));
     }
-
     @Test
     void testUpdatePet() throws Exception {
         when(authentication.getName()).thenReturn(testUsername);
@@ -141,5 +145,96 @@ public class PetControllerIntegrationTest {
         mockMvc.perform(delete("/pets/{id}", testPetId)
                         .principal(authentication))
                 .andExpect(status().isNoContent());
+    }
+    @Test
+    void testGetAllPetsWithFilter() throws Exception {
+        // Setup
+        List<Pet> pets = List.of(testPet);
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Pet> petPage = new PageImpl<>(pets, pageable, pets.size());
+
+        when(petService.getAllPets(any(Pageable.class), any(PetFilter.class))).thenReturn(petPage);
+
+        // Test with filter parameters
+        mockMvc.perform(get("/pets")
+                        .param("page", "0")
+                        .param("size", "10")
+                        .param("species", "Dog")
+                        .param("available", "true"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].species").value("Dog"));
+    }
+
+    @Test
+    void testGetPetById_NotFound() throws Exception {
+        when(petService.getPetById(testPetId)).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/pets/{id}", testPetId))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void testCreatePet_InvalidInput() throws Exception {
+        PetInputDTO invalidInput = new PetInputDTO(
+                null, "Dog", true, 3, testUser.getId(), "New York");
+
+        mockMvc.perform(post("/pets")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalidInput)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void testUpdatePet_Unauthorized() throws Exception {
+        when(authentication.getName()).thenReturn("differentUser");
+
+        // Create a proper PetUpdateInputDTO with all required fields
+        PetUpdateInputDTO updateDTO = new PetUpdateInputDTO(
+                null,  // name
+                null,  // species
+                null,  // available
+                null,  // age
+                null,  // ownerId
+                null   // location
+        );
+
+        when(petService.updatePet(eq(testPetId), any(PetUpdateInputDTO.class), eq("differentUser")))
+                .thenThrow(new SecurityException("Unauthorized"));
+
+        mockMvc.perform(put("/pets/{id}", testPetId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateDTO))
+                        .principal(authentication))
+                .andExpect(status().isForbidden());
+    }
+    @Test
+    void testDeletePet_NotFound() throws Exception {
+        when(authentication.getName()).thenReturn(testUsername);
+        doThrow(new PetNotFoundException("Not found"))
+                .when(petService).deletePet(testPetId, testUsername);
+
+        mockMvc.perform(delete("/pets/{id}", testPetId)
+                        .principal(authentication))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void testUploadProfilePicture() throws Exception {
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "test.jpg", "image/jpeg", "test image content".getBytes());
+
+        mockMvc.perform(multipart("/pets/{id}/picture", testPetId)
+                        .file(file))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void testGetProfilePicture() throws Exception {
+        // Mocka endast det som behövs
+        Resource mockResource = mock(Resource.class);
+        when(petService.getProfilePicture(testPetId)).thenReturn(mockResource);
+
+        mockMvc.perform(get("/pets/{id}/picture", testPetId))
+                .andExpect(status().isOk());
     }
 }

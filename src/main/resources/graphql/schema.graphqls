@@ -7,9 +7,10 @@ type Query {
     getUserByUsername(username: String!): User
 
     # Pet queries
-    getAllPets(page: Int, size: Int): PetPage!
+    getAllPets(page: Int, size: Int, filter: PetFilter): PetPage!
     getPetById(id: ID!): Pet
     getPetsBySpecies(species: String!): [Pet!]!
+    getPetsByFilter(filter: PetFilter): [Pet!]!
 }
 
 input PetFilter {
