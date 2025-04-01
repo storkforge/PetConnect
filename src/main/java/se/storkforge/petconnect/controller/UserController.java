@@ -2,9 +2,11 @@ package se.storkforge.petconnect.controller;
 
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import se.storkforge.petconnect.entity.User;
 import se.storkforge.petconnect.exception.UserNotFoundException;
 import se.storkforge.petconnect.service.UserService;
@@ -65,5 +67,19 @@ public class UserController {
         } catch (UserNotFoundException e) {
             return ResponseEntity.notFound().build();
         }
+    }
+
+    @PostMapping("/{id}/PFP")
+    public ResponseEntity<String> uploadPetProfilePicture(
+            @PathVariable Long id, @RequestParam("file") MultipartFile file) {
+        userService.uploadProfilePicture(id, file);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/{id}/PFP")
+    public ResponseEntity<Resource> getPetProfilePicture(
+            @PathVariable Long id) {
+        Resource resource = userService.getProfilePicture(id);
+        return new ResponseEntity<>(resource, HttpStatus.OK);
     }
 }

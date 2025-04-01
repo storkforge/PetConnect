@@ -1,10 +1,12 @@
 package se.storkforge.petconnect.service;
 
+import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import se.storkforge.petconnect.entity.User;
 import se.storkforge.petconnect.exception.UserNotFoundException;
 import se.storkforge.petconnect.repository.UserRepository;
@@ -18,15 +20,16 @@ import java.util.regex.Pattern;
 @Service
 @Transactional
 public class UserService {
-
+    private final FileStorageService fileStorageService;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private static final String EMAIL_REGEX = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
     private final Pattern emailPattern = Pattern.compile(EMAIL_REGEX);
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, FileStorageService fileStorageService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.fileStorageService = fileStorageService;
     }
 
     public User createUser(User user) {
@@ -126,3 +129,37 @@ public class UserService {
         return !matcher.matches();
     }
 }
+
+
+    public void uploadProfilePicture(Long id, MultipartFile file) {
+        if (file == null) {
+            throw new IllegalArgumentException("File cannot be null");
+        }
+        Optional<User> user = userRepository.findById(id);
+        if (user.isEmpty()) {
+            throw new UserNotFoundException("User with id " + id + " not found");
+        }
+
+        if (user.get().getProfilePicturePath() != null) {
+            fileStorageService.delete(user.get().getProfilePicturePath());
+        }
+
+        String filename = fileStorageService.store(file);
+        user.get().setProfilePicturePath(filename);
+        userRepository.save(user.get());
+    }
+
+    @Transactional(readOnly = true)
+    public Resource getProfilePicture(Long id) {
+        Optional<User> user = userRepository.findById(id);
+        if (user.isEmpty()) {
+            throw new UserNotFoundException("User with id " + id + " not found");
+        }
+        String filename = user.get().getProfilePicturePath();
+        if (filename == null) {
+            throw new RuntimeException("User does not have a profile picture");
+        }
+        return fileStorageService.loadFile(filename);
+    }
+}
+

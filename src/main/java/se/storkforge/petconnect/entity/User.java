@@ -35,6 +35,7 @@ public class User {
             inverseJoinColumns = @JoinColumn(name = "meetup_id")
     )
     private Set<MeetUp> meetUps = new HashSet<>();
+    private String profilePicturePath;
 
     public User() {
     }
@@ -84,6 +85,9 @@ public class User {
     public void setMeetUps(Set<MeetUp> meetUps) {
         this.meetUps = meetUps;
     }
+    public String getProfilePicturePath() { return profilePicturePath; }
+
+    public void setProfilePicturePath(String profilePicturePath) { this.profilePicturePath = profilePicturePath; }
 
     @Override
     public boolean equals(Object o) {
