@@ -1,9 +1,6 @@
 package se.storkforge.petconnect.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
@@ -23,19 +20,24 @@ public class Pet {
     @Size(max = 50, message = "Species cannot exceed 50 characters")
     private String species;
 
-    private boolean available; // Corrected field name
+    private boolean available;
     private int age;
-    private String owner;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "owner_id")
+    private User owner;
+
     private String location;
 
     private String profilePicturePath;
 
-    public Pet() {}
+    public Pet() {
+    }
 
-    public Pet(String name, String species, boolean available, int age, String owner, String location) {
+    public Pet(String name, String species, boolean available, int age, User owner, String location) {
         this.name = name;
         this.species = species;
-        this.available = available; // Corrected field name
+        this.available = available;
         this.age = age;
         this.owner = owner;
         this.location = location;
@@ -65,11 +67,11 @@ public class Pet {
         this.species = species;
     }
 
-    public boolean isAvailable() { // Corrected getter
+    public boolean isAvailable() {
         return available;
     }
 
-    public void setAvailable(boolean available) { // Corrected setter
+    public void setAvailable(boolean available) {
         this.available = available;
     }
 
@@ -81,11 +83,11 @@ public class Pet {
         this.age = age;
     }
 
-    public String getOwner() {
+    public User getOwner() {
         return owner;
     }
 
-    public void setOwner(String owner) {
+    public void setOwner(User owner) {
         this.owner = owner;
     }
 
@@ -97,9 +99,13 @@ public class Pet {
         this.location = location;
     }
 
-    public String getProfilePicturePath() { return profilePicturePath; }
+    public String getProfilePicturePath() {
+        return profilePicturePath;
+    }
 
-    public void setProfilePicturePath(String profilePicturePath) { this.profilePicturePath = profilePicturePath; }
+    public void setProfilePicturePath(String profilePicturePath) {
+        this.profilePicturePath = profilePicturePath;
+    }
 
     @Override
     public String toString() {
@@ -107,9 +113,9 @@ public class Pet {
                 "id=" + id +
                 ", name='" + name + '\'' +
                 ", species='" + species + '\'' +
-                ", available=" + (available ? "Yes" : "No") + // Corrected field name
+                ", available=" + (available ? "Yes" : "No") +
                 ", age=" + age +
-                ", owner='" + owner + '\'' +
+                ", owner=" + (owner != null ? owner.getId() : null) +
                 ", location='" + location + '\'' +
                 '}';
     }

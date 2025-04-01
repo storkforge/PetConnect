@@ -5,6 +5,6 @@ public record PetInputDTO(
         String species,
         boolean available,
         int age,
-        String owner,
+        Long ownerId,  
         String location
 ) {}

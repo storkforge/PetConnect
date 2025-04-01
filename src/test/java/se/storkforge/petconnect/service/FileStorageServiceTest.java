@@ -9,9 +9,11 @@ import org.springframework.core.io.Resource;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
 import se.storkforge.petconnect.entity.Pet;
+import se.storkforge.petconnect.entity.User;
 import se.storkforge.petconnect.repository.PetRepository;
 import se.storkforge.petconnect.service.FileStorageService;
 import se.storkforge.petconnect.service.PetService;
+import se.storkforge.petconnect.service.UserService;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -25,37 +27,45 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class FileStorageServiceTest {
 
-    private Pet pet =  new Pet("Buddy",
-            "Dog",
-            true,
-            3,
-            "John",
-            "New York");
-
+    private Pet pet;
+    private User owner;
     private Optional<Pet> optionalPet;
     private MockMultipartFile file;
-
     private FileStorageService fileStorageService;
     private PetService petService;
-
     private Path testDir;
 
     @Mock
     private PetRepository petRepository;
 
+    @Mock
+    private UserService userService;
+
     @BeforeEach
     void setUp() throws IOException {
+        // Create test owner user
+        owner = new User("John", "john@example.com", "password");
+        owner.setId(1L);
+
+        // Create test pet with User owner
+        pet = new Pet();
+        pet.setId(1L);
+        pet.setName("Buddy");
+        pet.setSpecies("Dog");
+        pet.setAvailable(true);
+        pet.setAge(3);
+        pet.setOwner(owner);
+        pet.setLocation("New York");
+
         this.testDir = Files.createTempDirectory("test-uploads");
         this.optionalPet = Optional.of(pet);
         this.file = new MockMultipartFile("file", "test.jpg", "image/jpeg", "test".getBytes());
         this.fileStorageService = new FileStorageService();
-        this.petService = new PetService(petRepository, fileStorageService);
+        this.petService = new PetService(petRepository, fileStorageService, userService);
+
         // Ensure directory exists
-        try {
-            Files.createDirectories(testDir);
-        } catch (IOException e) {
-            throw new RuntimeException("Could not create test directory", e);
-        }
+        Files.createDirectories(testDir);
+
         ReflectionTestUtils.setField(fileStorageService, "maxFileSize", 100L);
         ReflectionTestUtils.setField(fileStorageService, "allowedTypes", List.of("image/jpeg"));
         ReflectionTestUtils.setField(fileStorageService, "root", testDir);
@@ -77,7 +87,6 @@ class FileStorageServiceTest {
         petService.uploadProfilePicture(1L, file);
         assertThat(pet.getProfilePicturePath()).isNotNull();
         fileStorageService.delete(pet.getProfilePicturePath());
-
     }
 
     @Test

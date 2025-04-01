@@ -32,15 +32,39 @@ class RecommendationServiceTest {
     private RecommendationService recommendationService;
 
     private User testUser;
+    private User petOwner;
     private Pet testPet;
+    private Pet unavailablePet;
 
     @BeforeEach
     void setUp() {
+        // Setup test user
         testUser = new User();
         testUser.setUsername("testuser");
         testUser.setEmail("test@example.com");
 
-        testPet = new Pet("Fluffy", "Cat", true, 2, "Owner", "Stockholm");
+        // Setup pet owner
+        petOwner = new User();
+        petOwner.setUsername("petowner");
+        petOwner.setEmail("owner@example.com");
+
+        // Setup available pet
+        testPet = new Pet();
+        testPet.setName("Fluffy");
+        testPet.setSpecies("Cat");
+        testPet.setAvailable(true);
+        testPet.setAge(2);
+        testPet.setOwner(petOwner);
+        testPet.setLocation("Stockholm");
+
+        // Setup unavailable pet
+        unavailablePet = new Pet();
+        unavailablePet.setName("Rex");
+        unavailablePet.setSpecies("Dog");
+        unavailablePet.setAvailable(false);
+        unavailablePet.setAge(3);
+        unavailablePet.setOwner(petOwner);
+        unavailablePet.setLocation("Gothenburg");
     }
 
     @Test
@@ -57,9 +81,7 @@ class RecommendationServiceTest {
 
     @Test
     void generateRecommendation_ShouldFilterOutUnavailablePets() {
-        Pet unavailablePet = new Pet("Rex", "Dog", false, 3, "Owner", "Gothenburg");
         Page<Pet> pets = new PageImpl<>(List.of(testPet, unavailablePet));
-
         when(petService.getAllPets(any(Pageable.class))).thenReturn(pets);
         when(aiExecutor.callAi(any(Prompt.class))).thenReturn("I recommend Fluffy!");
 

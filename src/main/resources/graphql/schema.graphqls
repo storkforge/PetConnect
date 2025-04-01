@@ -11,6 +11,7 @@ type Query {
     getPetById(id: ID!): Pet
     getPetsBySpecies(species: String!): [Pet!]!
 }
+
 input PetFilter {
     species: String
     available: Boolean

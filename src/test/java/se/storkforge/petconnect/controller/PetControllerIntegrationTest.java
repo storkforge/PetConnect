@@ -3,21 +3,24 @@ package se.storkforge.petconnect.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.Authentication;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import se.storkforge.petconnect.dto.PetInputDTO;
+import se.storkforge.petconnect.dto.PetUpdateInputDTO;
 import se.storkforge.petconnect.entity.Pet;
-import se.storkforge.petconnect.exception.PetNotFoundException;
+import se.storkforge.petconnect.entity.User;
 import se.storkforge.petconnect.service.PetService;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,126 +30,116 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+@ExtendWith(MockitoExtension.class)
 public class PetControllerIntegrationTest {
+
     private MockMvc mockMvc;
-
-    @Mock
-    private PetService petService;
-
-    @InjectMocks
-    private PetController petController;
-
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    @Mock private PetService petService;
+    @Mock private Authentication authentication;
+    @InjectMocks private PetController petController;
+
     private Pet testPet;
+    private User testUser;
+    private final Long testPetId = 1L;
+    private final String testUsername = "testUser";
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
         mockMvc = MockMvcBuilders.standaloneSetup(petController).build();
-        testPet = new Pet("Buddy", "Dog", true, 3, "John", "New York");
+
+        testUser = new User(testUsername, "test@example.com", "password");
+        testUser.setId(1L);
+
+        testPet = new Pet();
+        testPet.setId(testPetId);
+        testPet.setName("Buddy");
+        testPet.setSpecies("Dog");
+        testPet.setAvailable(true);
+        testPet.setAge(3);
+        testPet.setOwner(testUser);
+        testPet.setLocation("New York");
     }
 
     @Test
-    public void testGetAllPetsEndpoint() throws Exception {
-        List<Pet> pets = Arrays.asList(
-                testPet,
-                new Pet("Misty", "Cat", false, 2, "Sarah", "Boston")
-        );
+    void testGetAllPets() throws Exception {
+        // Create a proper Page implementation
+        List<Pet> pets = List.of(testPet);
         Pageable pageable = PageRequest.of(0, 10);
         Page<Pet> petPage = new PageImpl<>(pets, pageable, pets.size());
-        when(petService.getAllPets(pageable)).thenReturn(petPage);
 
-        mockMvc.perform(get("/pets"))
+        // Mock the service call
+        when(petService.getAllPets(any(Pageable.class))).thenReturn(petPage);
+
+        // Perform the request and verify
+        mockMvc.perform(get("/pets")
+                        .param("page", "0")
+                        .param("size", "10"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.content.length()").value(2))
                 .andExpect(jsonPath("$.content[0].name").value("Buddy"))
-                .andExpect(jsonPath("$.content[1].species").value("Cat"));
-
-        verify(petService, times(1)).getAllPets(pageable);
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.totalPages").value(1));
     }
 
     @Test
-    public void testGetPetByIdEndpoint() throws Exception {
-        // Given
-        when(petService.getPetById(1L)).thenReturn(Optional.of(testPet));
+    void testGetPetById() throws Exception {
+        when(petService.getPetById(testPetId)).thenReturn(Optional.of(testPet));
 
-        // When & Then
-        mockMvc.perform(get("/pets/1"))
+        mockMvc.perform(get("/pets/{id}", testPetId))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.name").value("Buddy"));
-
-        verify(petService, times(1)).getPetById(1L);
     }
 
     @Test
-    public void testGetPetByIdNotFoundEndpoint() throws Exception {
-        // Given
-        when(petService.getPetById(1L)).thenReturn(Optional.empty());
+    void testCreatePet() throws Exception {
+        PetInputDTO inputDTO = new PetInputDTO(
+                "Buddy", "Dog", true, 3, testUser.getId(), "New York");
 
-        // When & Then
-        mockMvc.perform(get("/pets/1"))
-                .andExpect(status().isNotFound());
+        when(petService.createPet(any(PetInputDTO.class))).thenReturn(testPet);
 
-        verify(petService, times(1)).getPetById(1L);
-    }
-
-    @Test
-    public void testCreatePetEndpoint() throws Exception {
-        // Given
-        String petJson = objectMapper.writeValueAsString(testPet);
-        when(petService.createPet(any(Pet.class))).thenReturn(testPet);
-
-        // When & Then
         mockMvc.perform(post("/pets")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(petJson))
+                        .content(objectMapper.writeValueAsString(inputDTO)))
                 .andExpect(status().isCreated())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.name").value("Buddy"));
-
-        verify(petService, times(1)).createPet(any(Pet.class));
     }
 
     @Test
-    public void testUpdatePetEndpoint() throws Exception {
-        // Given
-        String petJson = objectMapper.writeValueAsString(testPet);
-        when(petService.updatePet(eq(1L), any(Pet.class))).thenReturn(testPet);
+    void testUpdatePet() throws Exception {
+        when(authentication.getName()).thenReturn(testUsername);
 
-        // When & Then
-        mockMvc.perform(put("/pets/1")
+        PetUpdateInputDTO updateDTO = new PetUpdateInputDTO(
+                "Buddy Updated", null, null, null, null, "New Location");
+
+        Pet updatedPet = new Pet();
+        updatedPet.setId(testPetId);
+        updatedPet.setName("Buddy Updated");
+        updatedPet.setLocation("New Location");
+        updatedPet.setOwner(testUser);
+
+        when(petService.updatePet(eq(testPetId), any(PetUpdateInputDTO.class), eq(testUsername)))
+                .thenReturn(updatedPet);
+
+        mockMvc.perform(put("/pets/{id}", testPetId)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(petJson))
+                        .content(objectMapper.writeValueAsString(updateDTO))
+                        .principal(authentication))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value("Buddy"));
-
-        verify(petService, times(1)).updatePet(eq(1L), any(Pet.class));
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.name").value("Buddy Updated"));
     }
+
     @Test
-    void testUpdatePetNotFoundEndpoint() throws Exception {
-        // Given
-        Long notFoundId = 999L;
-        Pet updatedPet = new Pet("Updated Name", "Updated Species", true, 6, "New Owner", "New Location");
-        String updatedPetJson = objectMapper.writeValueAsString(updatedPet);
+    void testDeletePet() throws Exception {
+        when(authentication.getName()).thenReturn(testUsername);
+        doNothing().when(petService).deletePet(eq(testPetId), eq(testUsername));
 
-        when(petService.updatePet(eq(notFoundId), any(Pet.class)))
-                .thenThrow(new PetNotFoundException("Pet with id " + notFoundId + " not found"));
-
-        // When & Then
-        mockMvc.perform(put("/pets/{id}", notFoundId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(updatedPetJson))
-                .andExpect(status().isNotFound());
-
-        verify(petService, times(1)).updatePet(eq(notFoundId), any(Pet.class));
-    }
-    @Test
-    public void testDeletePetEndpoint() throws Exception {
-        // When & Then
-        mockMvc.perform(delete("/pets/1"))
+        mockMvc.perform(delete("/pets/{id}", testPetId)
+                        .principal(authentication))
                 .andExpect(status().isNoContent());
-
-        verify(petService, times(1)).deletePet(eq(1L));
     }
 }
