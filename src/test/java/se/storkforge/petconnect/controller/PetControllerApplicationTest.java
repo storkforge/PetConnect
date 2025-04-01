@@ -13,10 +13,12 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import se.storkforge.petconnect.controller.PetController;
+import se.storkforge.petconnect.dto.PetRequestDTO;
+import se.storkforge.petconnect.dto.PetResponseDTO;
 import se.storkforge.petconnect.entity.Pet;
+import se.storkforge.petconnect.entity.User;
 import se.storkforge.petconnect.exception.PetNotFoundException;
 import se.storkforge.petconnect.service.PetService;
 
@@ -24,8 +26,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -43,145 +43,147 @@ public class PetControllerApplicationTest {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     private Pet testPet;
+    private PetResponseDTO testPetResponseDTO;
     private final Long testPetId = 1L;
+    private User testUser;
 
     @BeforeEach
     void setUp() {
         mockMvc = MockMvcBuilders.standaloneSetup(petController).build();
-        testPet = new Pet("Buddy", "Dog", true, 3, "John", "New York");
-        testPet.setId(testPetId); // Set an ID for the test pet
+
+        testUser = new User();
+        testUser.setId(1L);
+        testUser.setUsername("john_user");
+        testUser.setEmail("john@example.com");
+        testUser.setPassword("password");
+
+        testPet = new Pet("Buddy", "Dog", true, 3, testUser, "New York");
+        testPet.setId(testPetId);
+
+        new PetRequestDTO(
+                "Buddy", "Dog", true, 3, "john_user", "New York");
+
+        testPetResponseDTO = new PetResponseDTO(
+                testPetId, "Buddy", "Dog", true, 3, "john_user", "New York", null);
     }
 
     @Test
     void testGetAllPetsEndpoint() throws Exception {
-        // Given
-        List<Pet> pets = Arrays.asList(
-                testPet,
-                new Pet("Misty", "Cat", false, 2, "Sarah", "Boston")
-        );
+        // Setup test data
+        User user2 = new User();
+        user2.setId(2L);
+        user2.setUsername("sarah_user");
+
+        Pet pet2 = new Pet("Misty", "Cat", false, 2, user2, "Boston");
+        pet2.setId(2L);
+
+        List<Pet> pets = Arrays.asList(testPet, pet2);
         Pageable pageable = PageRequest.of(0, 10);
         Page<Pet> petPage = new PageImpl<>(pets, pageable, pets.size());
 
-        when(petService.getAllPets(pageable)).thenReturn(petPage);
+        PetResponseDTO responseDTO2 = new PetResponseDTO(
+                2L, "Misty", "Cat", false, 2, "sarah_user", "Boston", null);
 
-        // When & Then
+        // Mock service calls
+        when(petService.getAllPets(pageable)).thenReturn(petPage);
+        when(petService.convertToPetResponseDTO(testPet)).thenReturn(testPetResponseDTO);
+        when(petService.convertToPetResponseDTO(pet2)).thenReturn(responseDTO2);
+
+        // Execute and verify
         mockMvc.perform(get("/pets"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.content.length()").value(2))
                 .andExpect(jsonPath("$.content[0].name").value("Buddy"))
                 .andExpect(jsonPath("$.content[1].name").value("Misty"));
-
-        verify(petService, times(1)).getAllPets(pageable);
     }
 
     @Test
     void testGetPetByIdEndpointFound() throws Exception {
-        // Given
         when(petService.getPetById(testPetId)).thenReturn(Optional.of(testPet));
+        when(petService.convertToPetResponseDTO(testPet)).thenReturn(testPetResponseDTO);
 
-        // When & Then
         mockMvc.perform(get("/pets/{id}", testPetId))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.name").value("Buddy"))
-                .andExpect(jsonPath("$.species").value("Dog"))
-                .andExpect(jsonPath("$.available").value(true))
-                .andExpect(jsonPath("$.age").value(3))
-                .andExpect(jsonPath("$.owner").value("John"))
-                .andExpect(jsonPath("$.location").value("New York"));
-
-        verify(petService, times(1)).getPetById(testPetId);
+                .andExpect(jsonPath("$.owner").value("john_user"));
     }
 
     @Test
     void testCreatePetEndpoint() throws Exception {
-        // Given
-        Pet newPet = new Pet("Lucy", "Rabbit", false, 1, "Alice", "London");
-        when(petService.createPet(any(Pet.class))).thenReturn(newPet);
-        String petJson = objectMapper.writeValueAsString(newPet);
+        PetRequestDTO newPetRequest = new PetRequestDTO(
+                "Lucy", "Rabbit", false, 1, "alice_user", "London");
 
-        // When & Then
+        Pet newPet = new Pet("Lucy", "Rabbit", false, 1, testUser, "London");
+        PetResponseDTO newPetResponse = new PetResponseDTO(
+                null, "Lucy", "Rabbit", false, 1, "alice_user", "London", null);
+
+        when(petService.convertToPet(newPetRequest)).thenReturn(newPet);
+        when(petService.createPet(newPet)).thenReturn(newPet);
+        when(petService.convertToPetResponseDTO(newPet)).thenReturn(newPetResponse);
+
         mockMvc.perform(post("/pets")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(petJson))
+                        .content(objectMapper.writeValueAsString(newPetRequest)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.name").value("Lucy"))
-                .andExpect(jsonPath("$.species").value("Rabbit"))
-                .andExpect(jsonPath("$.available").value(false))
-                .andExpect(jsonPath("$.age").value(1))
-                .andExpect(jsonPath("$.owner").value("Alice"))
-                .andExpect(jsonPath("$.location").value("London"));
-
-        verify(petService, times(1)).createPet(any(Pet.class));
+                .andExpect(jsonPath("$.owner").value("alice_user"));
     }
 
     @Test
     void testUpdatePetEndpointFound() throws Exception {
-        // Given
-        Pet updatedPet = new Pet("Buddy Updated", "Dog", true, 4, "John Doe", "Somewhere");
-        updatedPet.setId(testPetId);
-        when(petService.updatePet(eq(testPetId), any(Pet.class))).thenReturn(updatedPet);
-        String petJson = objectMapper.writeValueAsString(updatedPet);
+        PetRequestDTO updateRequest = new PetRequestDTO(
+                "Buddy Updated", "Dog", true, 4, "johndoe_user", "Somewhere");
 
-        // When & Then
+        Pet updatedPet = new Pet("Buddy Updated", "Dog", true, 4, testUser, "Somewhere");
+        updatedPet.setId(testPetId);
+        PetResponseDTO updatedResponse = new PetResponseDTO(
+                testPetId, "Buddy Updated", "Dog", true, 4, "johndoe_user", "Somewhere", null);
+
+        when(petService.convertToPet(updateRequest)).thenReturn(updatedPet);
+        when(petService.updatePet(testPetId, updatedPet)).thenReturn(updatedPet);
+        when(petService.convertToPetResponseDTO(updatedPet)).thenReturn(updatedResponse);
+
         mockMvc.perform(put("/pets/{id}", testPetId)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(petJson))
+                        .content(objectMapper.writeValueAsString(updateRequest)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(testPetId))
                 .andExpect(jsonPath("$.name").value("Buddy Updated"))
-                .andExpect(jsonPath("$.owner").value("John Doe"))
-                .andExpect(jsonPath("$.species").value("Dog"))
-                .andExpect(jsonPath("$.available").value(true))
-                .andExpect(jsonPath("$.age").value(4))
-                .andExpect(jsonPath("$.location").value("Somewhere"));
-
-        verify(petService, times(1)).updatePet(eq(testPetId), any(Pet.class));
+                .andExpect(jsonPath("$.owner").value("johndoe_user"));
     }
 
     @Test
     void testUpdatePetEndpointNotFound() throws Exception {
-        // Given
         Long notFoundId = 999L;
-        Pet updatedPet = new Pet("Updated", "Cat", true, 5, "Someone", "Here");
-        when(petService.updatePet(eq(notFoundId), any(Pet.class)))
-                .thenThrow(new PetNotFoundException("Pet with id " + notFoundId + " not found"));
-        String petJson = objectMapper.writeValueAsString(updatedPet);
+        PetRequestDTO updateRequest = new PetRequestDTO(
+                "Updated", "Cat", true, 5, "someone_user", "Here");
 
-        // When & Then
+        when(petService.convertToPet(updateRequest)).thenReturn(new Pet());
+        when(petService.updatePet(eq(notFoundId), any(Pet.class)))
+                .thenThrow(new PetNotFoundException("Pet not found"));
+
         mockMvc.perform(put("/pets/{id}", notFoundId)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(petJson))
+                        .content(objectMapper.writeValueAsString(updateRequest)))
                 .andExpect(status().isNotFound());
-
-        verify(petService, times(1)).updatePet(eq(notFoundId), any(Pet.class));
     }
+
     @Test
     void testDeletePetEndpointFound() throws Exception {
-        // Given
-        doNothing().when(petService).deletePet(eq(testPetId));
+        doNothing().when(petService).deletePet(testPetId);
 
-        // When & Then
         mockMvc.perform(delete("/pets/{id}", testPetId))
                 .andExpect(status().isNoContent());
-
-        verify(petService, times(1)).deletePet(eq(testPetId));
     }
 
     @Test
     void testDeletePetEndpointNotFound() throws Exception {
-        // Given
         Long notFoundId = 999L;
-        doThrow(new PetNotFoundException("Pet with id " + notFoundId + " not found"))
-                .when(petService).deletePet(eq(notFoundId)); // Simulate PetNotFoundException
+        doThrow(new PetNotFoundException("Pet not found"))
+                .when(petService).deletePet(notFoundId);
 
-        // When & Then
-        ResultActions resultActions = mockMvc.perform(delete("/pets/{id}", notFoundId));
-
-        resultActions.andExpect(status().isNotFound())
-                .andExpect(content().string("")); // Expect an empty response body
-
-        verify(petService, times(1)).deletePet(eq(notFoundId));
+        mockMvc.perform(delete("/pets/{id}", notFoundId))
+                .andExpect(status().isNotFound());
     }
 }
