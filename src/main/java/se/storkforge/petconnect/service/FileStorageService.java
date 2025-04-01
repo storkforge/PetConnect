@@ -37,15 +37,20 @@ public class FileStorageService {
     private void init() {
         this.root = Paths.get(uploadDir);
         try{
-            Files.createDirectories(root.resolve("users/profilePictures"));
-            Files.createDirectories(root.resolve("pets/profilePictures"));
+            Files.createDirectories(root);
         } catch (IOException e) {
             throw new RuntimeException("Unable to create directory", e);
         }
 
     }
 
-    public String store(MultipartFile file) {
+    public String store(MultipartFile file, String dir) {
+        try{
+            Files.createDirectories(root.resolve(dir));
+        } catch (IOException e) {
+            throw new RuntimeException("Unable to create directory", e);
+        }
+
         try {
             //Validation
             if (file.isEmpty()) {

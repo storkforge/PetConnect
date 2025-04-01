@@ -129,6 +129,7 @@ public class UserService {
     }
 
     public void uploadProfilePicture(Long id, MultipartFile file) {
+        String dir = "users/profilePictures";
         if (file == null) {
             throw new IllegalArgumentException("File cannot be null");
         }
@@ -141,7 +142,7 @@ public class UserService {
             fileStorageService.delete(user.get().getProfilePicturePath());
         }
 
-        String filename = fileStorageService.store(file);
+        String filename = fileStorageService.store(file, dir);
         user.get().setProfilePicturePath(filename);
         userRepository.save(user.get());
     }
