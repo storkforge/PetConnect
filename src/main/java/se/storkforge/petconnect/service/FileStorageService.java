@@ -37,7 +37,9 @@ public class FileStorageService {
     private void init() {
         this.root = Paths.get(uploadDir);
         try{
-            Files.createDirectories(root);  // Creates the upload directory if it doesn't exist
+            Files.createDirectories(root);
+            Files.createDirectories(root.resolve("users"));
+            Files.createDirectories(root.resolve("pets"));
         } catch (IOException e) {
             throw new RuntimeException("Unable to create directory", e);
         }
