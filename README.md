@@ -1,31 +1,40 @@
+To enable AI-powered features, you’ll need to generate and securely store your OpenAI API key.
+
+### 1. Get Your OpenAI API Key
+
+1. Visit the official OpenAI platform: [https://platform.openai.com/account/api-keys](https://platform.openai.com/account/api-keys)
+2. Sign in or sign up for an account.
+3. Click **Create new secret key**
+4. Copy the generated API key (starts with `sk-...`)
+
+### 2. Create `OpenAI.env` File
+
+Inside your project root (`PetConnect/`), create a new file called: OpenAI.env
+
+### 3. Add Your API Key as:
+
+OPENAI_API_KEY=sk-YourGeneratedKeyHere
+save file
+### THIS FILE SHOULD ALREADY BE IN .GITIGNORE
 
 
 
-### START DOCKER ###
 
 
-# Run command
-
-docker run --name petconnect-db -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=petconnect -e POSTGRES_DB=petconnect -p 5432:5432 -d postgres
-
-# wait for server to create & confirm its working with 
-
-mvn spring-boot:run
-
-
-# Server running, run local:
+## Run Program, Server running, run local:
 
 After server is running open a browser and input 
 
 http://localhost:8080 
 
-# user and password
+### user and password
 
-to login on the website you need to put user as: user
-and the password will be generated in the server console, it looks
-like this:
+to login on the website you need to put 
 
-Using generated security password: 38915130-c6d6-46d3-93f7-1f93ad77dc1d
+## user as: user
+
+## password as: password
+
 
 
 

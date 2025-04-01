@@ -1,16 +1,14 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
-<head th:replace="fragments/header :: title"></head>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title th:text="${pageTitle}">PetConnect</title>
+    <th:block th:replace="fragments/header :: title"></th:block>
+</head>
 <body>
+<th:block th:replace="fragments/header :: header"></th:block>
 
-<div th:replace="fragments/header :: header"></div>
+<main th:replace="${content}">Content goes here</main>
 
-
-<main th:fragment="content">
-
-</main>
-
-<div th:replace="fragments/footer :: footer"></div>
-
+<th:block th:replace="fragments/footer :: footer"></th:block>
 </body>
 </html>
