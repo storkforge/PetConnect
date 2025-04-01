@@ -128,8 +128,6 @@ public class UserService {
         Matcher matcher = emailPattern.matcher(email);
         return !matcher.matches();
     }
-}
-
 
     public void uploadProfilePicture(Long id, MultipartFile file) {
         if (file == null) {
