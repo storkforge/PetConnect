@@ -1,15 +1,18 @@
-
+<!-- src/main/resources/templates/index.html -->
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" th:replace="layout :: layout" th:lang="${#locale.language}">
+<html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
 <head>
-  <title>Home</title> <!-- Ignored because layout handles the title -->
+  <title>Home</title> <!-- Ignored anyway -->
 </head>
 <body>
-<main th:fragment="content">
+
+<!-- This is the content fragment injected into layout.html -->
+<div th:fragment="content">
   <h1 th:text="#{greeting}">Welcome to our site!</h1>
   <p th:text="#{language.switch}">Your language is automatically detected based on your browser settings.</p>
   <button th:text="#{login.button}">Login</button>
   <button th:text="#{logout.button}">Logout</button>
-</main>
+</div>
+
 </body>
 </html>
