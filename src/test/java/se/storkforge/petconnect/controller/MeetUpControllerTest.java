@@ -23,6 +23,7 @@ import se.storkforge.petconnect.service.MeetUpService;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -52,7 +53,7 @@ class MeetUpControllerIntegrationTest {
         testMeetUp = new MeetUp();
         testMeetUp.setLocation("Test Location");
         testMeetUp.setDateTime(LocalDateTime.now().plusDays(1));
-        testMeetUp.setParticipants(new ArrayList<>());
+        testMeetUp.setParticipants(new HashSet<>());
         testMeetUp.setStatus("PLANNED");
 
     }

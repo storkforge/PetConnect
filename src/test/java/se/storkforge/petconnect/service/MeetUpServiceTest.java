@@ -33,7 +33,7 @@ class MeetUpServiceTest {
         MeetUp meetUp = new MeetUp();
         meetUp.setLocation(location);
         meetUp.setDateTime(dateTime);
-        meetUp.setParticipants(participants);
+        meetUp.setParticipants(new HashSet<>(participants));
         meetUp.setStatus("PLANNED");
         return meetUp;
     }
