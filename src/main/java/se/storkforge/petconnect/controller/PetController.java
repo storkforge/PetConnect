@@ -18,7 +18,7 @@ import se.storkforge.petconnect.exception.PetNotFoundException;
 import se.storkforge.petconnect.service.PetFilter;
 import se.storkforge.petconnect.service.PetService;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 import java.util.Optional;
 
 @RestController
@@ -119,13 +119,25 @@ public class PetController {
         }
     }
 
-    @GetMapping(value = "/{id}/picture", produces = MediaType.IMAGE_JPEG_VALUE)
+    @GetMapping(value = "/{id}/picture")
     public ResponseEntity<Resource> getProfilePicture(
             @PathVariable Long id) {
         Resource resource = petService.getProfilePicture(id);
+        MediaType mediaType = determineMediaType(resource.getFilename());
         return ResponseEntity.ok()
-                .contentType(MediaType.IMAGE_JPEG)
+                .contentType(mediaType)
                 .body(resource);
+    }
+    private MediaType determineMediaType(String filename) {
+        if (filename == null) {
+            return MediaType.IMAGE_JPEG;
+        }
+        if (filename.endsWith(".png")) {
+            return MediaType.IMAGE_PNG;
+        } else if (filename.endsWith(".gif")) {
+            return MediaType.IMAGE_GIF;
+        }
+        return MediaType.IMAGE_JPEG;
     }
 
     @ExceptionHandler(PetNotFoundException.class)

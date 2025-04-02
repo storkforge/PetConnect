@@ -124,7 +124,7 @@ public class PetServiceTest {
 
         assertEquals(1, result.getContent().size());
         assertEquals("Dog", result.getContent().getFirst().getSpecies());
-        assertTrue(result.getContent().getFirst().isAvailable());
+        assertTrue(result.getContent().getFirst().isAvailable()); 
     }
 
 }

@@ -33,19 +33,16 @@ public class PetSpecification {
             if (filter.getMaxAge() != null) {
                 predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("age"), filter.getMaxAge()));
             }
-            if (predicates.isEmpty()) {
-                if (filter.getLocation() != null) {
-                    predicates.add(criteriaBuilder.equal(root.get("location"), filter.getLocation()));
-                }
-                if (filter.getNameContains() != null && !filter.getNameContains().trim().isEmpty()) {
-                    predicates.add(criteriaBuilder.like(
-                            criteriaBuilder.lower(root.get("name")),
-                            "%" + filter.getNameContains().toLowerCase() + "%"));
-                }
-                return criteriaBuilder.conjunction();
+
+            if (filter.getLocation() != null) {
+                predicates.add(criteriaBuilder.equal(root.get("location"), filter.getLocation()));
             }
 
-            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+            if (filter.getNameContains() != null) {
+                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("name")),
+                        "%" + filter.getNameContains().toLowerCase() + "%"));
+            }
+            return predicates.isEmpty() ? criteriaBuilder.conjunction() : criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
     }
 }

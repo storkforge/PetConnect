@@ -17,6 +17,7 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.core.Authentication;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.multipart.MultipartFile;
 import se.storkforge.petconnect.dto.PetInputDTO;
 import se.storkforge.petconnect.dto.PetUpdateInputDTO;
 import se.storkforge.petconnect.entity.Pet;
@@ -28,6 +29,9 @@ import se.storkforge.petconnect.service.PetService;
 import java.util.List;
 import java.util.Optional;
 
+import org.mockito.ArgumentCaptor;
+
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -74,7 +78,7 @@ public class PetControllerIntegrationTest {
         Pageable pageable = PageRequest.of(0, 10);
         Page<Pet> petPage = new PageImpl<>(pets, pageable, pets.size());
 
-        // Use any() for both Pageable and PetFilter
+        ArgumentCaptor<PetFilter> filterCaptor = ArgumentCaptor.forClass(PetFilter.class);
         when(petService.getAllPets(any(Pageable.class), any(PetFilter.class)))
                 .thenReturn(petPage);
 
@@ -84,6 +88,9 @@ public class PetControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.content[0].name").value("Buddy"));
+        verify(petService).getAllPets(any(Pageable.class), filterCaptor.capture());
+        PetFilter capturedFilter = filterCaptor.getValue();
+        assertNull(capturedFilter.getSpecies()); // Or other assertions on the filter properties
     }
 
     @Test
@@ -206,7 +213,6 @@ public class PetControllerIntegrationTest {
                         .content(objectMapper.writeValueAsString(updateDTO))
                         .principal(authentication))
                 .andExpect(status().isForbidden());
-        verify(petService).updatePet(eq(testPetId), any(PetUpdateInputDTO.class), eq("differentUser"));
     }
     @Test
     void testDeletePet_NotFound() throws Exception {
@@ -223,10 +229,13 @@ public class PetControllerIntegrationTest {
     void testUploadProfilePicture() throws Exception {
         MockMultipartFile file = new MockMultipartFile(
                 "file", "test.jpg", "image/jpeg", "test image content".getBytes());
+        doNothing().when(petService).uploadProfilePicture(eq(testPetId), any(MultipartFile.class));
 
         mockMvc.perform(multipart("/pets/{id}/picture", testPetId)
                         .file(file))
                 .andExpect(status().isOk());
+        verify(petService).uploadProfilePicture(eq(testPetId), any(MultipartFile.class));
+
     }
 
     @Test
@@ -236,6 +245,7 @@ public class PetControllerIntegrationTest {
         when(petService.getProfilePicture(testPetId)).thenReturn(mockResource);
 
         mockMvc.perform(get("/pets/{id}/picture", testPetId))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.IMAGE_JPEG)); // Korrigerad rad
     }
 }

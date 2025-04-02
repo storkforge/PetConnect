@@ -132,6 +132,14 @@ public class PetService {
         if (petInput.age() < 0) {  // Removed null check since age is primitive int
             throw new IllegalArgumentException("Pet age cannot be negative");
         }
+        if (petInput.location() != null && petInput.location().trim().isEmpty()) {
+            throw new IllegalArgumentException("Pet location cannot be empty if provided");
+        }
+        // If you have a predefined list of allowed species
+        // List<String> allowedSpecies = Arrays.asList("dog", "cat", "bird", "rabbit", "fish");
+        // if (!allowedSpecies.contains(petInput.species().toLowerCase())) {
+        //     throw new IllegalArgumentException("Invalid pet species: " + petInput.species());
+        // }
     }
 
     private void setPetOwner(Pet pet, Long ownerId, String currentUsername) {
