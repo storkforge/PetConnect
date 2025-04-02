@@ -136,10 +136,12 @@ public class PetService {
 
     private void setPetOwner(Pet pet, Long ownerId, String currentUsername) {
         if (ownerId != null) {
-            Optional<User> ownerOptional = Optional.ofNullable(userService.getUserById(ownerId));
-            User owner = ownerOptional.orElseThrow(() ->
-                    new IllegalArgumentException("Owner not found with ID: " + ownerId));
-
+            User owner;
+            try {
+                owner = userService.getUserById(ownerId);
+            } catch (Exception e) {
+                throw new SecurityException("Invalid owner reference");
+            }
             if (!owner.getUsername().equals(currentUsername)) {
                 throw new SecurityException("You can only create pets for yourself");
             }
@@ -196,6 +198,11 @@ public class PetService {
         User newOwner = newOwnerOptional.orElseThrow(() ->
                 new IllegalArgumentException("New owner not found with ID: " + newOwnerId));
 
+        // Ensure current user can only transfer to themselves
+         if (!newOwner.getUsername().equals(currentUsername)) {
+            throw new SecurityException("You can only transfer ownership to yourself");
+        }
+
         if (pet.getOwner() != null) {
             pet.getOwner().getPets().remove(pet);
         }
@@ -236,7 +243,12 @@ public class PetService {
                 .orElseThrow(() -> new PetNotFoundException("Pet with id " + id + " not found"));
 
         if (pet.getProfilePicturePath() != null) {
-            fileStorageService.delete(pet.getProfilePicturePath());
+            try {
+                fileStorageService.delete(pet.getProfilePicturePath());
+            } catch (RuntimeException e) {
+                // Log error but continue with new upload
+                logger.warn("Failed to delete old profile picture: {}", e.getMessage());
+            }
         }
 
         String filename = fileStorageService.store(file);

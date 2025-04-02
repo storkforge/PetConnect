@@ -74,7 +74,7 @@ public class PetControllerIntegrationTest {
         Pageable pageable = PageRequest.of(0, 10);
         Page<Pet> petPage = new PageImpl<>(pets, pageable, pets.size());
 
-        // Använd any() för både Pageable och PetFilter
+        // Use any() for both Pageable and PetFilter
         when(petService.getAllPets(any(Pageable.class), any(PetFilter.class)))
                 .thenReturn(petPage);
 
@@ -206,6 +206,7 @@ public class PetControllerIntegrationTest {
                         .content(objectMapper.writeValueAsString(updateDTO))
                         .principal(authentication))
                 .andExpect(status().isForbidden());
+        verify(petService).updatePet(eq(testPetId), any(PetUpdateInputDTO.class), eq("differentUser"));
     }
     @Test
     void testDeletePet_NotFound() throws Exception {
@@ -230,7 +231,7 @@ public class PetControllerIntegrationTest {
 
     @Test
     void testGetProfilePicture() throws Exception {
-        // Mocka endast det som behövs
+        // Mock only what's needed
         Resource mockResource = mock(Resource.class);
         when(petService.getProfilePicture(testPetId)).thenReturn(mockResource);
 

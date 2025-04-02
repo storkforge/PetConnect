@@ -106,8 +106,17 @@ public class PetController {
     public ResponseEntity<String> uploadProfilePicture(
             @PathVariable Long id,
             @RequestParam("file") MultipartFile file) {
-        petService.uploadProfilePicture(id, file);
-        return ResponseEntity.ok("Profile picture uploaded successfully");
+        try {
+            petService.uploadProfilePicture(id, file);
+            return ResponseEntity.ok("Profile picture uploaded successfully");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (PetNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("Failed to upload picture: " + e.getMessage());
+        }
     }
 
     @GetMapping(value = "/{id}/picture", produces = MediaType.IMAGE_JPEG_VALUE)

@@ -8,6 +8,12 @@ import java.util.List;
 
 public class PetSpecification {
 
+    /**
+     * Creates a JPA Specification for filtering Pet entities.
+     *
+     * @param filter the criteria to filter pets by
+     * @return a Specification that can be used with JpaSpecificationExecutor
+     */
     public static Specification<Pet> filterPets(PetFilter filter) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
@@ -26,6 +32,17 @@ public class PetSpecification {
 
             if (filter.getMaxAge() != null) {
                 predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("age"), filter.getMaxAge()));
+            }
+            if (predicates.isEmpty()) {
+                if (filter.getLocation() != null) {
+                    predicates.add(criteriaBuilder.equal(root.get("location"), filter.getLocation()));
+                }
+                if (filter.getNameContains() != null && !filter.getNameContains().trim().isEmpty()) {
+                    predicates.add(criteriaBuilder.like(
+                            criteriaBuilder.lower(root.get("name")),
+                            "%" + filter.getNameContains().toLowerCase() + "%"));
+                }
+                return criteriaBuilder.conjunction();
             }
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
