@@ -23,7 +23,9 @@ public class MeetUpService {
         if (start.isAfter(end)){
             throw new IllegalArgumentException("Start date most be before end date");
         }
-        return meetUpRepository.findByLocationContainingAndDateTimeBetween(location, start, end);
+        return meetUpRepository.findByLocationContaining(location). stream()
+                .filter(meetUp -> !meetUp.getDateTime().isBefore(start) && !meetUp.getDateTime().isAfter(end))
+                .collect(Collectors.toList());
     }
 
     public boolean isUserAvailable(User user, LocalDateTime dateTime) {
