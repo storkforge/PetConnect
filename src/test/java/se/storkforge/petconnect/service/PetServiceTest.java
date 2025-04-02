@@ -85,6 +85,12 @@ public class PetServiceTest {
 
         assertEquals(1, result.getContent().size());
         assertEquals("Dog", result.getContent().getFirst().getSpecies());
+
+        // Verify repository was called
+        verify(petRepository).findAll(
+                ArgumentMatchers.<Specification<Pet>>any(),
+                any(Pageable.class)
+        );
     }
 
     @Test
@@ -124,7 +130,30 @@ public class PetServiceTest {
 
         assertEquals(1, result.getContent().size());
         assertEquals("Dog", result.getContent().getFirst().getSpecies());
-        assertTrue(result.getContent().getFirst().isAvailable()); 
+        assertTrue(result.getContent().getFirst().isAvailable());
+
+        // Verify repository was called
+        verify(petRepository).findAll(
+                ArgumentMatchers.<Specification<Pet>>any(),
+                any(Pageable.class)
+        );
     }
 
+    @Test
+    void testPetFilterValidation() {
+        // Given
+        PetFilter filter = new PetFilter();
+        filter.setMinAge(5);
+        filter.setMaxAge(3);
+
+        // When/Then
+        assertThrows(IllegalArgumentException.class, filter::validate);
+
+        // Given valid values
+        filter.setMinAge(2);
+        filter.setMaxAge(5);
+
+        // When/Then (should not throw)
+        assertDoesNotThrow(filter::validate);
+    }
 }

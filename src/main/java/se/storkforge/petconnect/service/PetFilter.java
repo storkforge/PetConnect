@@ -1,15 +1,30 @@
 package se.storkforge.petconnect.service;
 
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Size;
+import java.util.Objects;
+
 /**
  * Filter criteria for searching pets.
  * Used in conjunction with PetSpecification to filter pets based on various attributes.
  */
 public class PetFilter {
+
+    @Size(max = 50)
     private String species;
+
     private Boolean available;
+
+    @Min(0)
     private Integer minAge;
+
+    @Min(0)
     private Integer maxAge;
+
+    @Size(max = 100)
     private String location;
+
+    @Size(max = 100)
     private String nameContains;
 
     /**
@@ -43,7 +58,7 @@ public class PetFilter {
      * @param species The species to set.
      */
     public void setSpecies(String species) {
-        this.species = species;
+        this.species = (species != null && !species.trim().isEmpty()) ? species.trim() : null;
     }
 
     /**
@@ -115,7 +130,7 @@ public class PetFilter {
      * @param location The location to set.
      */
     public void setLocation(String location) {
-        this.location = location;
+        this.location = (location != null && !location.trim().isEmpty()) ? location.trim() : null;
     }
 
     /**
@@ -133,7 +148,7 @@ public class PetFilter {
      * @param nameContains The nameContains filter to set.
      */
     public void setNameContains(String nameContains) {
-        this.nameContains = nameContains;
+        this.nameContains = (nameContains != null && !nameContains.trim().isEmpty()) ? nameContains.trim() : null;
     }
 
     /**
@@ -172,5 +187,23 @@ public class PetFilter {
                 ", location='" + location + '\'' +
                 ", nameContains='" + nameContains + '\'' +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        PetFilter petFilter = (PetFilter) o;
+        return Objects.equals(species, petFilter.species) &&
+                Objects.equals(available, petFilter.available) &&
+                Objects.equals(minAge, petFilter.minAge) &&
+                Objects.equals(maxAge, petFilter.maxAge) &&
+                Objects.equals(location, petFilter.location) &&
+                Objects.equals(nameContains, petFilter.nameContains);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(species, available, minAge, maxAge, location, nameContains);
     }
 }

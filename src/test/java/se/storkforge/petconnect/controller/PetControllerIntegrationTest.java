@@ -195,15 +195,8 @@ public class PetControllerIntegrationTest {
     void testUpdatePet_Unauthorized() throws Exception {
         when(authentication.getName()).thenReturn("differentUser");
 
-        // Create a proper PetUpdateInputDTO with all required fields
-        PetUpdateInputDTO updateDTO = new PetUpdateInputDTO(
-                null,  // name
-                null,  // species
-                null,  // available
-                null,  // age
-                null,  // ownerId
-                null   // location
-        );
+        PetUpdateInputDTO updateDTO = new PetUpdateInputDTO(null, null, null, null, null, null);
+
 
         when(petService.updatePet(eq(testPetId), any(PetUpdateInputDTO.class), eq("differentUser")))
                 .thenThrow(new SecurityException("Unauthorized"));
@@ -246,6 +239,6 @@ public class PetControllerIntegrationTest {
 
         mockMvc.perform(get("/pets/{id}/picture", testPetId))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.IMAGE_JPEG)); // Korrigerad rad
+                .andExpect(content().contentType(MediaType.IMAGE_JPEG)); // Corrected line
     }
 }

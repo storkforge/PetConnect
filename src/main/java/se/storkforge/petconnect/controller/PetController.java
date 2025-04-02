@@ -1,5 +1,6 @@
 package se.storkforge.petconnect.controller;
 
+import jakarta.validation.constraints.Min;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
@@ -27,7 +28,6 @@ public class PetController {
 
     private final PetService petService;
 
-    @Autowired
     public PetController(PetService petService) {
         this.petService = petService;
     }
@@ -38,8 +38,8 @@ public class PetController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String species,
             @RequestParam(required = false) Boolean available,
-            @RequestParam(required = false) Integer minAge,
-            @RequestParam(required = false) Integer maxAge,
+            @RequestParam(required = false) @Min(0) Integer minAge,
+            @RequestParam(required = false) @Min(0) Integer maxAge,
             @RequestParam(required = false) String location,
             @RequestParam(required = false) String name) {
 
@@ -71,14 +71,18 @@ public class PetController {
     public ResponseEntity<Pet> createPet(
             @Valid @RequestBody PetInputDTO petInput,
             Authentication authentication) {
-        String username = authentication.getName();
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(petService.createPet(petInput, username));
+        try {
+            String username = authentication.getName();
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(petService.createPet(petInput, username));
+        } catch (SecurityException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
     }
     @PutMapping("/{id}")
     public ResponseEntity<?> updatePet(
             @PathVariable Long id,
-            @RequestBody PetUpdateInputDTO petUpdate,
+            @Valid @RequestBody PetUpdateInputDTO petUpdate,
             Authentication authentication) {
         try {
             Pet updated = petService.updatePet(id, petUpdate, authentication.getName());
@@ -99,6 +103,8 @@ public class PetController {
             return ResponseEntity.noContent().build();
         } catch (PetNotFoundException e) {
             return ResponseEntity.notFound().build();
+        } catch (SecurityException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
     }
 

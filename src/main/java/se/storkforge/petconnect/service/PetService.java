@@ -99,7 +99,7 @@ public class PetService {
     public Optional<Pet> getPetById(Long id) {
         logger.info("Retrieving pet by ID: {}", id);
         if (id == null || id <= 0) {
-            throw new IllegalArgumentException("Invalid pet ID");
+            throw new IllegalArgumentException("Invalid pet ID: ID must be positive and non-null");
         }
         return petRepository.findById(id);
     }
