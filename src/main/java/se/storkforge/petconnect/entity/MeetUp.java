@@ -1,11 +1,14 @@
 package se.storkforge.petconnect.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import org.hibernate.proxy.HibernateProxy;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 @Entity
 public class MeetUp {
@@ -16,9 +19,15 @@ public class MeetUp {
     private String location;
     private LocalDateTime dateTime;
 
-    @ManyToMany
-    private List<User> participants;
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "user_meetup",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
+    private Set<User> participants = new HashSet<>();
 
+    @NotNull(message = "Status is required")
     private String status; // "PLANNED", "CONFIRMED", "CANCELED"
 
     public Long getId() {
@@ -45,11 +54,11 @@ public class MeetUp {
         this.dateTime = dateTime;
     }
 
-    public List<User> getParticipants() {
+    public Set<User> getParticipants() {
         return participants;
     }
 
-    public void setParticipants(List<User> participants) {
+    public void setParticipants(Set<User> participants) {
         this.participants = participants;
     }
 
