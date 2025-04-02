@@ -1,4 +1,4 @@
-package se.storkforge.petconnect.service;
+package se.storkforge.petconnect.service.storageService;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,13 +44,12 @@ public class FileStorageService {
 
     }
 
-    public String store(MultipartFile file, String dir) {
+    public String store(MultipartFile file, String dir, long maxFileSize, List<String> allowedTypes ) {
         try{
             Files.createDirectories(root.resolve(dir));
         } catch (IOException e) {
             throw new RuntimeException("Unable to create directory", e);
         }
-
         try {
             //Validation
             if (file.isEmpty()) {
@@ -70,7 +69,7 @@ public class FileStorageService {
             String filename = generateFileName(contentType);
 
             //Save file
-            Path destination = this.root.resolve(Paths.get(filename)).normalize().toAbsolutePath();
+            Path destination = this.root.resolve(dir + Paths.get(filename)).normalize().toAbsolutePath();
             if (!destination.startsWith(this.root.toAbsolutePath())) {
                  throw new RuntimeException("Invalid path outside upload directory.");
             }

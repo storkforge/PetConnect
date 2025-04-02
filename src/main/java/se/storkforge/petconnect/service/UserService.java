@@ -10,6 +10,8 @@ import org.springframework.web.multipart.MultipartFile;
 import se.storkforge.petconnect.entity.User;
 import se.storkforge.petconnect.exception.UserNotFoundException;
 import se.storkforge.petconnect.repository.UserRepository;
+import se.storkforge.petconnect.service.storageService.FileStorageService;
+import se.storkforge.petconnect.service.storageService.ImageStorageService;
 
 import java.util.List;
 import java.util.Optional;
@@ -19,13 +21,13 @@ import java.util.regex.Pattern;
 @Service
 @Transactional
 public class UserService {
-    private final FileStorageService fileStorageService;
+    private final ImageStorageService fileStorageService;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private static final String EMAIL_REGEX = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
     private final Pattern emailPattern = Pattern.compile(EMAIL_REGEX);
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, FileStorageService fileStorageService) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, ImageStorageService fileStorageService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.fileStorageService = fileStorageService;
