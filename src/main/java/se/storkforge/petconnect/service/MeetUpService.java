@@ -8,6 +8,7 @@ import se.storkforge.petconnect.entity.User;
 import se.storkforge.petconnect.repository.MeetUpRepository;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -53,7 +54,7 @@ public class MeetUpService {
         MeetUp meetUp = new MeetUp();
         meetUp.setLocation(location);
         meetUp.setDateTime(dateTime);
-        meetUp.setParticipants(participants);
+        meetUp.setParticipants(new HashSet<>(participants));
         meetUp.setStatus("PLANNED");
 
         return meetUpRepository.save(meetUp);
