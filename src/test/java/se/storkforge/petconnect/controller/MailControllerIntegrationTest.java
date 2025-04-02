@@ -37,14 +37,14 @@ class MailControllerIntegrationTest {
 
     @Test
     void testSendMailEndpoint() throws Exception {
-        doNothing().when(mailService).sendMeetUpNotification(anyString(), anyString(), anyString());
+        doNothing().when(mailService).sendMeetUpNotification(eq("text@example.com"), anyString(), anyString());
 
         mockMvc.perform(get("/mail/send")
                 .param("to", "text@example.com"))
                 .andExpect(status().isOk())
                 .andExpect(content().string("Mail sent to text@example.com"));
 
-        verify(mailService, times(1)).sendMeetUpNotification(anyString(), anyString(), anyString());
+        verify(mailService, times(1)).sendMeetUpNotification(eq("text@example.com"), anyString(), anyString());
     }
 
 }

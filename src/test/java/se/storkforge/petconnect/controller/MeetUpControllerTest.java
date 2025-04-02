@@ -60,7 +60,7 @@ class MeetUpControllerIntegrationTest {
     @Test
     public void testSearchMeetUpsEndPoint() throws Exception {
         List<MeetUp> meetUps = Arrays.asList(testMeetUp);
-        when(meetUpService.searchMeetUps(anyString(), any(LocalDateTime.class), any(LocalDateTime.class)))
+        when(meetUpService.searchMeetUps(eq("Test Location"), any(LocalDateTime.class), any(LocalDateTime.class)))
                 .thenReturn(meetUps);
         mockMvc.perform(get("/meetups/search")
                 .param("location", "Test Location")
@@ -72,7 +72,7 @@ class MeetUpControllerIntegrationTest {
                 .andExpect(jsonPath("$[0].location").value("Test Location"));
 
         verify(meetUpService, times(1))
-                .searchMeetUps(anyString(), any(LocalDateTime.class), any(LocalDateTime.class));
+                .searchMeetUps(eq("Test Location"), any(LocalDateTime.class), any(LocalDateTime.class));
 
     }
 }

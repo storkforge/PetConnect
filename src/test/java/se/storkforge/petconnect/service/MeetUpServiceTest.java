@@ -41,15 +41,22 @@ class MeetUpServiceTest {
     @Test
     void searchMeetUps_validCriteria_shouldReturnMeetUps() {
         // Arrange
-        List<MeetUp> meetUps = Arrays.asList(createMeetUp("location", LocalDateTime.now().plusDays(1), new ArrayList<>()));
-        when(meetUpRepository.findByLocationContaining(anyString())).thenReturn(meetUps);
+        LocalDateTime inRangeDate = LocalDateTime.now().plusDays(1);
+        LocalDateTime outOfRangeDate = LocalDateTime.now().plusDays(5);
+        MeetUp inRangeMeetUp = createMeetUp("location", inRangeDate, new ArrayList<>());
+        MeetUp outOfRangeMeetUp = createMeetUp("location", outOfRangeDate, new ArrayList<>());
+        List<MeetUp> allMeetUps = Arrays.asList(inRangeMeetUp, outOfRangeMeetUp);
+        when(meetUpRepository.findByLocationContaining(anyString())).thenReturn(allMeetUps);
 
         // Act
-        List<MeetUp> result = meetUpService.searchMeetUps("location", LocalDateTime.now().minusDays(1), LocalDateTime.now().plusDays(2));
+        LocalDateTime startDate = LocalDateTime.now().minusDays(1);
+        LocalDateTime endDate = LocalDateTime.now().plusDays(2);
+        List<MeetUp> result = meetUpService.searchMeetUps("location", startDate, endDate);
 
         // Assert
         assertNotNull(result);
-        assertFalse(result.isEmpty());
+        assertEquals(1, result.size());
+        assertEquals(inRangeDate, result.get(0).getDateTime());
     }
 
     @Test
@@ -63,6 +70,20 @@ class MeetUpServiceTest {
 
         // Assert
         assertTrue(result);
+    }
+
+    @Test
+    void isUserAvailable_userNotAvailable_shouldReturnFalse() {
+        User user = new User();
+        HashSet<MeetUp> existingMeetUps = new HashSet<>();
+        LocalDateTime meetUpTime = LocalDateTime.now();
+        MeetUp existingMeetUp = createMeetUp("Test location", meetUpTime, new ArrayList<>());
+        existingMeetUps.add(existingMeetUp);
+        user.setMeetUps(existingMeetUps);
+
+        boolean result = meetUpService.isUserAvailable(user, meetUpTime);
+
+        assertFalse(result);
     }
 
     @Test
