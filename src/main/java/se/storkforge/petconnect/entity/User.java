@@ -11,7 +11,6 @@ import jakarta.validation.constraints.*;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 @Entity(name = "user_table")
 public class User {
@@ -93,9 +92,6 @@ public class User {
         this.meetUps = meetUps;
     }
     public String getProfilePicturePath() { return profilePicturePath; }
-    public String getProfilePicturePath() {
-        return profilePicturePath;
-    }
 
     public void setProfilePicturePath(String profilePicturePath) {
         this.profilePicturePath = profilePicturePath;
