@@ -1,11 +1,10 @@
 package se.storkforge.petconnect.controller;
 
+import jakarta.validation.constraints.Email;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import se.storkforge.petconnect.service.MailService;
 
 @RestController
@@ -15,9 +14,19 @@ public class MailController {
     @Autowired
     private MailService mailService;
 
-    @GetMapping("/send")
-    public ResponseEntity<String> sendMail(@RequestParam String to) {
-        mailService.sendMeetUpNotification(to, "MeetUp Reminder", "Don't forget the meet-up!");
-        return ResponseEntity.ok("Mail sent to " + to);
+    @PostMapping("/send")
+    public ResponseEntity<String> sendMail(
+            @RequestParam @Email String to,
+            @RequestParam(defaultValue = "MeetUp Reminder") String subject,
+            @RequestParam(defaultValue = "Don't forget the meet-up!") String content) {
+        try {
+            mailService.sendMeetUpNotification(to, subject, content);
+            return ResponseEntity.ok("Mail sent to " + to);
+        }catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to send email: " + e.getMessage());
+        }
+
+
     }
 }
