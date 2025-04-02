@@ -129,6 +129,8 @@ public class UserService {
         return !matcher.matches();
     }
 
+
+
     public void uploadProfilePicture(Long id, MultipartFile file) {
         if (file == null) {
             throw new IllegalArgumentException("File cannot be null");
@@ -160,4 +162,3 @@ public class UserService {
         return fileStorageService.loadFile(filename);
     }
 }
-
