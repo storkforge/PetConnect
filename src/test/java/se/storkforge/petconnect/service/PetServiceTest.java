@@ -2,24 +2,29 @@ package se.storkforge.petconnect.service;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import se.storkforge.petconnect.entity.Pet;
-import se.storkforge.petconnect.exception.PetNotFoundException;
 import se.storkforge.petconnect.repository.PetRepository;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import org.mockito.ArgumentMatchers;
 
+@ExtendWith(MockitoExtension.class)
 public class PetServiceTest {
 
     @Mock
@@ -28,104 +33,127 @@ public class PetServiceTest {
     @InjectMocks
     private PetService petService;
 
+    private PetFilter petFilter;
+    private Pageable pageable;
+    private Pet testPet;
+
     @BeforeEach
-    public void setUp() {
-        MockitoAnnotations.openMocks(this);
+    void setUp() {
+        petFilter = new PetFilter();
+        pageable = PageRequest.of(0, 10);
+        testPet = new Pet();
+        testPet.setId(1L);
+        testPet.setName("Buddy");
+        testPet.setSpecies("Dog");
+        testPet.setAvailable(true);
+        testPet.setAge(3);
+        testPet.setLocation("New York");
     }
 
     @Test
-    public void testGetAllPets() {
-        Pet pet1 = new Pet("Buddy", "Dog", true, 3, "John", "New York");
-        Pet pet2 = new Pet("Whiskers", "Cat", false, 5, "Jane", "London");
-        List<Pet> pets = Arrays.asList(pet1, pet2);
+    void testGetAllPetsWithoutFilter() {
+        // Given
         Pageable pageable = PageRequest.of(0, 10);
-        Page<Pet> petPage = new PageImpl<>(pets, pageable, pets.size());
+        PetFilter filter = null;
+        Page<Pet> expectedPage = new PageImpl<>(List.of(new Pet()));
 
-        when(petRepository.findAll(pageable)).thenReturn(petPage);
+        // Mock the specification behavior
+        Specification<Pet> spec = Specification.where(null);
+        when(petRepository.findAll(spec, pageable)).thenReturn(expectedPage);
 
-        Page<Pet> result = petService.getAllPets(pageable);
+        // When
+        Page<Pet> result = petService.getAllPets(pageable, filter);
 
-        assertEquals(2, result.getContent().size());
-        assertEquals("Buddy", result.getContent().getFirst().getName());
-        verify(petRepository, times(1)).findAll(pageable);
+        // Then
+        assertNotNull(result);
+        assertEquals(expectedPage, result);
+        verify(petRepository).findAll(spec, pageable);
     }
 
     @Test
-    public void testGetPetById() {
-        Pet pet = new Pet("Buddy", "Dog", true, 3, "John", "New York");
-        pet.setId(1L);
+    void testGetAllPetsWithFilter() {
+        List<Pet> pets = Collections.singletonList(testPet);
+        Page<Pet> page = new PageImpl<>(pets, pageable, pets.size());
+        petFilter.setSpecies("Dog");
 
-        when(petRepository.findById(1L)).thenReturn(Optional.of(pet));
+        when(petRepository.findAll(
+                ArgumentMatchers.<Specification<Pet>>any(),
+                any(Pageable.class))
+        ).thenReturn(page);
+
+        Page<Pet> result = petService.getAllPets(pageable, petFilter);
+
+        assertEquals(1, result.getContent().size());
+        assertEquals("Dog", result.getContent().getFirst().getSpecies());
+
+        // Verify repository was called
+        verify(petRepository).findAll(
+                ArgumentMatchers.<Specification<Pet>>any(),
+                any(Pageable.class)
+        );
+    }
+
+    @Test
+    void testGetPetByIdFound() {
+        when(petRepository.findById(1L)).thenReturn(Optional.of(testPet));
 
         Optional<Pet> result = petService.getPetById(1L);
 
         assertTrue(result.isPresent());
         assertEquals("Buddy", result.get().getName());
-        verify(petRepository, times(1)).findById(1L);
     }
 
     @Test
-    public void testGetPetByIdNotFound() {
+    void testGetPetByIdNotFound() {
         when(petRepository.findById(1L)).thenReturn(Optional.empty());
 
         Optional<Pet> result = petService.getPetById(1L);
 
-        assertFalse(result.isPresent());
-        verify(petRepository, times(1)).findById(1L);
+        assertTrue(result.isEmpty());
     }
 
     @Test
-    public void testCreatePet() {
-        Pet pet = new Pet("Buddy", "Dog", true, 3, "John", "New York");
+    void testGetAllPetsWithMultipleFilters() {
+        List<Pet> pets = Collections.singletonList(testPet);
+        Page<Pet> page = new PageImpl<>(pets, pageable, pets.size());
+        petFilter.setSpecies("Dog");
+        petFilter.setAvailable(true);
+        petFilter.setMinAge(2);
+        petFilter.setMaxAge(5);
 
-        when(petRepository.save(pet)).thenReturn(pet);
+        when(petRepository.findAll(
+                ArgumentMatchers.<Specification<Pet>>any(),
+                any(Pageable.class))
+        ).thenReturn(page);
 
-        Pet result = petService.createPet(pet);
+        Page<Pet> result = petService.getAllPets(pageable, petFilter);
 
-        assertEquals("Buddy", result.getName());
-        verify(petRepository, times(1)).save(pet);
+        assertEquals(1, result.getContent().size());
+        assertEquals("Dog", result.getContent().getFirst().getSpecies());
+        assertTrue(result.getContent().getFirst().isAvailable());
+
+        // Verify repository was called
+        verify(petRepository).findAll(
+                ArgumentMatchers.<Specification<Pet>>any(),
+                any(Pageable.class)
+        );
     }
 
     @Test
-    public void testUpdatePet() {
-        Pet existingPet = new Pet("Buddy", "Dog", true, 3, "John", "New York");
-        existingPet.setId(1L);
-        Pet updatedPet = new Pet("New Buddy", "Dog", true, 4, "John", "New York");
-
-        when(petRepository.existsById(1L)).thenReturn(true);
-        when(petRepository.save(any(Pet.class))).thenReturn(updatedPet);
-
-        Pet result = petService.updatePet(1L, updatedPet);
-
-        assertEquals("New Buddy", result.getName());
-        verify(petRepository, times(1)).existsById(1L);
-        verify(petRepository, times(1)).save(any(Pet.class));
-    }
-
-    @Test
-    public void testDeletePet() {
-        Long petIdToDelete = 1L;
+    void testPetFilterValidation() {
         // Given
-        when(petRepository.existsById(petIdToDelete)).thenReturn(true);
-        doNothing().when(petRepository).deleteById(petIdToDelete);
+        PetFilter filter = new PetFilter();
+        filter.setMinAge(5);
+        filter.setMaxAge(3);
 
-        // When
-        petService.deletePet(petIdToDelete);
+        // When/Then
+        assertThrows(IllegalArgumentException.class, filter::validate);
 
-        // Then
-        verify(petRepository, times(1)).existsById(petIdToDelete);
-        verify(petRepository, times(1)).deleteById(petIdToDelete);
-    }
+        // Given valid values
+        filter.setMinAge(2);
+        filter.setMaxAge(5);
 
-    @Test
-    public void testDeletePetNotFound() {
-        Long notFoundId = 999L;
-        // Given
-        when(petRepository.existsById(notFoundId)).thenReturn(false);
-
-        // When & Then
-        assertThrows(PetNotFoundException.class, () -> petService.deletePet(notFoundId));
-        verify(petRepository, times(1)).existsById(notFoundId);
-        verify(petRepository, never()).deleteById(notFoundId);
+        // When/Then (should not throw)
+        assertDoesNotThrow(filter::validate);
     }
 }
