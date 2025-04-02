@@ -1,14 +1,40 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
+    <meta charset="UTF-8">
     <title th:text="${pageTitle}">PetConnect</title>
-    <th:block th:replace="fragments/header :: title"></th:block>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-<th:block th:replace="fragments/header :: header"></th:block>
+<body class="bg-gray-100 text-gray-800 min-h-screen flex flex-col">
 
-<main th:replace="${content}">Content goes here</main>
+<!-- Optional banner -->
+<div class="bg-blue-500 text-white p-4 text-center">
+    Tailwind is working!
+</div>
 
-<th:block th:replace="fragments/footer :: footer"></th:block>
+<!-- Header -->
+<header class="bg-white shadow p-4">
+    <div class="container mx-auto flex justify-between items-center">
+        <h1 class="text-2xl font-bold">🐾 PetConnect</h1>
+        <nav class="space-x-4">
+            <a href="/home" class="text-blue-600 hover:underline">Home</a>
+            <a href="/pets" class="text-blue-600 hover:underline">Pets</a>
+            <a href="/profile" class="text-blue-600 hover:underline">Profile</a>
+        </nav>
+    </div>
+</header>
+
+<!-- Main Content -->
+<main class="container mx-auto p-8 flex-grow" th:replace="~{index :: content}">
+    Content goes here.
+</main>
+
+<!-- Footer -->
+<footer class="bg-white shadow p-4 mt-8">
+    <div class="container mx-auto text-center text-sm text-gray-500">
+        &copy; 2025 PetConnect. All rights reserved.
+    </div>
+</footer>
+
 </body>
 </html>

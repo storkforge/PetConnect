@@ -5,11 +5,13 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.MutationMapping;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import se.storkforge.petconnect.dto.PetInputDTO;
 import se.storkforge.petconnect.dto.PetUpdateInputDTO;
 import se.storkforge.petconnect.entity.Pet;
 import se.storkforge.petconnect.exception.PetNotFoundException;
+import se.storkforge.petconnect.service.PetFilter;
 import se.storkforge.petconnect.service.PetService;
 
 @Controller
@@ -22,8 +24,13 @@ public class PetGraphQLController {
     }
 
     @QueryMapping
-    public Page<Pet> getAllPets(@Argument int page, @Argument int size) {
-        return petService.getAllPets(PageRequest.of(page, size));
+    public Page<Pet> getAllPets(@Argument int page, @Argument int size, @Argument("filter") PetFilter filter) {
+        return petService.getAllPets(PageRequest.of(page, size), filter);
+    }
+
+    @QueryMapping
+    public java.util.List<Pet> getPetsByFilter(@Argument("filter") PetFilter filter) {
+        return petService.getPetsByFilter(filter);
     }
 
     @QueryMapping
@@ -33,52 +40,18 @@ public class PetGraphQLController {
     }
 
     @MutationMapping
-    public Pet createPet(@Argument("pet") PetInputDTO petInput) {
-        Pet pet = new Pet();
-        pet.setName(petInput.name());
-        pet.setSpecies(petInput.species());
-        pet.setAvailable(petInput.available());
-        pet.setAge(petInput.age());
-        pet.setOwner(petInput.owner());
-        pet.setLocation(petInput.location());
-        return petService.createPet(pet);
+    public Pet createPet(@Argument("pet") PetInputDTO petInput, Authentication authentication) {
+        return petService.createPet(petInput, authentication.getName());
     }
+
     @MutationMapping
-    public Pet updatePet(@Argument Long id, @Argument("pet") PetUpdateInputDTO petInput) {
-        Pet existingPet = petService.getPetById(id)
-                .orElseThrow(() -> new PetNotFoundException("Pet not found with id: " + id));
-
-         updateNonNullFields(existingPet, petInput);
-
-        return petService.updatePet(id, existingPet);
+    public Pet updatePet(@Argument Long id, @Argument("pet") PetUpdateInputDTO petInput, Authentication authentication) {
+        return petService.updatePet(id, petInput, authentication.getName());
     }
-private void updateNonNullFields(Pet existingPet, PetUpdateInputDTO petInput) {
-     if (petInput.name() != null) {
-         existingPet.setName(petInput.name());
-     }
-     if (petInput.species() != null) {
-         existingPet.setSpecies(petInput.species());
-     }
-    if (petInput.available() != null) {
-         existingPet.setAvailable(petInput.available());
-     }
-     if (petInput.age() != null) {
-         existingPet.setAge(petInput.age());
-     }
-    if (petInput.owner() != null) {
-         existingPet.setOwner(petInput.owner());
-     }
-     if (petInput.location() != null) {
-         existingPet.setLocation(petInput.location());
-     }
- }
-    @MutationMapping
-    public Boolean deletePet(@Argument Long id) {
-          // Check if pet exists first
-            petService.getPetById(id)
-                    .orElseThrow(() -> new PetNotFoundException("Pet not found with id: " + id));
 
-                petService.deletePet(id);
+    @MutationMapping
+    public Boolean deletePet(@Argument Long id, Authentication authentication) {
+        petService.deletePet(id, authentication.getName());
         return true;
     }
 }

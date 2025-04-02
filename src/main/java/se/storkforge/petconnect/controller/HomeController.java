@@ -9,8 +9,14 @@ public class HomeController {
 
     @GetMapping("/home")
     public String home(Model model) {
-        model.addAttribute("content", "index :: content"); // refers to the fragment inside index.html
         model.addAttribute("pageTitle", "Home");
-        return "layout"; // layout.html is the shell, index.html provides the inner content
+        model.addAttribute("content", "index :: content");
+        return "layout";
+    }
+
+    @GetMapping("/")
+    public String index(Model model) {
+        model.addAttribute("pageTitle", "Welcome");
+        return "layout"; // layout.html will include the fragment from index.html
     }
 }
