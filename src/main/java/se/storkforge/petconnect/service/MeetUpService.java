@@ -17,22 +17,38 @@ public class MeetUpService {
     private MeetUpRepository meetUpRepository;
 
     public List<MeetUp> searchMeetUps(String location, LocalDateTime start, LocalDateTime end) {
-        return meetUpRepository.findByLocationContaining(location)
-                .stream()
-                .filter(meetUp -> meetUp.getDateTime().isAfter(start) && meetUp.getDateTime().isBefore(end))
-                .collect(Collectors.toList());
+        if (location == null || start == null || end == null)
+            throw new IllegalArgumentException("Location, start date and end date cannot be null");
+        if (start.isAfter(end)){
+            throw new IllegalArgumentException("Start date most be before end date");
+        }
+        return meetUpRepository.findByLocationContainingAndDateTimeBetween(location, start, end);
     }
 
     public boolean isUserAvailable(User user, LocalDateTime dateTime) {
+        if (user == null || dateTime == null)
+            throw new IllegalArgumentException("User and dateTime cannot be null");
+
+        LocalDateTime startWindow = dateTime.minusMinutes(30);
+        LocalDateTime endWindow = dateTime.plusMinutes(30);
         return user.getMeetUps().stream()
-                .noneMatch(meetUp -> meetUp.getDateTime().equals(dateTime));
+                .noneMatch(meetUp -> {
+                    LocalDateTime meetupTime = meetUp.getDateTime();
+                    return !meetupTime.isBefore(startWindow) && !meetupTime.isAfter(endWindow);
+                });
     }
 
     @Transactional
     public MeetUp planMeetUp(String location, LocalDateTime dateTime, List<User> participants) {
-        if (participants.stream().anyMatch(user -> !isUserAvailable(user, dateTime))) {
+        if (location == null || location.trim().isEmpty())
+            throw new IllegalArgumentException("Location cannot be null or empty");
+        if (dateTime == null)
+            throw new IllegalArgumentException("Date time cannot be null");
+        if (participants == null || participants.isEmpty())
+            throw new IllegalArgumentException("Participants cannot be null or empty");
+        if (participants.stream().anyMatch(user -> !isUserAvailable(user, dateTime)))
             throw new IllegalStateException("Some users are not available at this time.");
-        }
+
 
         MeetUp meetUp = new MeetUp();
         meetUp.setLocation(location);
