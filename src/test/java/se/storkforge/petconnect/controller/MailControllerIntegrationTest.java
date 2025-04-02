@@ -15,6 +15,7 @@ import se.storkforge.petconnect.service.MailService;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -39,7 +40,7 @@ class MailControllerIntegrationTest {
     void testSendMailEndpoint() throws Exception {
         doNothing().when(mailService).sendMeetUpNotification(eq("text@example.com"), anyString(), anyString());
 
-        mockMvc.perform(get("/mail/send")
+        mockMvc.perform(post("/mail/send")
                 .param("to", "text@example.com"))
                 .andExpect(status().isOk())
                 .andExpect(content().string("Mail sent to text@example.com"));
