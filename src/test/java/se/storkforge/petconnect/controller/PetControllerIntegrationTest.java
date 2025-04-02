@@ -91,6 +91,11 @@ public class PetControllerIntegrationTest {
         verify(petService).getAllPets(any(Pageable.class), filterCaptor.capture());
         PetFilter capturedFilter = filterCaptor.getValue();
         assertNull(capturedFilter.getSpecies()); // Or other assertions on the filter properties
+        assertNull(capturedFilter.getAvailable());
+        assertNull(capturedFilter.getMinAge());
+        assertNull(capturedFilter.getMaxAge());
+        assertNull(capturedFilter.getLocation());
+        assertNull(capturedFilter.getNameContains());
     }
 
     @Test
@@ -235,10 +240,11 @@ public class PetControllerIntegrationTest {
     void testGetProfilePicture() throws Exception {
         // Mock only what's needed
         Resource mockResource = mock(Resource.class);
+        when(mockResource.getFilename()).thenReturn("test.png");
         when(petService.getProfilePicture(testPetId)).thenReturn(mockResource);
 
         mockMvc.perform(get("/pets/{id}/picture", testPetId))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.IMAGE_JPEG)); // Corrected line
+                .andExpect(content().contentType(MediaType.IMAGE_PNG));
     }
 }

@@ -41,7 +41,7 @@ public class PetController {
             @RequestParam(required = false) @Min(0) Integer minAge,
             @RequestParam(required = false) @Min(0) Integer maxAge,
             @RequestParam(required = false) String location,
-            @RequestParam(required = false) String name) {
+            @RequestParam(required = false) String nameContains) {
 
         Pageable pageable = PageRequest.of(page, size);
         PetFilter filter = new PetFilter();
@@ -50,7 +50,7 @@ public class PetController {
         filter.setMinAge(minAge);
         filter.setMaxAge(maxAge);
         filter.setLocation(location);
-        filter.setNameContains(name);
+        filter.setNameContains(nameContains);
 
         Page<Pet> pets = petService.getAllPets(pageable, filter);
         return new ResponseEntity<>(pets, HttpStatus.OK);
@@ -138,9 +138,9 @@ public class PetController {
         if (filename == null) {
             return MediaType.IMAGE_JPEG;
         }
-        if (filename.endsWith(".png")) {
+        if (filename.toLowerCase().endsWith(".png")) {
             return MediaType.IMAGE_PNG;
-        } else if (filename.endsWith(".gif")) {
+        } else if (filename.toLowerCase().endsWith(".gif")) {
             return MediaType.IMAGE_GIF;
         }
         return MediaType.IMAGE_JPEG;

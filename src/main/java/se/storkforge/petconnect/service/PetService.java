@@ -16,6 +16,8 @@ import se.storkforge.petconnect.entity.Pet;
 import se.storkforge.petconnect.entity.User;
 import se.storkforge.petconnect.exception.PetNotFoundException;
 import se.storkforge.petconnect.repository.PetRepository;
+
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,7 +30,7 @@ public class PetService {
     private final FileStorageService fileStorageService;
     private final UserService userService;
 
-    @Autowired
+
     public PetService(PetRepository petRepository,
                       FileStorageService fileStorageService,
                       UserService userService) {
@@ -135,11 +137,11 @@ public class PetService {
         if (petInput.location() != null && petInput.location().trim().isEmpty()) {
             throw new IllegalArgumentException("Pet location cannot be empty if provided");
         }
-        // If you have a predefined list of allowed species
-        // List<String> allowedSpecies = Arrays.asList("dog", "cat", "bird", "rabbit", "fish");
-        // if (!allowedSpecies.contains(petInput.species().toLowerCase())) {
-        //     throw new IllegalArgumentException("Invalid pet species: " + petInput.species());
-        // }
+        // Validate against allowed species
+        List<String> allowedSpecies = Arrays.asList("dog", "cat", "bird", "rabbit", "fish");
+        if (!allowedSpecies.contains(petInput.species().toLowerCase())) {
+            throw new IllegalArgumentException("Invalid pet species: " + petInput.species());
+        }
     }
 
     private void setPetOwner(Pet pet, Long ownerId, String currentUsername) {
@@ -202,9 +204,7 @@ public class PetService {
     }
 
     private void updatePetOwner(Pet pet, Long newOwnerId, String currentUsername) {
-        Optional<User> newOwnerOptional = Optional.ofNullable(userService.getUserById(newOwnerId));
-        User newOwner = newOwnerOptional.orElseThrow(() ->
-                new IllegalArgumentException("New owner not found with ID: " + newOwnerId));
+        User newOwner = userService.getUserById(newOwnerId);
 
         // Ensure current user can only transfer to themselves
          if (!newOwner.getUsername().equals(currentUsername)) {
