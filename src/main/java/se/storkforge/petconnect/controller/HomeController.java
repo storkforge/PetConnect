@@ -19,4 +19,13 @@ public class HomeController {
         model.addAttribute("pageTitle", "Welcome");
         return "layout"; // layout.html will include the fragment from index.html
     }
+
+    @Controller
+    public class AuthController {
+
+        @GetMapping("/login")
+        public String loginPage() {
+            return "login"; // This maps to login.html in templates
+        }
+    }
 }

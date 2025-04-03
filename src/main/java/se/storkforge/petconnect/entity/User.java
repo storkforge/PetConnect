@@ -3,9 +3,7 @@ package se.storkforge.petconnect.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 @Entity(name = "user_table")
 public class User {
@@ -30,6 +28,18 @@ public class User {
 
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Pet> pets = new ArrayList<>();
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @Enumerated(EnumType.STRING)
+    private Set<Role> roles = new HashSet<>();
+
+    public Set<Role> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(Set<Role> roles) {
+        this.roles = roles;
+    }
 
     public User() {
     }
@@ -119,4 +129,16 @@ public class User {
                 ", email='" + email + '\'' +
                 '}';
     }
+
+    public enum Role {
+        USER,
+        PREMIUM,
+        Catloaf,
+        MODERATOR,
+        ADMIN
+    }
+
+
+
+
 }
