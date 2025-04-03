@@ -2,6 +2,10 @@ package se.storkforge.petconnect.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
+import se.storkforge.petconnect.entity.Role;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.JoinColumn;
 
 import java.util.*;
 
@@ -29,9 +33,14 @@ public class User {
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Pet> pets = new ArrayList<>();
 
-    @ElementCollection(fetch = FetchType.EAGER)
-    @Enumerated(EnumType.STRING)
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "user_roles",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
     private Set<Role> roles = new HashSet<>();
+
 
     public Set<Role> getRoles() {
         return roles;
@@ -130,15 +139,25 @@ public class User {
                 '}';
     }
 
-    public enum Role {
-        USER,
-        PREMIUM,
-        Catloaf,
-        MODERATOR,
-        ADMIN
+    // helper method to check if the user has a specific role
+    public boolean hasRole(String roleName) {
+        return roles.stream()
+                .anyMatch(role -> role.getName().equalsIgnoreCase(roleName));
     }
 
+    // helper method to check if the user has any of the specified roles
+    public boolean hasAnyRole(String... roleNames) {
+        return Arrays.stream(roleNames)
+                .anyMatch(this::hasRole);
+    }
 
-
+    // helper methods to check for specific roles
+    public boolean isAdmin() {
+        return hasRole("ROLE_ADMIN");
+    }
+    // helper method to check if the user is a regular user
+    public boolean isPremium() {
+        return hasRole("ROLE_PREMIUM");
+    }
 
 }
