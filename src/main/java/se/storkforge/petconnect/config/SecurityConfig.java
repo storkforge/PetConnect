@@ -35,10 +35,19 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/graphql").permitAll() // Adjust as needed
+                        .requestMatchers("/", "/login", "/register", "/css/**", "/js/**", "/images/**", "/graphql").permitAll()
+                        .requestMatchers("/premium/**").hasRole("PREMIUM")
+                        .requestMatchers("/user-profile/**").hasAnyRole("USER", "PREMIUM")
                         .anyRequest().authenticated()
                 )
-                .formLogin(Customizer.withDefaults())
+                .formLogin(form -> form
+                        .loginPage("/login") // setting this up later
+                        .permitAll()
+                )
+                .logout(logout -> logout
+                        .logoutSuccessUrl("/")
+                        .permitAll()
+                )
                 .httpBasic(Customizer.withDefaults());
 
         return http.build();
@@ -52,4 +61,8 @@ public class SecurityConfig {
         }
         return null;
     }
+
+
+
+
 }
