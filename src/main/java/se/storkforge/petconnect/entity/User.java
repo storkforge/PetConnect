@@ -1,11 +1,16 @@
 package se.storkforge.petconnect.entity;
 
 import jakarta.persistence.*;
+
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
+
+
 import jakarta.validation.constraints.*;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 @Entity(name = "user_table")
 public class User {
@@ -26,6 +31,13 @@ public class User {
     @Size(min = 8, message = "Password must be at least 8 characters")
     private String password;
 
+    @ManyToMany
+    @JoinTable(
+            name = "user_meetup",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "meetup_id")
+    )
+    private Set<MeetUp> meetUps = new HashSet<>();
     private String profilePicturePath;
 
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -72,9 +84,14 @@ public class User {
         this.password = password;
     }
 
-    public String getProfilePicturePath() {
-        return profilePicturePath;
+    public Set<MeetUp> getMeetUps() {
+        return meetUps;
     }
+
+    public void setMeetUps(Set<MeetUp> meetUps) {
+        this.meetUps = meetUps;
+    }
+    public String getProfilePicturePath() { return profilePicturePath; }
 
     public void setProfilePicturePath(String profilePicturePath) {
         this.profilePicturePath = profilePicturePath;
