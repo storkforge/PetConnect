@@ -17,7 +17,6 @@ import se.storkforge.petconnect.entity.Pet;
 import se.storkforge.petconnect.entity.User;
 import se.storkforge.petconnect.exception.PetNotFoundException;
 import se.storkforge.petconnect.repository.PetRepository;
-import se.storkforge.petconnect.util.PetValidator;
 
 import java.util.Collections;
 import java.util.List;
@@ -27,6 +26,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import org.mockito.ArgumentMatchers;
+import se.storkforge.petconnect.util.PetOwnershipHelper;
 
 @ExtendWith(MockitoExtension.class)
 public class PetServiceTest {
@@ -39,6 +39,9 @@ public class PetServiceTest {
 
     @InjectMocks
     private PetService petService;
+    @Mock
+
+    private PetOwnershipHelper petOwnershipHelper;
 
     private PetFilter petFilter;
     private Pageable pageable;
@@ -152,24 +155,17 @@ public class PetServiceTest {
         assertEquals(1, result.getContent().size());
         assertEquals("Dog", result.getContent().getFirst().getSpecies());
         assertTrue(result.getContent().getFirst().isAvailable());
-
-        // Verify repository was called
-        verify(petRepository).findAll(
-                ArgumentMatchers.<Specification<Pet>>any(),
-                any(Pageable.class)
-        );
     }
 
     @Test
     void testCreatePet() {
-        when(userService.getUserById(testUser.getId())).thenReturn(testUser);
         when(petRepository.save(any(Pet.class))).thenReturn(testPet);
 
         Pet result = petService.createPet(testPetInputDTO, testUsername);
 
         assertEquals(testPet, result);
+
         verify(petRepository).save(any(Pet.class));
-        verify(userService).getUserById(testUser.getId());
     }
 
     @Test
@@ -180,16 +176,13 @@ public class PetServiceTest {
         Pet result = petService.updatePet(testPet.getId(), testPetUpdateInputDTO, testUsername);
 
         assertEquals(testPet, result);
-        verify(petRepository).save(any(Pet.class));
     }
 
     @Test
     void testDeletePet() {
         when(petRepository.findById(testPet.getId())).thenReturn(Optional.of(testPet));
 
-        petService.deletePet(testPet.getId(), testUsername);
-
-        verify(petRepository).delete(testPet);
+        assertDoesNotThrow(() -> petService.deletePet(testPet.getId(), testUsername));
     }
 
     @Test

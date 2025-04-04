@@ -12,9 +12,10 @@ import org.springframework.web.multipart.MultipartFile;
 import se.storkforge.petconnect.dto.PetInputDTO;
 import se.storkforge.petconnect.dto.PetUpdateInputDTO;
 import se.storkforge.petconnect.entity.Pet;
-import se.storkforge.petconnect.entity.User;
 import se.storkforge.petconnect.exception.PetNotFoundException;
 import se.storkforge.petconnect.repository.PetRepository;
+import se.storkforge.petconnect.util.OwnershipValidator;
+import se.storkforge.petconnect.util.PetOwnershipHelper;
 import se.storkforge.petconnect.util.PetValidator;
 
 import java.util.List;
@@ -28,13 +29,16 @@ public class PetService {
     private final PetRepository petRepository;
     private final FileStorageService fileStorageService;
     private final UserService userService;
+    private final PetOwnershipHelper petOwnershipHelper; // Injicera PetOwnershipHelper
 
     public PetService(PetRepository petRepository,
                       FileStorageService fileStorageService,
-                      UserService userService) {
+                      UserService userService,
+                      PetOwnershipHelper petOwnershipHelper) { // Lägg till PetOwnershipHelper i konstruktorn
         this.petRepository = petRepository;
         this.fileStorageService = fileStorageService;
         this.userService = userService;
+        this.petOwnershipHelper = petOwnershipHelper;
     }
 
     @Transactional(readOnly = true)
@@ -117,46 +121,9 @@ public class PetService {
         pet.setAge(petInput.age());
         pet.setLocation(petInput.location());
 
-        setPetOwner(pet, petInput.ownerId(), currentUsername);
+        petOwnershipHelper.setPetOwner(pet, petInput.ownerId(), currentUsername, userService); // Använd PetOwnershipHelper
 
         return petRepository.save(pet);
-    }
-
-    private void setPetOwner(Pet pet, Long ownerId, String currentUsername) {
-        if (ownerId != null) {
-            User owner;
-            try {
-                owner = userService.getUserById(ownerId);
-            } catch (Exception e) {
-                throw new SecurityException("Invalid owner reference");
-            }
-            if (!owner.getUsername().equals(currentUsername)) {
-                throw new SecurityException("You can only create pets for yourself");
-            }
-
-            pet.setOwner(owner);
-            owner.addPet(pet);
-        }
-    }
-
-    @Transactional
-    public Pet updatePet(Long id, PetUpdateInputDTO petUpdate, String currentUsername) {
-        logger.info("Updating pet with ID: {} for user: {}", id, currentUsername);
-
-        Pet existingPet = petRepository.findById(id)
-                .orElseThrow(() -> new PetNotFoundException("Pet with id " + id + " not found"));
-
-        validateOwnership(existingPet, currentUsername);
-
-        applyPetUpdates(existingPet, petUpdate, currentUsername);
-
-        return petRepository.save(existingPet);
-    }
-
-    private void validateOwnership(Pet pet, String currentUsername) {
-        if (pet.getOwner() == null || !pet.getOwner().getUsername().equals(currentUsername)) {
-            throw new SecurityException("You can only modify your own pets");
-        }
     }
 
     private void applyPetUpdates(Pet pet, PetUpdateInputDTO petUpdate, String currentUsername) {
@@ -179,24 +146,24 @@ public class PetService {
         }
 
         if (petUpdate.ownerId() != null) {
-            updatePetOwner(pet, petUpdate.ownerId(), currentUsername);
+            petOwnershipHelper.updatePetOwner(pet, petUpdate.ownerId(), currentUsername, userService); // Använd PetOwnershipHelper
         }
     }
 
-    private void updatePetOwner(Pet pet, Long newOwnerId, String currentUsername) {
-        User newOwner = userService.getUserById(newOwnerId);
+    @Transactional
+    public Pet updatePet(Long id, PetUpdateInputDTO petUpdate, String currentUsername) {
+        logger.info("Updating pet with ID: {} for user: {}", id, currentUsername);
 
-        // Ensure current user can only transfer to themselves
-        if (!newOwner.getUsername().equals(currentUsername)) {
-            throw new SecurityException("You can only transfer ownership to yourself");
-        }
+        Optional<Pet> optionalPet = petRepository.findById(id);
 
-        if (pet.getOwner() != null) {
-            pet.getOwner().getPets().remove(pet);
-        }
+        Pet existingPet = optionalPet
+                .orElseThrow(() -> new PetNotFoundException("Pet with id " + id + " not found"));
 
-        pet.setOwner(newOwner);
-        newOwner.addPet(pet);
+        OwnershipValidator.validateOwnership(existingPet, currentUsername); // Använd OwnershipValidator
+
+        applyPetUpdates(existingPet, petUpdate, currentUsername);
+
+        return petRepository.save(existingPet);
     }
 
     @Transactional
@@ -206,7 +173,7 @@ public class PetService {
         Pet pet = petRepository.findById(id)
                 .orElseThrow(() -> new PetNotFoundException("Pet with id " + id + " not found"));
 
-        validateOwnership(pet, currentUsername);
+        OwnershipValidator.validateOwnership(pet, currentUsername); // Använd OwnershipValidator
 
         if (pet.getOwner() != null) {
             pet.getOwner().getPets().remove(pet);
