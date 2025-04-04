@@ -11,9 +11,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import se.storkforge.petconnect.entity.Pet;
 import se.storkforge.petconnect.entity.User;
 import se.storkforge.petconnect.repository.PetRepository;
-import se.storkforge.petconnect.service.FileStorageService;
-import se.storkforge.petconnect.service.PetService;
-import se.storkforge.petconnect.service.UserService;
+import se.storkforge.petconnect.util.PetOwnershipHelper;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -41,6 +39,9 @@ class FileStorageServiceTest {
     @Mock
     private UserService userService;
 
+    @Mock
+    private PetOwnershipHelper petOwnershipHelper;
+
     @BeforeEach
     void setUp() throws IOException {
         // Create test owner user
@@ -61,7 +62,7 @@ class FileStorageServiceTest {
         this.optionalPet = Optional.of(pet);
         this.file = new MockMultipartFile("file", "test.jpg", "image/jpeg", "test".getBytes());
         this.fileStorageService = new FileStorageService();
-        this.petService = new PetService(petRepository, fileStorageService, userService);
+        this.petService = new PetService(petRepository, fileStorageService, userService, petOwnershipHelper); // Korrigerad rad
 
         // Ensure directory exists
         Files.createDirectories(testDir);
