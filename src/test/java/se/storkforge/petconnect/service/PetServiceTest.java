@@ -17,6 +17,7 @@ import se.storkforge.petconnect.entity.Pet;
 import se.storkforge.petconnect.entity.User;
 import se.storkforge.petconnect.exception.PetNotFoundException;
 import se.storkforge.petconnect.repository.PetRepository;
+import se.storkforge.petconnect.util.PetValidator;
 
 import java.util.Collections;
 import java.util.List;
@@ -160,34 +161,15 @@ public class PetServiceTest {
     }
 
     @Test
-    void testPetFilterValidation() {
-        // Given
-        PetFilter filter = new PetFilter();
-        filter.setMinAge(5);
-        filter.setMaxAge(3);
-
-        // When/Then
-        assertThrows(IllegalArgumentException.class, filter::validate);
-
-        // Given valid values
-        filter.setMinAge(2);
-        filter.setMaxAge(5);
-
-        // When/Then (should not throw)
-        assertDoesNotThrow(filter::validate);
-    }
-
-    @Test
     void testCreatePet() {
-        when(userService.getUserById(testUser.getId())).thenReturn(testUser); // Mock getUserById
+        when(userService.getUserById(testUser.getId())).thenReturn(testUser);
         when(petRepository.save(any(Pet.class))).thenReturn(testPet);
-
-        System.out.println("Owner ID from DTO: " + testPetInputDTO.ownerId());
 
         Pet result = petService.createPet(testPetInputDTO, testUsername);
 
         assertEquals(testPet, result);
         verify(petRepository).save(any(Pet.class));
+        verify(userService).getUserById(testUser.getId());
     }
 
     @Test
