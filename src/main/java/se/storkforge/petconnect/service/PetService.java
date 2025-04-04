@@ -29,12 +29,12 @@ public class PetService {
     private final PetRepository petRepository;
     private final FileStorageService fileStorageService;
     private final UserService userService;
-    private final PetOwnershipHelper petOwnershipHelper; // Injicera PetOwnershipHelper
+    private final PetOwnershipHelper petOwnershipHelper;
 
     public PetService(PetRepository petRepository,
                       FileStorageService fileStorageService,
                       UserService userService,
-                      PetOwnershipHelper petOwnershipHelper) { // Lägg till PetOwnershipHelper i konstruktorn
+                      PetOwnershipHelper petOwnershipHelper) {
         this.petRepository = petRepository;
         this.fileStorageService = fileStorageService;
         this.userService = userService;
@@ -121,7 +121,7 @@ public class PetService {
         pet.setAge(petInput.age());
         pet.setLocation(petInput.location());
 
-        petOwnershipHelper.setPetOwner(pet, petInput.ownerId(), currentUsername, userService); // Använd PetOwnershipHelper
+        petOwnershipHelper.setPetOwner(pet, petInput.ownerId(), currentUsername, userService);
 
         return petRepository.save(pet);
     }
@@ -146,7 +146,7 @@ public class PetService {
         }
 
         if (petUpdate.ownerId() != null) {
-            petOwnershipHelper.updatePetOwner(pet, petUpdate.ownerId(), currentUsername, userService); // Använd PetOwnershipHelper
+            petOwnershipHelper.updatePetOwner(pet, petUpdate.ownerId(), currentUsername, userService);
         }
     }
 
@@ -159,7 +159,7 @@ public class PetService {
         Pet existingPet = optionalPet
                 .orElseThrow(() -> new PetNotFoundException("Pet with id " + id + " not found"));
 
-        OwnershipValidator.validateOwnership(existingPet, currentUsername); // Använd OwnershipValidator
+        OwnershipValidator.validateOwnership(existingPet, currentUsername);
 
         applyPetUpdates(existingPet, petUpdate, currentUsername);
 
@@ -173,7 +173,7 @@ public class PetService {
         Pet pet = petRepository.findById(id)
                 .orElseThrow(() -> new PetNotFoundException("Pet with id " + id + " not found"));
 
-        OwnershipValidator.validateOwnership(pet, currentUsername); // Använd OwnershipValidator
+        OwnershipValidator.validateOwnership(pet, currentUsername);
 
         if (pet.getOwner() != null) {
             pet.getOwner().getPets().remove(pet);
@@ -201,7 +201,6 @@ public class PetService {
             try {
                 fileStorageService.delete(pet.getProfilePicturePath());
             } catch (RuntimeException e) {
-                // Log error but continue with new upload
                 logger.warn("Failed to delete old profile picture: {}", e.getMessage());
             }
         }

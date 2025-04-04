@@ -191,4 +191,27 @@ public class PetServiceTest {
 
         assertThrows(PetNotFoundException.class, () -> petService.deletePet(testPet.getId(), testUsername));
     }
+    @Test
+    void updatePet_ByNonOwner_ShouldThrowException() {
+        // Arrange
+        String nonOwnerUsername = "anotherUser";
+        User nonOwner = new User(nonOwnerUsername, "another@example.com", "password");
+        nonOwner.setId(2L);
+
+        PetUpdateInputDTO update = new PetUpdateInputDTO(
+                "Buddy Updated", null, null, null, null, "New Location");
+
+        // Set up a pet owned by testUser
+        Pet ownedPet = new Pet();
+        ownedPet.setId(1L);
+        ownedPet.setName("Buddy");
+        ownedPet.setSpecies("Dog");
+        ownedPet.setOwner(testUser);
+
+        when(petRepository.findById(1L)).thenReturn(Optional.of(ownedPet));
+
+        // When/Then - Expect SecurityException because non-owner tries to update
+        assertThrows(SecurityException.class,
+                () -> petService.updatePet(1L, update, nonOwnerUsername));
+    }
 }
