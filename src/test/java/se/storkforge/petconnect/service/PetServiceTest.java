@@ -11,7 +11,11 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import se.storkforge.petconnect.dto.PetInputDTO;
+import se.storkforge.petconnect.dto.PetUpdateInputDTO;
 import se.storkforge.petconnect.entity.Pet;
+import se.storkforge.petconnect.entity.User;
+import se.storkforge.petconnect.exception.PetNotFoundException;
 import se.storkforge.petconnect.repository.PetRepository;
 
 import java.util.Collections;
@@ -20,8 +24,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import org.mockito.ArgumentMatchers;
 
 @ExtendWith(MockitoExtension.class)
@@ -30,17 +33,26 @@ public class PetServiceTest {
     @Mock
     private PetRepository petRepository;
 
+    @Mock
+    private UserService userService;
+
     @InjectMocks
     private PetService petService;
 
     private PetFilter petFilter;
     private Pageable pageable;
     private Pet testPet;
+    private User testUser;
+    private PetInputDTO testPetInputDTO;
+    private PetUpdateInputDTO testPetUpdateInputDTO;
+    private String testUsername;
 
     @BeforeEach
     void setUp() {
         petFilter = new PetFilter();
         pageable = PageRequest.of(0, 10);
+        testUser = new User("testUser", "test@example.com", "password");
+        testUser.setId(1L);
         testPet = new Pet();
         testPet.setId(1L);
         testPet.setName("Buddy");
@@ -48,6 +60,14 @@ public class PetServiceTest {
         testPet.setAvailable(true);
         testPet.setAge(3);
         testPet.setLocation("New York");
+        testPet.setOwner(testUser);
+        testUsername = "testUser";
+
+        testPetInputDTO = new PetInputDTO(
+                "Buddy", "Dog", true, 3, testUser.getId(), "New York");
+
+        testPetUpdateInputDTO = new PetUpdateInputDTO(
+                "Buddy Updated", null, null, null, null, "New Location");
     }
 
     @Test
@@ -155,5 +175,45 @@ public class PetServiceTest {
 
         // When/Then (should not throw)
         assertDoesNotThrow(filter::validate);
+    }
+
+    @Test
+    void testCreatePet() {
+        when(userService.getUserById(testUser.getId())).thenReturn(testUser); // Mock getUserById
+        when(petRepository.save(any(Pet.class))).thenReturn(testPet);
+
+        System.out.println("Owner ID from DTO: " + testPetInputDTO.ownerId());
+
+        Pet result = petService.createPet(testPetInputDTO, testUsername);
+
+        assertEquals(testPet, result);
+        verify(petRepository).save(any(Pet.class));
+    }
+
+    @Test
+    void testUpdatePet() {
+        when(petRepository.findById(testPet.getId())).thenReturn(Optional.of(testPet));
+        when(petRepository.save(any(Pet.class))).thenReturn(testPet);
+
+        Pet result = petService.updatePet(testPet.getId(), testPetUpdateInputDTO, testUsername);
+
+        assertEquals(testPet, result);
+        verify(petRepository).save(any(Pet.class));
+    }
+
+    @Test
+    void testDeletePet() {
+        when(petRepository.findById(testPet.getId())).thenReturn(Optional.of(testPet));
+
+        petService.deletePet(testPet.getId(), testUsername);
+
+        verify(petRepository).delete(testPet);
+    }
+
+    @Test
+    void testDeletePetNotFound() {
+        when(petRepository.findById(testPet.getId())).thenReturn(Optional.empty());
+
+        assertThrows(PetNotFoundException.class, () -> petService.deletePet(testPet.getId(), testUsername));
     }
 }
