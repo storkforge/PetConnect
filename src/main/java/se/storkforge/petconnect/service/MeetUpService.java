@@ -17,6 +17,12 @@ public class MeetUpService {
     @Autowired
     private MeetUpRepository meetUpRepository;
 
+    @Autowired
+    private MailService mailService;
+
+    @Autowired
+    private SmsService smsService;
+
     public List<MeetUp> searchMeetUps(String location, LocalDateTime start, LocalDateTime end) {
         if (location == null || start == null || end == null)
             throw new IllegalArgumentException("Location, start date and end date cannot be null");
@@ -59,7 +65,24 @@ public class MeetUpService {
         meetUp.setParticipants(new HashSet<>(participants));
         meetUp.setStatus("PLANNED");
 
-        return meetUpRepository.save(meetUp);
+        MeetUp savedMeetUp = meetUpRepository.save(meetUp);
+
+        notifyParticipants(savedMeetUp);
+
+        return savedMeetUp;
+    }
+
+    public void notifyParticipants(MeetUp meetUp) {
+        String subject = "New MeetUp: " + meetUp.getLocation();
+        String content = "You're invited to a meet-up at " + meetUp.getLocation() +
+                " on " + meetUp.getDateTime().toString();
+
+        for (User user : meetUp.getParticipants()) {
+            if (user.getEmail() != null && !user.getEmail().isEmpty())
+                mailService.sendMeetUpNotification(user.getEmail(), subject, content);
+            if (user.getPhoneNumber() != null && !user.getPhoneNumber().isEmpty())
+                smsService.sendSms(user.getPhoneNumber(), content);
+        }
     }
 
 }
