@@ -6,8 +6,11 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
+
 import jakarta.validation.constraints.*;
 
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity(name = "user_table")
 public class User {
@@ -16,9 +19,9 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-   @NotBlank(message = "Username is required")
-  @Size(min = 3, max = 50, message = "Username must be between 3 and 50 characters")
-  private String username;
+    @NotBlank(message = "Username is required")
+    @Size(min = 3, max = 50, message = "Username must be between 3 and 50 characters")
+    private String username;
 
     @NotBlank(message = "Email is required")
     @Email(message = "Email should be valid")
@@ -43,6 +46,9 @@ public class User {
     )
     private Set<MeetUp> meetUps = new HashSet<>();
     private String profilePicturePath;
+
+    @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Pet> pets = new ArrayList<>();
 
     public User() {
     }
@@ -95,7 +101,27 @@ public class User {
     }
     public String getProfilePicturePath() { return profilePicturePath; }
 
-    public void setProfilePicturePath(String profilePicturePath) { this.profilePicturePath = profilePicturePath; }
+    public void setProfilePicturePath(String profilePicturePath) {
+        this.profilePicturePath = profilePicturePath;
+    }
+
+    public List<Pet> getPets() {
+        return pets;
+    }
+
+    public void setPets(List<Pet> pets) {
+        this.pets = pets;
+    }
+
+    public void addPet(Pet pet) {
+        pets.add(pet);
+        pet.setOwner(this);
+    }
+
+    public void removePet(Pet pet) {
+        pets.remove(pet);
+        pet.setOwner(null);
+    }
 
     public String getPhoneNumber() {
         return phoneNumber;

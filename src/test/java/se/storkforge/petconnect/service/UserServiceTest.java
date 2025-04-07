@@ -43,7 +43,7 @@ class UserServiceTest {
         return user;
     }
 
-    // CREATE USER TESTS
+    // CREATE USER TEST
     @Test
     void createUser_validUser_shouldSaveUser() {
         // Arrange

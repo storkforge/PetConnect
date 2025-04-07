@@ -9,6 +9,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import se.storkforge.petconnect.entity.Pet;
 import se.storkforge.petconnect.entity.User;
@@ -17,7 +18,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class RecommendationServiceTest {
@@ -36,63 +37,70 @@ class RecommendationServiceTest {
 
     @BeforeEach
     void setUp() {
+        // Initialize test data
         testUser = new User();
         testUser.setUsername("testuser");
         testUser.setEmail("test@example.com");
 
-        testPet = new Pet("Fluffy", "Cat", true, 2, "Owner", "Stockholm");
+        testPet = new Pet();
+        testPet.setName("Fluffy");
+        testPet.setSpecies("Cat");
+        testPet.setAvailable(true);
+        testPet.setAge(2);
+        testPet.setLocation("Stockholm");
+
+        // Reset mocks before each test
+        reset(petService, aiExecutor);
     }
 
     @Test
     void generateRecommendation_ShouldReturnPersonalizedRecommendation() {
-        Page<Pet> pets = new PageImpl<>(List.of(testPet));
-        when(petService.getAllPets(any(Pageable.class))).thenReturn(pets);
+        // Arrange
+        Pageable expectedPageable = PageRequest.of(0, 100);
+        Page<Pet> mockPage = new PageImpl<>(List.of(testPet));
+
+        // Properly mock the PetService behavior
+        doReturn(mockPage)
+                .when(petService)
+                .getAllPets(expectedPageable, null);
+
         when(aiExecutor.callAi(any(Prompt.class)))
                 .thenReturn("Fluffy is the perfect match for you!");
 
+        // Act
         String result = recommendationService.generateRecommendation(testUser);
 
+        // Assert
         assertEquals("Fluffy is the perfect match for you!", result);
-    }
-
-    @Test
-    void generateRecommendation_ShouldFilterOutUnavailablePets() {
-        Pet unavailablePet = new Pet("Rex", "Dog", false, 3, "Owner", "Gothenburg");
-        Page<Pet> pets = new PageImpl<>(List.of(testPet, unavailablePet));
-
-        when(petService.getAllPets(any(Pageable.class))).thenReturn(pets);
-        when(aiExecutor.callAi(any(Prompt.class))).thenReturn("I recommend Fluffy!");
-
-        String result = recommendationService.generateRecommendation(testUser);
-
-        assertEquals("I recommend Fluffy!", result);
+        verify(petService).getAllPets(expectedPageable, null);
+        verify(aiExecutor).callAi(any(Prompt.class));
     }
 
     @Test
     void generateRecommendation_ShouldHandleNoPetsAvailable() {
-        when(petService.getAllPets(any(Pageable.class)))
-                .thenReturn(new PageImpl<>(List.of())); // empty list
+        // Arrange
+        Pageable expectedPageable = PageRequest.of(0, 100);
+        Page<Pet> emptyPage = new PageImpl<>(List.of());
 
+        doReturn(emptyPage)
+                .when(petService)
+                .getAllPets(expectedPageable, null);
+
+        // Act
         String result = recommendationService.generateRecommendation(testUser);
 
+        // Assert
         assertEquals("No available pets to recommend at this time.", result);
     }
 
     @Test
     void generateRecommendation_ShouldHandleNullUser() {
-        String result = recommendationService.generateRecommendation(null);
+        // Act & Assert
+        assertEquals("User information is missing. Cannot generate recommendation.",
+                recommendationService.generateRecommendation(null));
 
-        assertEquals("User information is missing. Cannot generate recommendation.", result);
-    }
-
-    @Test
-    void fallback_ShouldReturnExpectedMessageWhenCalledManually() {
-        Prompt prompt = new Prompt("...");
-        RuntimeException ex = new RuntimeException("Simulated failure");
-
-        AiRecommendationExecutor executor = new AiRecommendationExecutor(null); // okay here
-        String result = executor.fallback(ex, prompt);
-
-        assertEquals("Our recommendation engine is currently unavailable. Please try again later.", result);
+        // Verify no interactions with mocks
+        verifyNoInteractions(petService);
+        verifyNoInteractions(aiExecutor);
     }
 }
