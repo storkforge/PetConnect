@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Register</title>
+</head>
+<body th:replace="~{layout/layout :: layout}">
+
+<div th:fragment="content">
+    <div class="max-w-md mx-auto mt-12">
+        <h1 class="text-3xl font-bold mb-6 text-center">Create Account</h1>
+
+        <form th:action="@{/register}" th:object="${registrationForm}" method="post" class="space-y-6">
+
+            <!-- Optional: Global error summary block -->
+
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6"
+                 th:if="${#fields.hasAnyErrors()}">
+                <p class="font-semibold">Please fix the errors below:</p>
+            </div>
+
+            <!-- Username -->
+            <div>
+                <label class="block font-medium text-gray-700">Username</label>
+                <input type="text" th:field="*{username}" class="mt-1 w-full border p-2 rounded" />
+                <p class="text-red-600 text-sm mt-1"
+                   th:if="${#fields.hasErrors('username')}"
+                   th:errors="*{username}"></p>
+            </div>
+
+            <!-- Email -->
+            <div>
+                <label class="block font-medium text-gray-700">Email</label>
+                <input type="email" th:field="*{email}" class="mt-1 w-full border p-2 rounded" />
+                <p class="text-red-600 text-sm mt-1"
+                   th:if="${#fields.hasErrors('email')}"
+                   th:errors="*{email}"></p>
+            </div>
+
+            <!-- Password -->
+            <div>
+                <label class="block font-medium text-gray-700">Password</label>
+                <input type="password" th:field="*{password}" class="mt-1 w-full border p-2 rounded" />
+                <p class="text-red-600 text-sm mt-1"
+                   th:if="${#fields.hasErrors('password')}"
+                   th:errors="*{password}"></p>
+            </div>
+
+            <!-- Confirm Password -->
+            <div>
+                <label class="block font-medium text-gray-700">Confirm Password</label>
+                <input type="password" th:field="*{confirmPassword}" class="mt-1 w-full border p-2 rounded" />
+                <p class="text-red-600 text-sm mt-1"
+                   th:if="${#fields.hasErrors('confirmPassword')}"
+                   th:errors="*{confirmPassword}"></p>
+            </div>
+
+            <!-- Submit -->
+            <div>
+                <button type="submit" class="w-full bg-blue-600 text-white font-semibold py-2 rounded hover:bg-blue-700">
+                    Register
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+</body>
+</html>
