@@ -65,6 +65,10 @@ public class SecurityConfig {
                         .key("uniqueAndSecret") // You can change this to a value from properties
                         .tokenValiditySeconds(1209600) // 14 days
                 )
+                .oauth2Login(oauth -> oauth
+                        .loginPage("/login")
+                        .defaultSuccessUrl("/dashboard", true)
+                )
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/")
