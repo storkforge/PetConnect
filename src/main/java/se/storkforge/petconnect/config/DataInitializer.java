@@ -35,7 +35,8 @@ public class DataInitializer {
                 user.setPassword(passwordEncoder.encode("password"));
                 user.setRoles(Set.of(userRole));
                 userRepository.save(user);
-            }
+                System.out.println("Created user: " + user.getUsername()); // log user existing
+            } else { System.out.println("User already exists"); }
 
             // Create premium user
             if (userRepository.findByUsername("premiumuser").isEmpty()) {
@@ -48,6 +49,8 @@ public class DataInitializer {
             }
         };
     }
+
+
 
     // Helper method using lambda to create a role if it doesn't exist
     private Role createRoleIfNotFound(RoleRepository repo, String roleName) {
