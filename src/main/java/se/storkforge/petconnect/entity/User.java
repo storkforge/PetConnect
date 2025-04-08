@@ -9,7 +9,8 @@ import jakarta.persistence.JoinColumn;
 
 import java.util.*;
 
-@Entity(name = "user_table")
+@Entity
+        @Table(name = "user_table")
 public class User {
 
     @Id
@@ -28,6 +29,8 @@ public class User {
     @Size(min = 8, message = "Password must be at least 8 characters")
     private String password;
 
+    // might need to be looked over more clearly
+    @Pattern(regexp = "^(https?://)?(www\\.)?[a-zA-Z0-9._%+-]+\\.[a-zA-Z]{2,6}/?[a-zA-Z0-9._%+-]*$", message = "Invalid URL format")
     private String profilePicturePath;
 
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -138,6 +141,7 @@ public class User {
                 ", email='" + email + '\'' +
                 '}';
     }
+
 
     // helper method to check if the user has a specific role
     public boolean hasRole(String roleName) {

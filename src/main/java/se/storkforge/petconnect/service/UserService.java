@@ -47,6 +47,9 @@ public class UserService {
         if (isInvalidEmail(user.getEmail())) {
             throw new IllegalArgumentException("Invalid email format.");
         }
+        if (!isStrongPassword(user.getPassword())) {
+            throw new IllegalArgumentException("Password must contain at least 8 characters, one number, and one special character.");
+        }
     }
 
     public User getUserById(Long id) {
@@ -158,4 +161,10 @@ public class UserService {
         }
         return fileStorageService.loadFile(filename);
     }
+
+    private boolean isStrongPassword(String password) {
+        return password != null && password.matches("^(?=.*[A-Za-z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$");
+    }
+
+
 }
