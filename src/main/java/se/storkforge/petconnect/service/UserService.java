@@ -165,6 +165,4 @@ public class UserService {
     private boolean isStrongPassword(String password) {
         return password != null && password.matches("^(?=.*[A-Za-z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$");
     }
-
-
 }

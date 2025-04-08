@@ -4,15 +4,28 @@
   <title>PetConnect</title>
 </head>
 <body th:fragment="header">
-<header>
-  <h1>PetConnect</h1>
-  <nav>
-    <ul>
-      <li><a th:href="@{/}">Home</a></li>
-      <li><a th:href="@{/login}">Login</a></li>
-      <li><a th:href="@{/register}">Register</a></li>
-    </ul>
-  </nav>
+<header class="bg-blue-600 text-white px-4 py-4 shadow-md">
+  <div class="container mx-auto flex items-center justify-between">
+    <h1 class="text-xl font-semibold">PetConnect</h1>
+    <nav>
+      <ul class="flex space-x-4 items-center">
+        <li><a th:href="@{/}" class="hover:underline">Home</a></li>
+        <li><a th:href="@{/login}" class="hover:underline"
+               th:if="${#authorization.expression('!isAuthenticated()')}">Login</a></li>
+        <li><a th:href="@{/register}" class="hover:underline"
+               th:if="${#authorization.expression('!isAuthenticated()')}">Register</a></li>
+
+        <!-- Logout button -->
+        <li th:if="${#authorization.expression('isAuthenticated()')}">
+          <form th:action="@{/logout}" method="post">
+            <button type="submit" class="hover:underline bg-red-600 px-3 py-1 rounded">
+              Logout
+            </button>
+          </form>
+        </li>
+      </ul>
+    </nav>
+  </div>
 </header>
 </body>
 </html>
