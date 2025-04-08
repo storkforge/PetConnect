@@ -57,7 +57,8 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
-                        .loginPage("/login") // setting this up later
+                        .loginPage("/login")
+                        .defaultSuccessUrl("/", true) // 👈 redirect after successful login
                         .permitAll()
                 )
                 .logout(logout -> logout
