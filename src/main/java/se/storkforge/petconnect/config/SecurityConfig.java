@@ -58,21 +58,26 @@ public class SecurityConfig {
                 )
                 .formLogin(form -> form
                         .loginPage("/login")
-                        .defaultSuccessUrl("/dashboard", true) // 👈 redirect after successful login
+                        .defaultSuccessUrl("/dashboard", true)
                         .permitAll()
+                )
+                .rememberMe(remember -> remember
+                        .key("uniqueAndSecret") // You can change this to a value from properties
+                        .tokenValiditySeconds(1209600) // 14 days
                 )
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/")
                         .invalidateHttpSession(true)
                         .clearAuthentication(true)
-                        .deleteCookies("JSESSIONID")
+                        .deleteCookies("JSESSIONID", "remember-me") // include remember-me
                         .permitAll()
                 )
                 .httpBasic(Customizer.withDefaults());
 
         return http.build();
     }
+
 
     public static String getCurrentUsername() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

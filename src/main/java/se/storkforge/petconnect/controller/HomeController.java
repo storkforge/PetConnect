@@ -27,13 +27,5 @@ public class HomeController {
         public String loginPage() {
             return "auth/login"; // This maps to login.html in templates
         }
-
-
-        @GetMapping("/dashboard")
-        public String dashboard() {
-            return "dashboard";
-        }
-
-
     }
 }

@@ -7,13 +7,17 @@
 
 </head>
 <body th:replace="~{layout/layout :: layout}">
-
 <div th:fragment="content">
-    <div class="max-w-3xl mx-auto mt-12 text-center">
-        <h1 class="text-3xl font-bold mb-4">Welcome to PetConnect!</h1>
-        <p class="text-gray-700 text-lg">You're successfully logged in.</p>
+    <div class="max-w-3xl mx-auto mt-12">
+        <h1 class="text-3xl font-bold text-center mb-6">Welcome back, <span th:text="${username}">User</span>!</h1>
+        <p class="text-lg text-center mb-4">Here's what's happening in your cat world today 🐾</p>
+
+        <div class="grid gap-4">
+            <div class="p-4 bg-white rounded shadow">📅 Upcoming vet visits</div>
+            <div class="p-4 bg-white rounded shadow">🧠 AI-powered toy & food suggestions</div>
+            <div class="p-4 bg-white rounded shadow">📸 Your latest shared stories</div>
+        </div>
     </div>
 </div>
-
 </body>
 </html>
