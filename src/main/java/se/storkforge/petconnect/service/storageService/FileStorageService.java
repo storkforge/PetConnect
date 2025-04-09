@@ -21,55 +21,26 @@ import java.util.UUID;
 public class FileStorageService {
     static final Logger LOG = LoggerFactory.getLogger(FileStorageService.class);
 
-    private Path root;
-
-    //all these values are edited in the application.properties
     @Value("${file.upload-dir}")
     private String uploadDir;
-
-    @Value("${file.max-size}")
-    private long maxFileSize;
-
-    @Value("${file.allowed-types}")
-    private List<String> allowedTypes;
+    private Path root;
 
     @PostConstruct //Runs after properties
     private void init() {
         this.root = Paths.get(uploadDir);
-        try{
-            Files.createDirectories(root);
-        } catch (IOException e) {
-            throw new RuntimeException("Unable to create directory", e);
-        }
-
+        creatDir(root);
     }
 
-    public String store(MultipartFile file, String dir, long maxFileSize, List<String> allowedTypes ) {
-        try{
-            Files.createDirectories(root.resolve(dir));
-        } catch (IOException e) {
-            throw new RuntimeException("Unable to create directory", e);
-        }
-        try {
-            //Validation
-            if (file.isEmpty()) {
-                throw new RuntimeException("Unable to store empty file.");
-            }
+    String store(MultipartFile file, String dir) {
+        creatDir(root.resolve(dir));
 
-            if (file.getSize() > maxFileSize) {
-                throw new RuntimeException("File size exceeds the allowed limit.");
-            }
+        try {
 
             String contentType = file.getContentType();
-            if (contentType == null || !allowedTypes.contains(contentType)) {
-                throw new RuntimeException("File type not allowed.");
-            }
+            String filename = generateFileName(contentType); //Generate unique filename
 
-            //Generate unique filename
-            String filename = generateFileName(contentType);
-
-            //Save file
-            Path destination = this.root.resolve(dir + Paths.get(filename)).normalize().toAbsolutePath();
+            Path tempDestination = root.resolve(dir);
+            Path destination = tempDestination.resolve(filename).normalize().toAbsolutePath();
             if (!destination.startsWith(this.root.toAbsolutePath())) {
                  throw new RuntimeException("Invalid path outside upload directory.");
             }
@@ -77,7 +48,7 @@ public class FileStorageService {
                 Files.copy(inputStream, destination);
             }
             LOG.info("Stored file: {}", destination);
-            return filename;
+            return destination.toString();
         } catch (IOException e) {
             throw new RuntimeException("Failed to store file.", e);
         }
@@ -96,7 +67,7 @@ public class FileStorageService {
     }
 
 
-    public void delete(String filename) {
+    void delete(String filename) {
         if (filename == null) {
             LOG.warn("Attempted to delete a null filename");
             return;
@@ -125,4 +96,15 @@ public class FileStorageService {
             throw new RuntimeException("Could not read file: " + filename, e);
         }
     }
+
+    private void creatDir(Path root) {
+        System.out.println(root.toString());
+        try {
+            Files.createDirectories(root);
+        } catch (IOException e) {
+            throw new RuntimeException("Unable to create directory", e);
+        }
+    }
+
+
 }
