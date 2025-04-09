@@ -4,12 +4,14 @@ import io.github.cdimascio.dotenv.Dotenv;
 import jakarta.annotation.PostConstruct;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class AiConfig {
 
+    @Value("${OPENAI_API_KEY}")
     private String openAiApiKey;
 
     @PostConstruct
@@ -30,7 +32,6 @@ public class AiConfig {
         return ChatClient.builder(chatModel).build();
     }
 
-    // exposes the key if needed elsewhere in our proj
     public String getOpenAiApiKey() {
         return openAiApiKey;
     }
