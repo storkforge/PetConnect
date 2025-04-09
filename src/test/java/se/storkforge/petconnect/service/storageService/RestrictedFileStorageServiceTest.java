@@ -6,7 +6,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
-import static org.assertj.core.api.Assertions.assertThat;
 
 
 import java.io.IOException;
@@ -15,11 +14,13 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 
+import static org.assertj.core.api.Assertions.*;
+
 @ExtendWith(MockitoExtension.class)
 class RestrictedFileStorageServiceTest {
 
     private MockMultipartFile file;
-    private RestrictedFileStorageService rfs = new RestrictedFileStorageService();
+    private final RestrictedFileStorageService rfs = new RestrictedFileStorageService();
 
     private void initRestrictedFileStorageService() throws IOException {
         ReflectionTestUtils.setField(rfs, "maxFileSize", 100L);
@@ -47,6 +48,18 @@ class RestrictedFileStorageServiceTest {
     void successfulUpload() {
         Path path = Path.of(rfs.store(file,"test"));
         assertThat(Files.exists(path)).isTrue();
+    }
+
+    @Test
+    void overMaxSize(){
+        ReflectionTestUtils.setField(rfs, "maxFileSize", 1L);
+        assertThatRuntimeException().isThrownBy(() -> rfs.storeFile(file,"test"));
+    }
+
+    @Test
+    void notAllowedFileTypes(){
+        ReflectionTestUtils.setField(rfs, "allowedFileTypes", List.of(""));
+        assertThatRuntimeException().isThrownBy(() -> rfs.storeFile(file,"test"));
     }
 
 
