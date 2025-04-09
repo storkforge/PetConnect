@@ -19,7 +19,7 @@ public class SmsController {
             @RequestParam(defaultValue = "Don't forget the meet-up!") String content) {
         try {
             smsService.sendSms(to, content);
-            return ResponseEntity.ok("SMS Sent to " + to);
+            return ResponseEntity.ok("SMS sent to " + to);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Failed to send SMS: " + e.getMessage());

@@ -57,7 +57,6 @@ public class User {
         this.username = username;
         this.email = email;
         this.password = password;
-        this.phoneNumber = phoneNumber;
     }
 
     public Long getId() {
@@ -136,12 +135,12 @@ public class User {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         User user = (User) o;
-        return Objects.equals(id, user.id) && Objects.equals(username, user.username) && Objects.equals(email, user.email) && Objects.equals(password, user.password) && Objects.equals(phoneNumber, user.phoneNumber);
+        return Objects.equals(id, user.id) && Objects.equals(username, user.username) && Objects.equals(email, user.email) && Objects.equals(password, user.password);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, username, email, phoneNumber);
+        return Objects.hash(id, username, email);
     }
 
     @Override
@@ -150,7 +149,6 @@ public class User {
                 "id=" + id +
                 ", username='" + username + '\'' +
                 ", email='" + email + '\'' +
-                ", phoneNumber='" + phoneNumber + '\'' +
                 '}';
     }
 }
