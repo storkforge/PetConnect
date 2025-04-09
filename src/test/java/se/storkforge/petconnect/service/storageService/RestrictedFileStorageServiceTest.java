@@ -6,7 +6,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
-import se.storkforge.petconnect.entity.Pet;
 import static org.assertj.core.api.Assertions.assertThat;
 
 
@@ -19,7 +18,6 @@ import java.util.Objects;
 @ExtendWith(MockitoExtension.class)
 class RestrictedFileStorageServiceTest {
 
-    private Pet pet;
     private MockMultipartFile file;
     private RestrictedFileStorageService rfs = new RestrictedFileStorageService();
 
@@ -30,7 +28,6 @@ class RestrictedFileStorageServiceTest {
     }
 
     public void createVariables() {
-        this.pet = new Pet("Buddy", "Dog", true, 3, "John", "New York");
         this.file = new MockMultipartFile("file", "test.jpg", "image/jpeg", "test".getBytes());
     }
 
