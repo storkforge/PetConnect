@@ -37,7 +37,7 @@ public class FileStorageService {
         try {
 
             String contentType = file.getContentType();
-            String filename = generateFileName(contentType); //Generate unique filename
+            String filename = UUID.randomUUID() + "." + contentType.split("/")[1];
 
             Path tempDestination = root.resolve(dir);
             Path destination = tempDestination.resolve(filename).normalize().toAbsolutePath();
@@ -53,19 +53,6 @@ public class FileStorageService {
             throw new RuntimeException("Failed to store file.", e);
         }
     }
-
-    private String generateFileName(String contentType) {
-        String filename = UUID.randomUUID() + "." + contentType.split("/")[1];
-
-        //if name is already taken
-        Path destination = this.root.resolve(Paths.get(filename)).normalize().toAbsolutePath();
-        if (Files.exists(destination)) {
-            filename = generateFileName(contentType);
-        }
-
-        return filename;
-    }
-
 
     void delete(String path) {
         if (path == null) {
