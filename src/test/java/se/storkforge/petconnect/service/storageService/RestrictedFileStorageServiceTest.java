@@ -62,7 +62,15 @@ class RestrictedFileStorageServiceTest {
         assertThatRuntimeException().isThrownBy(() -> rfs.storeFile(file,"test"));
     }
 
+    @Test
+    void successfulDelete(){
+        String path = rfs.store(file,"test");
+        rfs.delete(path);
+        assertThat(Files.exists(Path.of(path))).isFalse();
+    }
 
+    @Test
+    void successfulReturn(){
 
-
+    }
 }

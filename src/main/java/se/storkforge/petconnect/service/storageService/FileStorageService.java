@@ -67,17 +67,16 @@ public class FileStorageService {
     }
 
 
-    void delete(String filename) {
-        if (filename == null) {
+    void delete(String path) {
+        if (path == null) {
             LOG.warn("Attempted to delete a null filename");
             return;
         }
         try {
-            Path file = root.resolve(filename);
-            Files.deleteIfExists(file);
-            LOG.info("Deleted file: {}", filename);
+            Files.deleteIfExists(Paths.get(path));
+            LOG.info("Deleted file: {}", path);
         } catch (IOException e) {
-            throw new RuntimeException("Could not delete file: " + filename, e);
+            throw new RuntimeException("Could not delete file: " + path, e);
         }
     }
 
