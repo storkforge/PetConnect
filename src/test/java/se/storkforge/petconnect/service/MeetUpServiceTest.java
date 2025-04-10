@@ -10,14 +10,11 @@ import se.storkforge.petconnect.entity.User;
 import se.storkforge.petconnect.repository.MeetUpRepository;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -98,5 +95,55 @@ class MeetUpServiceTest {
         // Assert
         assertNotNull(result);
         assertEquals("PLANNED", result.getStatus());
+    }
+
+    @Test
+    void addParticipant_userAvailable_shouldAddUser() {
+        MeetUp meetUp = createMeetUp("location", LocalDateTime.now().plusDays(1), new ArrayList<>());
+        User user = new User();
+        user.setId(1L);
+        user.setMeetUps(new HashSet<>()); // tomt schema = tillgänglig
+
+        when(meetUpRepository.findById(anyLong())).thenReturn(Optional.of(meetUp));
+        when(meetUpRepository.save(any(MeetUp.class))).thenReturn(meetUp);
+
+        MeetUp updated = meetUpService.addParticipant(1L, user);
+
+        assertTrue(updated.getParticipants().contains(user));
+        verify(meetUpRepository).save(meetUp);
+    }
+
+    @Test
+    void removeParticipant_existingUser_shouldRemoveUser() {
+        User user = new User();
+        user.setId(1L);
+
+        MeetUp meetUp = createMeetUp("location", LocalDateTime.now().plusDays(1), List.of(user));
+
+        when(meetUpRepository.findById(anyLong())).thenReturn(Optional.of(meetUp));
+        when(meetUpRepository.save(any(MeetUp.class))).thenReturn(meetUp);
+
+        MeetUp result = meetUpService.removeParticipant(1L, 1L);
+
+        assertFalse(result.getParticipants().contains(user));
+        verify(meetUpRepository).save(meetUp);
+    }
+
+    @Test
+    void getParticipants_validMeetUpId_shouldReturnParticipants() {
+        User user1 = new User();
+        user1.setId(1L);
+        User user2 = new User();
+        user2.setId(2L);
+        Set<User> participants = new HashSet<>(List.of(user1, user2));
+        MeetUp meetUp = createMeetUp("loc", LocalDateTime.now().plusDays(1), new ArrayList<>());
+        meetUp.setParticipants(participants);
+
+        when(meetUpRepository.findById(anyLong())).thenReturn(Optional.of(meetUp));
+
+        Set<User> result = meetUpService.getParticipants(1L);
+
+        assertEquals(2, result.size());
+        assertTrue(result.contains(user1));
     }
 }
