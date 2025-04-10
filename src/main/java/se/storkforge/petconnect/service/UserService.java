@@ -31,6 +31,7 @@ public class UserService {
         this.fileStorageService = fileStorageService;
     }
 
+
     public User createUser(User user) {
         validateNewUser(user);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
@@ -163,6 +164,8 @@ public class UserService {
     }
 
     private boolean isStrongPassword(String password) {
-        return password != null && password.matches("^(?=.*[A-Za-z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$");
+        return password != null && password.matches(
+                "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$"
+        );
     }
 }
