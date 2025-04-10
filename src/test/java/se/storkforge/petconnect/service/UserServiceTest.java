@@ -46,26 +46,23 @@ class UserServiceTest {
     // CREATE USER TEST
     @Test
     void createUser_validUser_shouldSaveUser() {
-        // Arrange
-        User userToCreate = createUser("testuser", "test@example.com", "password");
+        User userToCreate = createUser("testuser", "test@example.com", "ValidPass1!");
         when(userRepository.findByUsername(userToCreate.getUsername())).thenReturn(Optional.empty());
         when(userRepository.findByEmail(userToCreate.getEmail())).thenReturn(Optional.empty());
-        when(passwordEncoder.encode(userToCreate.getPassword())).thenReturn("encodedPassword");
-        when(userRepository.save(userToCreate)).thenReturn(userToCreate);
+        when(passwordEncoder.encode("ValidPass1!")).thenReturn("encodedPassword");
+        when(userRepository.save(any(User.class))).thenReturn(userToCreate);
 
-        // Act
         User createdUser = userService.createUser(userToCreate);
 
-        // Assert
         assertNotNull(createdUser);
         assertEquals("encodedPassword", createdUser.getPassword());
-        verify(passwordEncoder).encode("password");
+        verify(passwordEncoder).encode("ValidPass1!");
         verify(userRepository).save(userToCreate);
     }
 
     @Test
     void createUser_usernameExists_shouldThrowException() {
-        User user = createUser("existing", "test@test.com", "pass");
+        User user = createUser("existing", "test@test.com", "ValidPass1!");
         when(userRepository.findByUsername(user.getUsername())).thenReturn(Optional.of(new User()));
 
         assertThrows(IllegalArgumentException.class, () -> userService.createUser(user));
@@ -74,7 +71,7 @@ class UserServiceTest {
 
     @Test
     void createUser_emailExists_shouldThrowException() {
-        User user = createUser("newuser", "existing@test.com", "pass");
+        User user = createUser("newuser", "existing@test.com", "ThePassword1!");
         when(userRepository.findByUsername(user.getUsername())).thenReturn(Optional.empty());
         when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(new User()));
 
@@ -84,7 +81,7 @@ class UserServiceTest {
 
     @Test
     void createUser_invalidEmail_shouldThrowException() {
-        User user = createUser("newuser", "invalid-email", "pass");
+        User user = createUser("newuser", "invalid-email", "ThePassword1!");
         when(userRepository.findByUsername(user.getUsername())).thenReturn(Optional.empty());
         when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.empty());
 
@@ -111,18 +108,18 @@ class UserServiceTest {
     // UPDATE USER TESTS  
     @Test
     void updateUser_validUpdate_shouldSaveChanges() {
-        User existing = createUserWithId(1L, "old", "old@test.com", "oldpass");
-        User update = createUserWithId(1L, "new", "new@test.com", "newpass");
+        User existing = createUserWithId(1L, "old", "old@test.com", "OldPassword1!");
+        User update = createUserWithId(1L, "new", "new@test.com", "NewPassword1!");
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(existing));
-        when(passwordEncoder.encode("newpass")).thenReturn("encodedNewPass");
+        when(passwordEncoder.encode("NewPassword1!")).thenReturn("encodedNewPass");
         when(userRepository.save(any(User.class))).thenReturn(update);
 
         User result = userService.updateUser(1L, update);
 
         assertEquals("new", result.getUsername());
         assertEquals("new@test.com", result.getEmail());
-        verify(passwordEncoder).encode("newpass");
+        verify(passwordEncoder).encode("NewPassword1!");
     }
 
     @Test
@@ -170,4 +167,71 @@ class UserServiceTest {
         when(userRepository.existsById(99L)).thenReturn(false);
         assertFalse(userService.existsById(99L));
     }
+
+    @Test
+    void createUser_weakPassword_shouldThrowException() {
+        User user = createUser("weakuser", "weak@example.com", "abc"); // invalid password
+
+        when(userRepository.findByUsername(user.getUsername())).thenReturn(Optional.empty());
+        when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.empty());
+
+        assertThrows(IllegalArgumentException.class, () -> userService.createUser(user));
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void createUser_passwordExactly8CharValid_shouldCreate() {
+        User user = createUser("edgeuser", "edge@example.com", "Abc123!@"); // 8 char, valid
+
+        when(userRepository.findByUsername(user.getUsername())).thenReturn(Optional.empty());
+        when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.empty());
+        when(passwordEncoder.encode(user.getPassword())).thenReturn("encoded");
+
+        userService.createUser(user);
+
+        verify(userRepository).save(user);
+    }
+
+    @Test
+    void createUser_passwordMissingUppercase_shouldThrowException() {
+        User user = createUser("user1", "user1@test.com", "valid1!@"); // no uppercase
+
+        when(userRepository.findByUsername(user.getUsername())).thenReturn(Optional.empty());
+        when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.empty());
+
+        assertThrows(IllegalArgumentException.class, () -> userService.createUser(user));
+    }
+
+    @Test
+    void createUser_passwordMissingNumber_shouldThrowException() {
+        User user = createUser("user2", "user2@test.com", "Invalid!A"); // no number
+
+        when(userRepository.findByUsername(user.getUsername())).thenReturn(Optional.empty());
+        when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.empty());
+
+        assertThrows(IllegalArgumentException.class, () -> userService.createUser(user));
+    }
+
+    @Test
+    void createUser_passwordMissingSpecialChar_shouldThrowException() {
+        User user = createUser("user3", "user3@test.com", "InvalidA1"); // no special character
+
+        when(userRepository.findByUsername(user.getUsername())).thenReturn(Optional.empty());
+        when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.empty());
+
+        assertThrows(IllegalArgumentException.class, () -> userService.createUser(user));
+    }
+
+    @Test
+    void createUser_passwordTooShort_shouldThrowException() {
+        User user = createUser("shortie", "short@test.com", "Aa1!"); // too short
+
+        when(userRepository.findByUsername(user.getUsername())).thenReturn(Optional.empty());
+        when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.empty());
+
+        assertThrows(IllegalArgumentException.class, () -> userService.createUser(user));
+    }
+
+
+
 }
