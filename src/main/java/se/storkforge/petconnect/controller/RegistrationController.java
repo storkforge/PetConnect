@@ -3,7 +3,6 @@ package se.storkforge.petconnect.controller;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.BindingResult;
 import se.storkforge.petconnect.entity.User;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -78,4 +77,5 @@ public class RegistrationController {
 
         return "redirect:/login?registered";
     }
+
 }
