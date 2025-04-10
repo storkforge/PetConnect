@@ -93,6 +93,7 @@ class RecommendationServiceTest {
         assertEquals("No available pets to recommend at this time.", result);
     }
 
+    // Warning log expected: "Attempted to generate recommendation for a null user"
     @Test
     void generateRecommendation_ShouldHandleNullUser() {
         // Act & Assert
