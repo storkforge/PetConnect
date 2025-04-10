@@ -10,6 +10,8 @@ import se.storkforge.petconnect.repository.MeetUpRepository;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -62,5 +64,37 @@ public class MeetUpService {
         return meetUpRepository.save(meetUp);
     }
 
+    @Transactional
+    public MeetUp addParticipant(Long meetUpId, User user) {
+        MeetUp meetUp = meetUpRepository.findById(meetUpId)
+                .orElseThrow(() -> new NoSuchElementException("Meet-up not found"));
+
+        if (!isUserAvailable(user, meetUp.getDateTime())) {
+            throw new IllegalStateException("User is not available at the scheduled time");
+        }
+
+        meetUp.getParticipants().add(user);
+        return meetUpRepository.save(meetUp);
+    }
+
+    @Transactional
+    public MeetUp removeParticipant(Long meetUpId, Long userId) {
+        MeetUp meetUp = meetUpRepository.findById(meetUpId)
+                .orElseThrow(() -> new NoSuchElementException("Meet-up not found"));
+
+        boolean removed = meetUp.getParticipants().removeIf(user -> user.getId().equals(userId));
+        if (!removed) {
+            throw new NoSuchElementException("User not found in participants");
+        }
+
+        return meetUpRepository.save(meetUp);
+    }
+
+    public Set<User> getParticipants(Long meetUpId) {
+        MeetUp meetUp = meetUpRepository.findById(meetUpId)
+                .orElseThrow(() -> new NoSuchElementException("Meet-up not found"));
+
+        return meetUp.getParticipants();
+    }
 
 }
