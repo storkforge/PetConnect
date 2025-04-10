@@ -38,7 +38,7 @@ class SmsControllerTest {
 
     @Test
     public void sendSms_validRequest_shouldReturnOk() throws Exception {
-        String to = "+46762378510";
+        String to = "+46762373333";
         String message = "Don't forget the meet-up!";
 
         mockMvc.perform(post("/sms/send")
@@ -63,7 +63,7 @@ class SmsControllerTest {
                 .when(smsService).sendSms(anyString(), anyString());
 
         mockMvc.perform(post("/sms/send")
-        .param("to", "+46762378510")
+        .param("to", "+46762373333")
                 .param("message", "Test message from SmsController"))
                 .andExpect(status().isInternalServerError())
                 .andExpect(content().string("Failed to send SMS: SMS error"));

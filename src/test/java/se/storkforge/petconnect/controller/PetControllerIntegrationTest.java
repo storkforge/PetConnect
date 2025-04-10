@@ -84,7 +84,8 @@ public class PetControllerIntegrationTest {
 
         mockMvc.perform(get("/pets")
                         .param("page", "0")
-                        .param("size", "10"))
+                        .param("size", "10")
+                        .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.content[0].name").value("Buddy"));
@@ -102,7 +103,8 @@ public class PetControllerIntegrationTest {
     void testGetPetById() throws Exception {
         when(petService.getPetById(testPetId)).thenReturn(Optional.of(testPet));
 
-        mockMvc.perform(get("/pets/{id}", testPetId))
+        mockMvc.perform(get("/pets/{id}", testPetId)
+                        .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.name").value("Buddy"));
@@ -119,7 +121,8 @@ public class PetControllerIntegrationTest {
         mockMvc.perform(post("/pets")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(inputDTO))
-                        .principal(authentication)) //include the Authentication
+                        .principal(authentication)
+                        .accept(MediaType.APPLICATION_JSON)) //include the Authentication
                 .andExpect(status().isCreated())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.name").value("Buddy"));
@@ -142,6 +145,7 @@ public class PetControllerIntegrationTest {
 
         mockMvc.perform(put("/pets/{id}", testPetId)
                         .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateDTO))
                         .principal(authentication))
                 .andExpect(status().isOk())
@@ -172,7 +176,8 @@ public class PetControllerIntegrationTest {
                         .param("page", "0")
                         .param("size", "10")
                         .param("species", "Dog")
-                        .param("available", "true"))
+                        .param("available", "true")
+                        .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].species").value("Dog"));
     }
