@@ -35,7 +35,7 @@ public class RegistrationController {
         this.roleRepository = roleRepository;
     }
 
-    @GetMapping("auth/register")
+    @GetMapping("/register")
     public String showRegistrationForm(Model model) {
         model.addAttribute("registrationForm", new RegistrationForm());
         return "auth/register";

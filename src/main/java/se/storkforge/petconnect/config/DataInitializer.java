@@ -3,6 +3,7 @@ package se.storkforge.petconnect.config;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import se.storkforge.petconnect.entity.Role;
 import se.storkforge.petconnect.entity.User;
@@ -14,6 +15,7 @@ import java.util.Optional;
 import java.util.Set;
 
 @Configuration
+@Profile("dev") // Only load this configuration in the dev profile
 public class DataInitializer {
 
     @Bean
