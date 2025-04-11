@@ -63,6 +63,13 @@ public class RegistrationController {
             return "auth/register";
         }
 
+        Optional<User> existingEmail = userRepository.findByEmail(form.getEmail());
+        if (existingEmail.isPresent()) {
+                 bindingResult.rejectValue("email", "error.email", "Email already exists.");
+                 log.warn("Attempt to register with existing email: {}", form.getEmail());
+                 return "auth/register";
+        }
+
         Role userRole = roleRepository.findByName("ROLE_USER")
                 .orElseThrow(() -> new RuntimeException("Default role not found"));
 
