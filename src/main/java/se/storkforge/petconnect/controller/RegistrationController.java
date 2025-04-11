@@ -35,13 +35,13 @@ public class RegistrationController {
         this.roleRepository = roleRepository;
     }
 
-    @GetMapping("/register")
+    @GetMapping("auth/register")
     public String showRegistrationForm(Model model) {
         model.addAttribute("registrationForm", new RegistrationForm());
         return "auth/register";
     }
 
-    @PostMapping("/register")
+    @PostMapping("auth/register")
     public String processRegistration(@Valid @ModelAttribute("registrationForm") RegistrationForm form,
                                       BindingResult bindingResult,
                                       Model model) {
