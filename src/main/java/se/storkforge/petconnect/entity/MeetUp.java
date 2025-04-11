@@ -1,7 +1,7 @@
 package se.storkforge.petconnect.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.*;
 import org.hibernate.proxy.HibernateProxy;
 
 import java.time.LocalDateTime;
@@ -16,7 +16,10 @@ public class MeetUp {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotBlank(message = "Location cannot be blank")
     private String location;
+
+    @Future(message = "Date and time must be in the future")
     private LocalDateTime dateTime;
 
     @ManyToMany(fetch = FetchType.LAZY)
@@ -28,7 +31,8 @@ public class MeetUp {
     private Set<User> participants = new HashSet<>();
 
     @NotNull(message = "Status is required")
-    private String status; // "PLANNED", "CONFIRMED", "CANCELED"
+    @Pattern(regexp = "PLANNED|CONFIRMED|CANCELED", message = "Status must be on of: PLANNED, CONFIRMED, CANCELED")
+    private String status;
 
     public Long getId() {
         return id;
