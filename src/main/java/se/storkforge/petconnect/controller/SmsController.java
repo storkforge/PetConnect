@@ -13,6 +13,13 @@ public class SmsController {
     @Autowired
     private SmsService smsService;
 
+    /**
+     * Endpoint to send an SMS message.
+     * Accepts phone number and message content via request parameters.
+     * @param to - recipient's phone number.
+     * @param content - message text (default is "Don't forget the meet-up!").
+     * @return HTTP response indicating the success or failure of the operation.
+     */
     @PostMapping("/send")
     public ResponseEntity<String> sendSms(
             @RequestParam String to,

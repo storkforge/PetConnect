@@ -19,6 +19,13 @@ public class MeetUpService {
     @Autowired
     private MeetUpRepository meetUpRepository;
 
+    /**
+     * Searches for meet-ups based on location and a date-time range.
+     * @param location - partial or full name of the location to filter.
+     * @param start - start of the time range.
+     * @param end - end of the time range.
+     * @return list of meet-ups matching the criteria.
+     */
     public List<MeetUp> searchMeetUps(String location, LocalDateTime start, LocalDateTime end) {
         if (location == null || start == null || end == null)
             throw new IllegalArgumentException("Location, start date and end date cannot be null");
@@ -30,6 +37,13 @@ public class MeetUpService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Checks if a user is available at a given date and time.
+     * The check considers a ±30 minute window to avoid overlapping meet-ups.
+     * @param user - the user to check.
+     * @param dateTime - the date and time to check for availability.
+     * @return true if the user is available, false otherwise.
+     */
     public boolean isUserAvailable(User user, LocalDateTime dateTime) {
         if (user == null || dateTime == null)
             throw new IllegalArgumentException("User and dateTime cannot be null");
@@ -43,6 +57,14 @@ public class MeetUpService {
                 });
     }
 
+    /**
+     * Plans a new meet-up by validating the input and checking participants' availability.
+     * If any participant is unavailable, the meet-up is not created.
+     * @param location - the location of the meet-up.
+     * @param dateTime - the date and time of the meet-up.
+     * @param participants - the list of users to invite.
+     * @return the saved MeetUp entity.
+     */
     @Transactional
     public MeetUp planMeetUp(String location, LocalDateTime dateTime, List<User> participants) {
         if (location == null || location.trim().isEmpty())
@@ -64,6 +86,16 @@ public class MeetUpService {
         return meetUpRepository.save(meetUp);
     }
 
+    /**
+     * Adds a participant to the specified meet-up, if the user is available at the scheduled time.
+     * Validates availability using the isUserAvailable method.
+     *
+     * @param meetUpId - the ID of the meet-up to join.
+     * @param user - the user to be added as a participant.
+     * @return the updated MeetUp entity with the new participant.
+     * @throws NoSuchElementException if the meet-up is not found.
+     * @throws IllegalStateException if the user is not available at the meet-up time.
+     */
     @Transactional
     public MeetUp addParticipant(Long meetUpId, User user) {
         MeetUp meetUp = meetUpRepository.findById(meetUpId)
@@ -77,6 +109,14 @@ public class MeetUpService {
         return meetUpRepository.save(meetUp);
     }
 
+    /**
+     * Removes a participant from the specified meet-up.
+     *
+     * @param meetUpId - the ID of the meet-up.
+     * @param userId - the ID of the user to be removed.
+     * @return the updated MeetUp entity without the removed participant.
+     * @throws NoSuchElementException if the meet-up or the user within the participants is not found.
+     */
     @Transactional
     public MeetUp removeParticipant(Long meetUpId, Long userId) {
         MeetUp meetUp = meetUpRepository.findById(meetUpId)
@@ -90,6 +130,13 @@ public class MeetUpService {
         return meetUpRepository.save(meetUp);
     }
 
+    /**
+     * Retrieves the list of participants for the given meet-up.
+     *
+     * @param meetUpId - the ID of the meet-up.
+     * @return a set of users participating in the meet-up.
+     * @throws NoSuchElementException if the meet-up is not found.
+     */
     public Set<User> getParticipants(Long meetUpId) {
         MeetUp meetUp = meetUpRepository.findById(meetUpId)
                 .orElseThrow(() -> new NoSuchElementException("Meet-up not found"));

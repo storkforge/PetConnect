@@ -14,6 +14,14 @@ public class MailController {
     @Autowired
     private MailService mailService;
 
+    /**
+     * Endpoint to send an email notification.
+     * Accepts recipient address, subject, and content via request parameters.
+     * @param to - recipient's email address (validated).
+     * @param subject - subject of the email (default is "MeetUp Reminder").
+     * @param content - body of the email (default is "Don't forget the meet-up!").
+     * @return HTTP response indicating the success or failure of the operation.
+     */
     @PostMapping("/send")
     public ResponseEntity<String> sendMail(
             @RequestParam @Email String to,
