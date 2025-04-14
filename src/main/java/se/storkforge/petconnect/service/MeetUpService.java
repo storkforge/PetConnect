@@ -32,7 +32,8 @@ public class MeetUpService {
     /**
      * Searches for meetups that are within a given radius from a geographic point and within a specified date range.
      *
-     * @param location    the center location as a Point<G2D> (latitude/longitude) from which to search
+     * @param latitude the latitude of the meet-up location
+     * @param longitude the longitude of the meet-up location
      * @param radiusInKm  the search radius in kilometers
      * @param start       the start of the time range for filtering meetups
      * @param end         the end of the time range for filtering meetups
