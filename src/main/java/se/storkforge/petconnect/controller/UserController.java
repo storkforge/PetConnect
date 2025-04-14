@@ -7,6 +7,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import se.storkforge.petconnect.dto.UserRequestDTO;
+import se.storkforge.petconnect.dto.UserResponseDTO;
 import se.storkforge.petconnect.entity.User;
 import se.storkforge.petconnect.exception.UserNotFoundException;
 import se.storkforge.petconnect.service.UserService;
@@ -24,38 +26,53 @@ public class UserController {
     }
 
     @GetMapping
-    public List<User> getAllUsers() {
-        return userService.getAllUsers();
+    public List<UserResponseDTO> getAllUsers() {
+        return userService.getAllUsers().stream()
+                .map(UserResponseDTO::fromEntity)
+                .toList();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<User> getUserById(@PathVariable Long id) {
+    public ResponseEntity<UserResponseDTO> getUserById(@PathVariable Long id) {
         try {
-            User user = userService.getUserById(id);
-            return ResponseEntity.ok(user);
+            return ResponseEntity.ok(
+                    UserResponseDTO.fromEntity(userService.getUserById(id))
+            );
         } catch (UserNotFoundException e) {
             return ResponseEntity.notFound().build();
         }
     }
 
     @PostMapping
-    public ResponseEntity<?> createUser(@Valid @RequestBody User user) {
+    public ResponseEntity<UserResponseDTO> createUser(@Valid @RequestBody UserRequestDTO userRequest) {
         try {
-            User createdUser = userService.createUser(user);
-            return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
+            User user = new User();
+            user.setUsername(userRequest.username());
+            user.setEmail(userRequest.email());
+            user.setPassword(userRequest.password());
+
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(UserResponseDTO.fromEntity(userService.createUser(user)));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().build();
         }
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User updatedUser) {
+    public ResponseEntity<UserResponseDTO> updateUser(
+            @PathVariable Long id,
+            @Valid @RequestBody UserRequestDTO userRequest) {
         try {
-            User updated = userService.updateUser(id, updatedUser);
-            return ResponseEntity.ok(updated);
+            User user = new User();
+            user.setUsername(userRequest.username());
+            user.setEmail(userRequest.email());
+            user.setPassword(userRequest.password());
+
+            return ResponseEntity.ok(
+                    UserResponseDTO.fromEntity(userService.updateUser(id, user))
+            );
         } catch (UserNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(null);
+            return ResponseEntity.notFound().build();
         }
     }
 

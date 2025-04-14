@@ -13,6 +13,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import se.storkforge.petconnect.dto.PetInputDTO;
+import se.storkforge.petconnect.dto.PetResponseDTO;
 import se.storkforge.petconnect.dto.PetUpdateInputDTO;
 import se.storkforge.petconnect.entity.Pet;
 import se.storkforge.petconnect.exception.PetNotFoundException;
@@ -33,7 +34,7 @@ public class PetController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<Pet>> getAllPets(
+    public ResponseEntity<Page<PetResponseDTO>> getAllPets(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String species,
@@ -52,15 +53,18 @@ public class PetController {
         filter.setLocation(location);
         filter.setNameContains(nameContains);
 
-        Page<Pet> pets = petService.getAllPets(pageable, filter);
-        return new ResponseEntity<>(pets, HttpStatus.OK);
+        return new ResponseEntity<>(
+                petService.getAllPets(pageable, filter)
+                        .map(PetResponseDTO::fromEntity),
+                HttpStatus.OK
+        );
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Pet> getPetById(@PathVariable Long id) {
+    public ResponseEntity<PetResponseDTO> getPetById(@PathVariable Long id) {
         try {
-            Optional<Pet> optionalPet = petService.getPetById(id);
-            return optionalPet.map(pet -> new ResponseEntity<>(pet, HttpStatus.OK))
+            return petService.getPetById(id)
+                    .map(pet -> ResponseEntity.ok(PetResponseDTO.fromEntity(pet)))
                     .orElseGet(() -> ResponseEntity.notFound().build());
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();
@@ -68,25 +72,25 @@ public class PetController {
     }
 
     @PostMapping
-    public ResponseEntity<Pet> createPet(
+    public ResponseEntity<PetResponseDTO> createPet(
             @Valid @RequestBody PetInputDTO petInput,
             Authentication authentication) {
         try {
             String username = authentication.getName();
             return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(petService.createPet(petInput, username));
+                    .body(PetResponseDTO.fromEntity(petService.createPet(petInput, username)));
         } catch (SecurityException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
     }
     @PutMapping("/{id}")
-    public ResponseEntity<?> updatePet(
+    public ResponseEntity<PetResponseDTO> updatePet(
             @PathVariable Long id,
             @Valid @RequestBody PetUpdateInputDTO petUpdate,
             Authentication authentication) {
         try {
             Pet updated = petService.updatePet(id, petUpdate, authentication.getName());
-            return ResponseEntity.ok(updated);
+            return ResponseEntity.ok(PetResponseDTO.fromEntity(updated));
         } catch (PetNotFoundException e) {
             return ResponseEntity.notFound().build();
         } catch (SecurityException e) {
@@ -121,7 +125,7 @@ public class PetController {
             return ResponseEntity.notFound().build();
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Failed to upload picture: " + e.getMessage());
+                    .body("Failed to upload picture: " + e.getMessage());
         }
     }
 
