@@ -122,8 +122,7 @@ public class PetControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(inputDTO))
                         .principal(authentication)
-                        .accept(MediaType.APPLICATION_JSON)) 
-                        .principal(authentication))
+                        .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isCreated())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.name").value("Buddy"));
