@@ -90,7 +90,7 @@ public class PetControllerIntegrationTest {
                 .andExpect(jsonPath("$.content[0].name").value("Buddy"));
         verify(petService).getAllPets(any(Pageable.class), filterCaptor.capture());
         PetFilter capturedFilter = filterCaptor.getValue();
-        assertNull(capturedFilter.getSpecies()); // Or other assertions on the filter properties
+        assertNull(capturedFilter.getSpecies());
         assertNull(capturedFilter.getAvailable());
         assertNull(capturedFilter.getMinAge());
         assertNull(capturedFilter.getMaxAge());
@@ -114,16 +114,17 @@ public class PetControllerIntegrationTest {
                 "Buddy", "Dog", true, 3, testUser.getId(), "New York");
 
         when(authentication.getName()).thenReturn(testUsername);
-        when(petService.createPet(any(PetInputDTO.class), eq(testUsername))).thenReturn(testPet); //include the String
+        when(petService.createPet(any(PetInputDTO.class), eq(testUsername))).thenReturn(testPet);
 
         mockMvc.perform(post("/pets")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(inputDTO))
-                        .principal(authentication)) //include the Authentication
+                        .principal(authentication))
                 .andExpect(status().isCreated())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.name").value("Buddy"));
     }
+
     @Test
     void testUpdatePet() throws Exception {
         when(authentication.getName()).thenReturn(testUsername);
@@ -158,16 +159,15 @@ public class PetControllerIntegrationTest {
                         .principal(authentication))
                 .andExpect(status().isNoContent());
     }
+
     @Test
     void testGetAllPetsWithFilter() throws Exception {
-        // Setup
         List<Pet> pets = List.of(testPet);
         Pageable pageable = PageRequest.of(0, 10);
         Page<Pet> petPage = new PageImpl<>(pets, pageable, pets.size());
 
         when(petService.getAllPets(any(Pageable.class), any(PetFilter.class))).thenReturn(petPage);
 
-        // Test with filter parameters
         mockMvc.perform(get("/pets")
                         .param("page", "0")
                         .param("size", "10")
@@ -202,7 +202,6 @@ public class PetControllerIntegrationTest {
 
         PetUpdateInputDTO updateDTO = new PetUpdateInputDTO(null, null, null, null, null, null);
 
-
         when(petService.updatePet(eq(testPetId), any(PetUpdateInputDTO.class), eq("differentUser")))
                 .thenThrow(new SecurityException("Unauthorized"));
 
@@ -212,6 +211,7 @@ public class PetControllerIntegrationTest {
                         .principal(authentication))
                 .andExpect(status().isForbidden());
     }
+
     @Test
     void testDeletePet_NotFound() throws Exception {
         when(authentication.getName()).thenReturn(testUsername);
@@ -233,12 +233,10 @@ public class PetControllerIntegrationTest {
                         .file(file))
                 .andExpect(status().isOk());
         verify(petService).uploadProfilePicture(eq(testPetId), any(MultipartFile.class));
-
     }
 
     @Test
     void testGetProfilePicture() throws Exception {
-        // Mock only what's needed
         Resource mockResource = mock(Resource.class);
         when(mockResource.getFilename()).thenReturn("test.png");
         when(petService.getProfilePicture(testPetId)).thenReturn(mockResource);
