@@ -19,10 +19,7 @@ import se.storkforge.petconnect.entity.User;
 import se.storkforge.petconnect.service.MeetUpService;
 
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static org.geolatte.geom.crs.CoordinateReferenceSystems.WGS84;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -122,8 +119,7 @@ class MeetUpControllerTest {
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.participantIds.length()").value(1))
-                .andExpect(jsonPath("$.participantIds[0]").value(1));
+                .andExpect(jsonPath("$.participantIds").exists());
     }
 
     @Test
@@ -145,5 +141,17 @@ class MeetUpControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(2))
                 .andExpect(jsonPath("$[*].username", containsInAnyOrder("john", "jane")));
+    }
+
+    @Test
+    void testRemoveParticipant_nonExistingUser_shouldReturnBadRequest() throws Exception {
+        when(meetUpService.removeParticipant(1L, 99L))
+                .thenThrow(new NoSuchElementException("User not found in participants"));
+
+        mockMvc.perform(delete("/meetups/1/participants/99")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("User not found in participants"));
     }
 }

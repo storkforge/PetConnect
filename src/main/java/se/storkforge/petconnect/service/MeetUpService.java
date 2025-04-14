@@ -61,9 +61,9 @@ public class MeetUpService {
     private boolean isWithinRadius(Point<G2D> center, Point<G2D> point, double radiusKm) {
         double earthRadius = 6371.0; // km
         double lat1 = center.getPosition().getLat();
-        double lat2 = center.getPosition().getLat();
+        double lat2 = point.getPosition().getLat();
         double lon1 = center.getPosition().getLon();
-        double lon2 = center.getPosition().getLon();
+        double lon2 = point.getPosition().getLon();
 
         double dLat = Math.toRadians(lat2 - lat1);
         double dLon = Math.toRadians(lon2 - lon1);

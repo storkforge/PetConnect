@@ -1,5 +1,7 @@
 package se.storkforge.petconnect.dto;
 
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import se.storkforge.petconnect.entity.MeetUp;
 import se.storkforge.petconnect.entity.User;
 
@@ -8,8 +10,14 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class MeetUpRequestDTO {
+    @Min(value = -90, message = "Latitude must be greater or equal to -90")
+    @Max(value = 90, message = "Latitude must be less or equal to 90")
     private double latitude;
+
+    @Min(value = -180, message = "Longitude must be greater or equal to -180")
+    @Max(value = 180, message = "Longitude must be less or equal to 180")
     private double longitude;
+
     private LocalDateTime dateTime;
     private List<Long> participantIds;
     private String status;

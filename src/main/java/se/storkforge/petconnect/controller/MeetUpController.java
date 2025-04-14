@@ -5,6 +5,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import se.storkforge.petconnect.dto.MeetUpRequestDTO;
 import se.storkforge.petconnect.entity.MeetUp;
 import se.storkforge.petconnect.entity.User;
@@ -12,6 +13,7 @@ import se.storkforge.petconnect.service.MeetUpService;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -55,10 +57,14 @@ public class MeetUpController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end) {
 
-        return meetUpService.searchMeetUps(longitude, latitude, radiusInKm, start, end)
-                .stream()
-                .map(MeetUpRequestDTO::fromEntity)
-                .collect(Collectors.toList());
+        try {
+            return meetUpService.searchMeetUps(longitude, latitude, radiusInKm, start, end)
+                    .stream()
+                    .map(MeetUpRequestDTO::fromEntity)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
     }
     /**
      * Adds a user as a participant to the specified meet-up.
@@ -104,6 +110,13 @@ public class MeetUpController {
      */
     @GetMapping("/{meetUpId}/participants")
     public ResponseEntity<Set<User>> getParticipants(@PathVariable Long meetUpId) {
-        return ResponseEntity.ok(meetUpService.getParticipants(meetUpId));
+        try {
+            return ResponseEntity.ok(meetUpService.getParticipants(meetUpId));
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Set.of());
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred", e);
+        }
+
     }
 }

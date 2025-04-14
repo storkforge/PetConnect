@@ -21,7 +21,7 @@ public class MeetUp {
 
     @Column(columnDefinition = "geometry(Point, 4326)")
     @JdbcTypeCode(SqlTypes.GEOMETRY)
-    @NotBlank(message = "Location cannot be blank")
+    @NotNull(message = "Location must not be null")
     private Point<G2D> location;
 
     @Future(message = "Date and time must be in the future")
