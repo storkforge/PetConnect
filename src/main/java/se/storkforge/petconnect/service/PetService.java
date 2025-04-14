@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import se.storkforge.petconnect.dto.PetInputDTO;
+import se.storkforge.petconnect.dto.PetResponseDTO;
 import se.storkforge.petconnect.dto.PetUpdateInputDTO;
 import se.storkforge.petconnect.entity.Pet;
 import se.storkforge.petconnect.exception.PetNotFoundException;
@@ -42,19 +43,22 @@ public class PetService {
     }
 
     @Transactional(readOnly = true)
-    public Page<Pet> getAllPets(Pageable pageable, PetFilter filter) {
+    public Page<PetResponseDTO> getAllPets(Pageable pageable, PetFilter filter) {
         logger.info("Retrieving all pets with pagination, page: {}, size: {}, filter: {}",
                 pageable.getPageNumber(), pageable.getPageSize(), filter);
 
         Specification<Pet> spec = buildSpecificationFromFilter(filter);
-        return petRepository.findAll(spec, pageable);
+        return petRepository.findAll(spec, pageable)
+                .map(PetResponseDTO::fromEntity);
     }
 
     @Transactional(readOnly = true)
-    public List<Pet> getPetsByFilter(PetFilter filter) {
+    public List<PetResponseDTO> getPetsByFilter(PetFilter filter) {
         logger.info("Retrieving pets by filter: {}", filter);
         Specification<Pet> spec = buildSpecificationFromFilter(filter);
-        return petRepository.findAll(spec);
+        return petRepository.findAll(spec).stream()
+                .map(PetResponseDTO::fromEntity)
+                .toList();
     }
 
     private Specification<Pet> buildSpecificationFromFilter(PetFilter filter) {
@@ -100,16 +104,16 @@ public class PetService {
     }
 
     @Transactional(readOnly = true)
-    public Optional<Pet> getPetById(Long id) {
+    public Optional<PetResponseDTO> getPetById(Long id) {
         logger.info("Retrieving pet by ID: {}", id);
         if (id == null || id <= 0) {
             throw new IllegalArgumentException("Invalid pet ID: ID must be positive and non-null");
         }
-        return petRepository.findById(id);
+        return petRepository.findById(id).map(PetResponseDTO::fromEntity);
     }
 
     @Transactional
-    public Pet createPet(PetInputDTO petInput, String currentUsername) {
+    public PetResponseDTO createPet(PetInputDTO petInput, String currentUsername) {
         logger.info("Creating new pet for user: {}", currentUsername);
 
         PetValidator.validatePetInput(petInput);
@@ -123,7 +127,7 @@ public class PetService {
 
         petOwnershipHelper.setPetOwner(pet, petInput.ownerId(), currentUsername, userService);
 
-        return petRepository.save(pet);
+        return PetResponseDTO.fromEntity(petRepository.save(pet));
     }
 
     private void applyPetUpdates(Pet pet, PetUpdateInputDTO petUpdate, String currentUsername) {
@@ -151,7 +155,7 @@ public class PetService {
     }
 
     @Transactional
-    public Pet updatePet(Long id, PetUpdateInputDTO petUpdate, String currentUsername) {
+    public PetResponseDTO updatePet(Long id, PetUpdateInputDTO petUpdate, String currentUsername) {
         logger.info("Updating pet with ID: {} for user: {}", id, currentUsername);
 
         Optional<Pet> optionalPet = petRepository.findById(id);
@@ -163,7 +167,7 @@ public class PetService {
 
         applyPetUpdates(existingPet, petUpdate, currentUsername);
 
-        return petRepository.save(existingPet);
+        return PetResponseDTO.fromEntity(petRepository.save(existingPet));
     }
 
     @Transactional
