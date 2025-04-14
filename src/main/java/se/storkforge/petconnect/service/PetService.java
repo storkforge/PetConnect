@@ -2,7 +2,6 @@ package se.storkforge.petconnect.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -13,11 +12,12 @@ import org.springframework.web.multipart.MultipartFile;
 import se.storkforge.petconnect.dto.PetInputDTO;
 import se.storkforge.petconnect.dto.PetUpdateInputDTO;
 import se.storkforge.petconnect.entity.Pet;
-import se.storkforge.petconnect.entity.User;
 import se.storkforge.petconnect.exception.PetNotFoundException;
 import se.storkforge.petconnect.repository.PetRepository;
+import se.storkforge.petconnect.util.OwnershipValidator;
+import se.storkforge.petconnect.util.PetOwnershipHelper;
+import se.storkforge.petconnect.util.PetValidator;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -29,14 +29,16 @@ public class PetService {
     private final PetRepository petRepository;
     private final FileStorageService fileStorageService;
     private final UserService userService;
-
+    private final PetOwnershipHelper petOwnershipHelper;
 
     public PetService(PetRepository petRepository,
                       FileStorageService fileStorageService,
-                      UserService userService) {
+                      UserService userService,
+                      PetOwnershipHelper petOwnershipHelper) {
         this.petRepository = petRepository;
         this.fileStorageService = fileStorageService;
         this.userService = userService;
+        this.petOwnershipHelper = petOwnershipHelper;
     }
 
     @Transactional(readOnly = true)
@@ -110,7 +112,7 @@ public class PetService {
     public Pet createPet(PetInputDTO petInput, String currentUsername) {
         logger.info("Creating new pet for user: {}", currentUsername);
 
-        validatePetInput(petInput);
+        PetValidator.validatePetInput(petInput);
 
         Pet pet = new Pet();
         pet.setName(petInput.name());
@@ -119,69 +121,14 @@ public class PetService {
         pet.setAge(petInput.age());
         pet.setLocation(petInput.location());
 
-        setPetOwner(pet, petInput.ownerId(), currentUsername);
+        petOwnershipHelper.setPetOwner(pet, petInput.ownerId(), currentUsername, userService);
 
         return petRepository.save(pet);
     }
 
-    private void validatePetInput(PetInputDTO petInput) {
-        if (petInput.name() == null || petInput.name().trim().isEmpty()) {
-            throw new IllegalArgumentException("Pet name cannot be empty");
-        }
-        if (petInput.species() == null || petInput.species().trim().isEmpty()) {
-            throw new IllegalArgumentException("Pet species cannot be empty");
-        }
-        if (petInput.age() < 0) {  // Removed null check since age is primitive int
-            throw new IllegalArgumentException("Pet age cannot be negative");
-        }
-        if (petInput.location() != null && petInput.location().trim().isEmpty()) {
-            throw new IllegalArgumentException("Pet location cannot be empty if provided");
-        }
-        // Validate against allowed species
-        List<String> allowedSpecies = Arrays.asList("dog", "cat", "bird", "rabbit", "fish");
-        if (!allowedSpecies.contains(petInput.species().toLowerCase())) {
-            throw new IllegalArgumentException("Invalid pet species: " + petInput.species());
-        }
-    }
-
-    private void setPetOwner(Pet pet, Long ownerId, String currentUsername) {
-        if (ownerId != null) {
-            User owner;
-            try {
-                owner = userService.getUserById(ownerId);
-            } catch (Exception e) {
-                throw new SecurityException("Invalid owner reference");
-            }
-            if (!owner.getUsername().equals(currentUsername)) {
-                throw new SecurityException("You can only create pets for yourself");
-            }
-
-            pet.setOwner(owner);
-            owner.addPet(pet);
-        }
-    }
-
-    @Transactional
-    public Pet updatePet(Long id, PetUpdateInputDTO petUpdate, String currentUsername) {
-        logger.info("Updating pet with ID: {} for user: {}", id, currentUsername);
-
-        Pet existingPet = petRepository.findById(id)
-                .orElseThrow(() -> new PetNotFoundException("Pet with id " + id + " not found"));
-
-        validateOwnership(existingPet, currentUsername);
-
-        applyPetUpdates(existingPet, petUpdate, currentUsername);
-
-        return petRepository.save(existingPet);
-    }
-
-    private void validateOwnership(Pet pet, String currentUsername) {
-        if (pet.getOwner() == null || !pet.getOwner().getUsername().equals(currentUsername)) {
-            throw new SecurityException("You can only modify your own pets");
-        }
-    }
-
     private void applyPetUpdates(Pet pet, PetUpdateInputDTO petUpdate, String currentUsername) {
+        PetValidator.validatePetUpdateInput(petUpdate);
+
         if (petUpdate.name() != null) {
             pet.setName(petUpdate.name());
         }
@@ -199,24 +146,24 @@ public class PetService {
         }
 
         if (petUpdate.ownerId() != null) {
-            updatePetOwner(pet, petUpdate.ownerId(), currentUsername);
+            petOwnershipHelper.updatePetOwner(pet, petUpdate.ownerId(), currentUsername, userService);
         }
     }
 
-    private void updatePetOwner(Pet pet, Long newOwnerId, String currentUsername) {
-        User newOwner = userService.getUserById(newOwnerId);
+    @Transactional
+    public Pet updatePet(Long id, PetUpdateInputDTO petUpdate, String currentUsername) {
+        logger.info("Updating pet with ID: {} for user: {}", id, currentUsername);
 
-        // Ensure current user can only transfer to themselves
-         if (!newOwner.getUsername().equals(currentUsername)) {
-            throw new SecurityException("You can only transfer ownership to yourself");
-        }
+        Optional<Pet> optionalPet = petRepository.findById(id);
 
-        if (pet.getOwner() != null) {
-            pet.getOwner().getPets().remove(pet);
-        }
+        Pet existingPet = optionalPet
+                .orElseThrow(() -> new PetNotFoundException("Pet with id " + id + " not found"));
 
-        pet.setOwner(newOwner);
-        newOwner.addPet(pet);
+        OwnershipValidator.validateOwnership(existingPet, currentUsername);
+
+        applyPetUpdates(existingPet, petUpdate, currentUsername);
+
+        return petRepository.save(existingPet);
     }
 
     @Transactional
@@ -226,7 +173,7 @@ public class PetService {
         Pet pet = petRepository.findById(id)
                 .orElseThrow(() -> new PetNotFoundException("Pet with id " + id + " not found"));
 
-        validateOwnership(pet, currentUsername);
+        OwnershipValidator.validateOwnership(pet, currentUsername);
 
         if (pet.getOwner() != null) {
             pet.getOwner().getPets().remove(pet);
@@ -254,7 +201,6 @@ public class PetService {
             try {
                 fileStorageService.delete(pet.getProfilePicturePath());
             } catch (RuntimeException e) {
-                // Log error but continue with new upload
                 logger.warn("Failed to delete old profile picture: {}", e.getMessage());
             }
         }
