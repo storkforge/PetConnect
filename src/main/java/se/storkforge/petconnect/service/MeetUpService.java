@@ -1,6 +1,7 @@
 package se.storkforge.petconnect.service;
 
 import jakarta.transaction.Transactional;
+import org.geolatte.geom.C2D;
 import org.geolatte.geom.G2D;
 import org.geolatte.geom.Point;
 import org.geolatte.geom.builder.DSL;
@@ -29,21 +30,49 @@ public class MeetUpService {
     UserRepository userRepository;
 
     /**
-     * Searches for meet-ups based on location and a date-time range.
-     * @param location - partial or full name of the location to filter.
-     * @param start - start of the time range.
-     * @param end - end of the time range.
-     * @return list of meet-ups matching the criteria.
+     * Searches for meetups that are within a given radius from a geographic point and within a specified date range.
+     *
+     * @param location    the center location as a Point<G2D> (latitude/longitude) from which to search
+     * @param radiusInKm  the search radius in kilometers
+     * @param start       the start of the time range for filtering meetups
+     * @param end         the end of the time range for filtering meetups
+     * @return a list of meetups that are located within the given radius from the specified location
+     *         and scheduled within the given time range
+     * @throws IllegalArgumentException if start or end are null, or if start is after end
      */
-    public List<MeetUp> searchMeetUps(String location, LocalDateTime start, LocalDateTime end) {
-        if (location == null || start == null || end == null)
-            throw new IllegalArgumentException("Location, start date and end date cannot be null");
-        if (start.isAfter(end)){
-            throw new IllegalArgumentException("Start date most be before end date");
-        }
-        return meetUpRepository.findByLocationContaining(location). stream()
-                .filter(meetUp -> !meetUp.getDateTime().isBefore(start) && !meetUp.getDateTime().isAfter(end))
+    public List<MeetUp> searchMeetUps(double longitude, double latitude, double radiusInKm, LocalDateTime start, LocalDateTime end) {
+        if (start == null || end == null)
+            throw new IllegalArgumentException("Start and end date cannot be null");
+        if (start.isAfter(end))
+            throw new IllegalArgumentException("Start date must be before end date");
+
+        Point<G2D> center = DSL.point(WGS84, new G2D(longitude, latitude));
+
+        List<MeetUp> candidates = meetUpRepository.findAll().stream()
+                .filter(m -> m.getLocation() != null)
+                .filter(m -> isWithinRadius(center, m.getLocation(), radiusInKm))
+                .filter(m -> !m.getDateTime().isBefore(start) && !m.getDateTime().isAfter(end))
                 .collect(Collectors.toList());
+
+        return candidates;
+    }
+
+    private boolean isWithinRadius(Point<G2D> center, Point<G2D> point, double radiusKm) {
+        double earthRadius = 6371.0; // km
+        double lat1 = center.getPosition().getLat();
+        double lat2 = center.getPosition().getLat();
+        double lon1 = center.getPosition().getLon();
+        double lon2 = center.getPosition().getLon();
+
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLon = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
+                        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        double distance = earthRadius * c;
+
+        return distance <= radiusKm;
     }
 
     /**
