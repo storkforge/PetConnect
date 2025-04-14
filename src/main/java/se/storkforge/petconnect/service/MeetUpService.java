@@ -1,11 +1,15 @@
 package se.storkforge.petconnect.service;
 
 import jakarta.transaction.Transactional;
+import org.geolatte.geom.G2D;
+import org.geolatte.geom.Point;
+import org.geolatte.geom.builder.DSL;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import se.storkforge.petconnect.entity.MeetUp;
 import se.storkforge.petconnect.entity.User;
 import se.storkforge.petconnect.repository.MeetUpRepository;
+import se.storkforge.petconnect.repository.UserRepository;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -14,10 +18,15 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static org.geolatte.geom.crs.CoordinateReferenceSystems.WGS84;
+
 @Service
 public class MeetUpService {
     @Autowired
     private MeetUpRepository meetUpRepository;
+
+    @Autowired
+    UserRepository userRepository;
 
     /**
      * Searches for meet-ups based on location and a date-time range.
@@ -58,23 +67,39 @@ public class MeetUpService {
     }
 
     /**
-     * Plans a new meet-up by validating the input and checking participants' availability.
-     * If any participant is unavailable, the meet-up is not created.
-     * @param location - the location of the meet-up.
-     * @param dateTime - the date and time of the meet-up.
-     * @param participants - the list of users to invite.
-     * @return the saved MeetUp entity.
+     * Plans and creates a new meet-up with the specified location, time, and participants.
+     *
+     * Validates that the date/time and participant list are provided,
+     * that all participant IDs correspond to existing users,
+     * and that all users are available at the specified time.
+     *
+     * Converts the given latitude and longitude into a geographic Point using the WGS84 coordinate system.
+     *
+     * @param latitude the latitude of the meet-up location
+     * @param longitude the longitude of the meet-up location
+     * @param dateTime the scheduled date and time for the meet-up
+     * @param participantIds list of user IDs to be added as participants
+     * @return the persisted MeetUp entity
+     * @throws IllegalArgumentException if required fields are missing
+     * @throws NoSuchElementException if any participant is not found
+     * @throws IllegalStateException if any user is not available at the given time
      */
     @Transactional
-    public MeetUp planMeetUp(String location, LocalDateTime dateTime, List<User> participants) {
-        if (location == null || location.trim().isEmpty())
-            throw new IllegalArgumentException("Location cannot be null or empty");
+    public MeetUp planMeetUp(double latitude, double longitude, LocalDateTime dateTime, List<Long> participantIds) {
         if (dateTime == null)
             throw new IllegalArgumentException("Date time cannot be null");
-        if (participants == null || participants.isEmpty())
+        if (participantIds == null || participantIds.isEmpty())
             throw new IllegalArgumentException("Participants cannot be null or empty");
+        List<User> participants = userRepository.findAllById(participantIds);
+        if (participants.size() != participantIds.size())
+            throw new NoSuchElementException("Some users were not found");
         if (participants.stream().anyMatch(user -> !isUserAvailable(user, dateTime)))
             throw new IllegalStateException("Some users are not available at this time.");
+
+        Point<G2D> location = DSL.point(
+                WGS84,
+                new G2D(longitude, latitude)
+        );
 
 
         MeetUp meetUp = new MeetUp();

@@ -2,11 +2,14 @@ package se.storkforge.petconnect.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
+import org.geolatte.geom.G2D;
+import org.geolatte.geom.Point;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.proxy.HibernateProxy;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -16,8 +19,10 @@ public class MeetUp {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(columnDefinition = "geometry(Point, 4326)")
+    @JdbcTypeCode(SqlTypes.GEOMETRY)
     @NotBlank(message = "Location cannot be blank")
-    private String location;
+    private Point<G2D> location;
 
     @Future(message = "Date and time must be in the future")
     private LocalDateTime dateTime;
@@ -42,11 +47,11 @@ public class MeetUp {
         this.id = id;
     }
 
-    public String getLocation() {
+    public Point<G2D> getLocation() {
         return location;
     }
 
-    public void setLocation(String location) {
+    public void setLocation(Point<G2D> location) {
         this.location = location;
     }
 
