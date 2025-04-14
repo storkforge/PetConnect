@@ -1,9 +1,11 @@
 package se.storkforge.petconnect.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import se.storkforge.petconnect.dto.MeetUpRequestDTO;
 import se.storkforge.petconnect.entity.MeetUp;
 import se.storkforge.petconnect.entity.User;
 import se.storkforge.petconnect.service.MeetUpService;
@@ -11,6 +13,7 @@ import se.storkforge.petconnect.service.MeetUpService;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/meetups")
@@ -19,20 +22,44 @@ public class MeetUpController {
     private MeetUpService meetUpService;
 
     /**
-     * Endpoint to search for meet-ups by location and date-time range.
-     * @param location - part of the location name to search.
-     * @param start - start of the search period.
-     * @param end - end of the search period.
-     * @return list of matching meet-ups.
+     * Handles the creation of a new meet-up.
+     *
+     * Accepts a request body containing location coordinates (latitude and longitude),
+     * date and time of the meet-up, and a list of participant user IDs.
+     * Delegates to the service layer to validate and persist the meet-up.
+     *
+     * @param dto the data transfer object containing meet-up details
+     * @return HTTP 200 with the created MeetUp object if successful,
+     *         or HTTP 400 with an error message if the request is invalid
      */
-    @GetMapping("/search")
-    public List<MeetUp> searchMeetUps(
-            @RequestParam String location,
-            @RequestParam LocalDateTime start,
-            @RequestParam LocalDateTime end) {
-        return meetUpService.searchMeetUps(location, start, end);
+    @PostMapping("/create")
+    public ResponseEntity<?> createMeetUp(@RequestBody MeetUpRequestDTO dto) {
+        try {
+            MeetUp meetUp = meetUpService.planMeetUp(
+                    dto.getLatitude(),
+                    dto.getLongitude(),
+                    dto.getDateTime(),
+                    dto.getParticipantIds()
+            );
+            return ResponseEntity.ok(meetUp);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
     }
 
+    @GetMapping("/search")
+    public List<MeetUpRequestDTO> searchMeetUps(
+            @RequestParam double longitude,
+            @RequestParam double latitude,
+            @RequestParam double radiusInKm,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end) {
+
+        return meetUpService.searchMeetUps(longitude, latitude, radiusInKm, start, end)
+                .stream()
+                .map(MeetUpRequestDTO::fromEntity)
+                .collect(Collectors.toList());
+    }
     /**
      * Adds a user as a participant to the specified meet-up.
      *
@@ -41,12 +68,10 @@ public class MeetUpController {
      * @return HTTP 200 with the updated meet-up if successful, or HTTP 400 with an error message if failed.
      */
     @PostMapping("/{meetUpId}/participants")
-    public ResponseEntity<?> addParticipant(
-            @PathVariable Long meetUpId,
-            @RequestBody User user) {
+    public ResponseEntity<?> addParticipant(@PathVariable Long meetUpId, @RequestBody User user) {
         try {
             MeetUp updated = meetUpService.addParticipant(meetUpId, user);
-            return ResponseEntity.ok(updated);
+            return ResponseEntity.ok(MeetUpRequestDTO.fromEntity(updated));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
@@ -65,7 +90,7 @@ public class MeetUpController {
             @PathVariable Long userId) {
         try {
             MeetUp updated = meetUpService.removeParticipant(meetUpId, userId);
-            return ResponseEntity.ok(updated);
+            return ResponseEntity.ok(MeetUpRequestDTO.fromEntity(updated));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }

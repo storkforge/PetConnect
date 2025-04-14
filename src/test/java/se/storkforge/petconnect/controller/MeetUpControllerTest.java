@@ -1,6 +1,9 @@
 package se.storkforge.petconnect.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.geolatte.geom.G2D;
+import org.geolatte.geom.Point;
+import org.geolatte.geom.builder.DSL;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,6 +24,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static org.geolatte.geom.crs.CoordinateReferenceSystems.WGS84;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -40,13 +44,18 @@ class MeetUpControllerTest {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     private MeetUp testMeetUp;
+    private final double longitude = 11.97;
+    private final double latitude = 57.70;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
         mockMvc = MockMvcBuilders.standaloneSetup(meetUpController).build();
+
+        Point<G2D> point = DSL.point(WGS84, new G2D(longitude, latitude));
+
         testMeetUp = new MeetUp();
-        testMeetUp.setLocation("Test Location");
+        testMeetUp.setLocation(point);
         testMeetUp.setDateTime(LocalDateTime.now().plusDays(1));
         testMeetUp.setParticipants(new HashSet<>());
         testMeetUp.setStatus("PLANNED");
@@ -55,25 +64,31 @@ class MeetUpControllerTest {
 
     @Test
     public void testSearchMeetUpsEndPoint() throws Exception {
-        List<MeetUp> meetUps = Arrays.asList(testMeetUp);
-        when(meetUpService.searchMeetUps(eq("Test Location"), any(LocalDateTime.class), any(LocalDateTime.class)))
+
+        LocalDateTime start = LocalDateTime.now().minusDays(1);
+        LocalDateTime end = LocalDateTime.now().plusDays(2);
+
+        List<MeetUp> meetUps = List.of(testMeetUp);
+        when(meetUpService.searchMeetUps(eq(longitude), eq(latitude), eq(10.0), any(), any()))
                 .thenReturn(meetUps);
+
         mockMvc.perform(
                         get("/meetups/search")
-                                .param("location", "Test Location")
-                                .param("start", LocalDateTime.now().minusDays(1).toString())
-                                .param("end", LocalDateTime.now().plusDays(2).toString())
-                                .accept(MediaType.APPLICATION_JSON)
-                        )
+                                .param("longitude", String.valueOf(longitude))
+                                .param("latitude", String.valueOf(latitude))
+                                .param("radiusInKm", "10.0")
+                                .param("start", start.toString())
+                                .param("end", end.toString())
+                                .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].location").value("Test Location"));
-
-        verify(meetUpService, times(1))
-                .searchMeetUps(eq("Test Location"), any(LocalDateTime.class), any(LocalDateTime.class));
+                .andExpect(jsonPath("$[0].longitude").value(longitude))
+                .andExpect(jsonPath("$[0].latitude").value(latitude))
+                .andExpect(jsonPath("$[0].status").value("PLANNED"));
 
     }
+
 
     @Test
     void testAddParticipant_shouldReturnUpdatedMeetUp() throws Exception {
@@ -90,7 +105,8 @@ class MeetUpControllerTest {
                         .content(objectMapper.writeValueAsString(user))
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.participants.length()").value(1));
+                .andExpect(jsonPath("$.participantIds.length()").value(1))
+                .andExpect(jsonPath("$.participantIds[0]").value(1));
     }
 
     @Test
@@ -102,9 +118,12 @@ class MeetUpControllerTest {
         when(meetUpService.removeParticipant(1L, 1L)).thenReturn(testMeetUp);
 
         mockMvc.perform(delete("/meetups/1/participants/1")
+                        .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.participants").exists());
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.participantIds.length()").value(1))
+                .andExpect(jsonPath("$.participantIds[0]").value(1));
     }
 
     @Test
