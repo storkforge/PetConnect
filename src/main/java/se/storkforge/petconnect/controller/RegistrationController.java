@@ -41,7 +41,7 @@ public class RegistrationController {
         return "auth/register";
     }
 
-    @PostMapping("auth/register")
+    @PostMapping("/register")
     public String processRegistration(@Valid @ModelAttribute("registrationForm") RegistrationForm form,
                                       BindingResult bindingResult,
                                       Model model) {
