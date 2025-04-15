@@ -5,6 +5,8 @@ import org.geolatte.geom.C2D;
 import org.geolatte.geom.G2D;
 import org.geolatte.geom.Point;
 import org.geolatte.geom.builder.DSL;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import se.storkforge.petconnect.entity.MeetUp;
@@ -23,9 +25,12 @@ import static org.geolatte.geom.crs.CoordinateReferenceSystems.WGS84;
 
 @Service
 public class MeetUpService {
-    @Autowired
-    private MeetUpRepository meetUpRepository;
 
+    @Autowired private MeetUpRepository meetUpRepository;
+    @Autowired private MailService mailService;
+    @Autowired private SmsService smsService;
+
+    private static final Logger logger = LoggerFactory.getLogger(MeetUpService.class);
     @Autowired
     UserRepository userRepository;
 
@@ -138,6 +143,9 @@ public class MeetUpService {
         meetUp.setParticipants(new HashSet<>(participants));
         meetUp.setStatus("PLANNED");
 
+        MeetUp savedMeetUp = meetUpRepository.save(meetUp);
+        // Automatically Notifies participants via email and SMS
+        notifyParticipants(savedMeetUp);
         return meetUpRepository.save(meetUp);
     }
 
@@ -199,4 +207,32 @@ public class MeetUpService {
         return meetUp.getParticipants();
     }
 
+
+    private void notifyParticipants(MeetUp meetUp) {
+        String subject = "You've been invited to a pet meet-up!";
+        String text = String.format(
+                "A meet-up is scheduled for %s at location [%.5f, %.5f]. Status: %s.",
+                meetUp.getDateTime(),
+                meetUp.getLocation().getPosition().getLat(),
+                meetUp.getLocation().getPosition().getLon(),
+                meetUp.getStatus()
+        );
+
+        for (User user : meetUp.getParticipants()) {
+            // Send email
+            try {
+                mailService.sendMeetUpNotification(user.getEmail(), subject, text);
+            } catch (Exception e) {
+                logger.warn("Failed to send email to {}", user.getEmail(), e);
+            }
+
+            // Send SMS
+            try {
+                smsService.sendSms(user.getPhoneNumber(), text);
+            } catch (Exception e) {
+                logger.warn("Failed to send SMS to {}", user.getPhoneNumber(), e);
+            }
+        }
+
+    }
 }
