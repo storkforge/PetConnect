@@ -166,16 +166,32 @@ public class MeetUpService {
      */
     @Transactional
     public MeetUp addParticipant(Long meetUpId, User user) {
+        if (user == null || user.getId() == null) {
+            throw new IllegalArgumentException("User cannot be null and must have a valid ID.");
+        }
+
+        User verifiedUser = userRepository.findById(user.getId())
+                .orElseThrow(() -> new NoSuchElementException("User not found"));
+
         MeetUp meetUp = meetUpRepository.findById(meetUpId)
                 .orElseThrow(() -> new NoSuchElementException("Meet-up not found"));
 
-        if (!isUserAvailable(user, meetUp.getDateTime())) {
-            throw new IllegalStateException("User is not available at the scheduled time");
+        if (!isUserAvailable(verifiedUser, meetUp.getDateTime())) {
+            throw new IllegalStateException("User is not available at the scheduled time.");
         }
 
-        meetUp.getParticipants().add(user);
-        return meetUpRepository.save(meetUp);
+        if (meetUp.getParticipants().contains(verifiedUser)) {
+            throw new IllegalStateException("User is already a participant.");
+        }
+
+        meetUp.getParticipants().add(verifiedUser);
+        MeetUp updatedMeetUp = meetUpRepository.save(meetUp);
+
+        notifyParticipant(updatedMeetUp, verifiedUser);
+
+        return updatedMeetUp;
     }
+
 
     /**
      * Removes a participant from the specified meet-up.
@@ -215,7 +231,34 @@ public class MeetUpService {
 
     void notifyParticipants(MeetUp meetUp) {
         String subject = "Pet Connect: You've been invited to a meet-up!";
-        String message = String.format(
+        String message = buildNotificationMessage(meetUp);
+
+        List<String> failedNotifications = new ArrayList<>();
+
+        for (User user : meetUp.getParticipants()) {
+            try {
+                sendNotification(user, subject, message);
+            } catch (Exception e) {
+                failedNotifications.add(user.getEmail() + " / " + user.getPhoneNumber());
+                logger.warn("Failed to send notification to {} / {}", user.getEmail(), user.getPhoneNumber(), e);
+            }
+        }
+
+        if (!failedNotifications.isEmpty()) {
+            logger.error("{} notification(s) failed: {}", failedNotifications.size(),
+                    String.join(", ", failedNotifications));
+        }
+    }
+
+    private void notifyParticipant(MeetUp meetUp, User participant) {
+        String subject = "Pet Connect: You've been invited to a meet-up!";
+        String message = buildNotificationMessage(meetUp);
+
+        sendNotification(participant, subject, message);
+    }
+
+    private String buildNotificationMessage(MeetUp meetUp) {
+        return String.format(
                 "Hello! You've been invited to a pet meet-up scheduled for %s at latitude %.5f, longitude %.5f. " +
                         "Please confirm your attendance. Status: %s.",
                 meetUp.getDateTime(),
@@ -223,30 +266,21 @@ public class MeetUpService {
                 meetUp.getLocation().getPosition().getLon(),
                 meetUp.getStatus()
         );
+    }
 
-        List<String> failedNotifications = new ArrayList<>();
-
-        for (User user : meetUp.getParticipants()) {
-            // Email
-            try {
-                mailService.sendMeetUpNotification(user.getEmail(), subject, message);
-            } catch (Exception e) {
-                logger.warn(" Failed to send email to {}.", user.getEmail(), e);
-                failedNotifications.add("Email to " + user.getEmail());
-            }
-
-            // SMS
-            try {
-                smsService.sendSms(user.getPhoneNumber(), message);
-            } catch (Exception e) {
-                logger.warn(" Failed to send SMS to {}.", user.getPhoneNumber(), e);
-                failedNotifications.add("SMS to " + user.getPhoneNumber());
-            }
+    private void sendNotification(User user, String subject, String message) {
+        try {
+            mailService.sendMeetUpNotification(user.getEmail(), subject, message);
+        } catch (Exception e) {
+            logger.warn("Failed to send email to {}.", user.getEmail(), e);
+            throw e;
         }
 
-        if (!failedNotifications.isEmpty()) {
-            logger.error(" {} notification(s) failed: {}", failedNotifications.size(),
-                    String.join(", ", failedNotifications));
+        try {
+            smsService.sendSms(user.getPhoneNumber(), message);
+        } catch (Exception e) {
+            logger.warn("Failed to send SMS to {}.", user.getPhoneNumber(), e);
+            throw e;
         }
     }
 
