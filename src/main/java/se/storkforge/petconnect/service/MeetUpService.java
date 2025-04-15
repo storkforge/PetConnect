@@ -36,33 +36,33 @@ public class MeetUpService {
     @Autowired
     UserRepository userRepository;
 
+
+
     /**
-     * Searches for meetups that are within a given radius from a geographic point and within a specified date range.
+     * Searches for meet-ups within a specified radius from a given location and time range.
      *
-     * @param latitude the latitude of the meet-up location
-     * @param longitude the longitude of the meet-up location
-     * @param radiusInKm  the search radius in kilometers
-     * @param start       the start of the time range for filtering meetups
-     * @param end         the end of the time range for filtering meetups
-     * @return a list of meetups that are located within the given radius from the specified location
-     *         and scheduled within the given time range
-     * @throws IllegalArgumentException if start or end are null, or if start is after end
+     * @param longitude - the longitude of the center point.
+     * @param latitude - the latitude of the center point.
+     * @param radiusInKm - the search radius in kilometers.
+     * @param start - the start date and time for filtering meet-ups.
+     * @param end - the end date and time for filtering meet-ups.
+     * @return a list of meet-ups that match the criteria.
      */
     public List<MeetUp> searchMeetUps(double longitude, double latitude, double radiusInKm, LocalDateTime start, LocalDateTime end) {
-        if (start == null || end == null)
-            throw new IllegalArgumentException("Start and end date cannot be null");
-        if (start.isAfter(end))
+        Objects.requireNonNull(start, "Start date cannot be null");
+        Objects.requireNonNull(end, "End date cannot be null");
+
+        if (start.isAfter(end)) {
             throw new IllegalArgumentException("Start date must be before end date");
+        }
 
         Point<G2D> center = DSL.point(WGS84, new G2D(longitude, latitude));
+        List<MeetUp> dateFilteredMeetUps = meetUpRepository.findByDateTimeBetween(start, end);
 
-        List<MeetUp> candidates = meetUpRepository.findAll().stream()
+        return dateFilteredMeetUps.stream()
                 .filter(m -> m.getLocation() != null)
                 .filter(m -> isWithinRadius(center, m.getLocation(), radiusInKm))
-                .filter(m -> !m.getDateTime().isBefore(start) && !m.getDateTime().isAfter(end))
                 .collect(Collectors.toList());
-
-        return candidates;
     }
 
     private boolean isWithinRadius(Point<G2D> center, Point<G2D> point, double radiusKm) {
