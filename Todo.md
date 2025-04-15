@@ -4,8 +4,6 @@ Tasks being
 
 Organize uploads into subfolders
 
-Modify FileStorageService.store() to accept a subfolder parameter (e.g. "users", "pets").
-
 Store files under root/subfolder/filename instead of directly in the root.
 
 Ensure subfolders are created if they don't exist.

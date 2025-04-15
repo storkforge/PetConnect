@@ -33,20 +33,21 @@ public class FileStorageService {
 
     String store(MultipartFile file, String dir) {
         creatDir(root.resolve(dir));
-
         try {
-
             String contentType = file.getContentType();
             String filename = UUID.randomUUID() + "." + contentType.split("/")[1];
 
             Path tempDestination = root.resolve(dir);
             Path destination = tempDestination.resolve(filename).normalize().toAbsolutePath();
-            if (!destination.startsWith(this.root.toAbsolutePath())) {
+
+            if (!destination.startsWith(root.toAbsolutePath())) {
                  throw new RuntimeException("Invalid path outside upload directory.");
             }
+
             try (var inputStream = file.getInputStream()) {
                 Files.copy(inputStream, destination);
             }
+
             LOG.info("Stored file: {}", destination);
             return destination.toString();
         } catch (IOException e) {
@@ -67,7 +68,6 @@ public class FileStorageService {
         }
     }
 
-    //Returns a Resource representing the file
     public Resource loadFile(String filename) {
         try {
             Path file = root.resolve(filename);
@@ -91,6 +91,5 @@ public class FileStorageService {
             throw new RuntimeException("Unable to create directory", e);
         }
     }
-
 
 }

@@ -35,8 +35,8 @@ public class RestrictedFileStorageService extends FileStorageService{
     }
 
     @Override
-    public void delete(String filename){
-        super.delete(filename);
+    public void delete(String path){
+        super.delete(path);
     }
 
     public boolean isValidFile(MultipartFile file, Long maxFileSize, List<String> allowedTypes) {

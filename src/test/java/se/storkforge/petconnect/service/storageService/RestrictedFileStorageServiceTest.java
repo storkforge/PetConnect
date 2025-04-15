@@ -64,13 +64,14 @@ class RestrictedFileStorageServiceTest {
 
     @Test
     void successfulDelete(){
-        String path = rfs.store(file,"test");
+        String path = rfs.storeFile(file,"test");
         rfs.delete(path);
         assertThat(Files.exists(Path.of(path))).isFalse();
     }
 
     @Test
-    void successfulReturn(){
-
+    void successfulReturn() throws IOException {
+        String path = rfs.storeFile(file,"test");
+        assertThat(rfs.loadFile(path).isReadable()).isTrue();
     }
 }
