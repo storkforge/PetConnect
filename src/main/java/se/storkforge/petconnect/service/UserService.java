@@ -20,7 +20,7 @@ import java.util.regex.Pattern;
 @Service
 @Transactional
 public class UserService {
-    private final RestrictedFileStorageService fileStorageService;
+    private final RestrictedFileStorageService storageService;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private static final String EMAIL_REGEX = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
@@ -29,7 +29,7 @@ public class UserService {
     public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, RestrictedFileStorageService fileStorageService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
-        this.fileStorageService = fileStorageService;
+        this.storageService = fileStorageService;
     }
 
     public User createUser(User user) {
@@ -51,8 +51,7 @@ public class UserService {
     }
 
     public User getUserById(Long id) {
-        return userRepository.findById(id)
-                .orElseThrow(() -> new UserNotFoundException("User with id " + id + " not found"));
+        return getOrElseThrow(id);
     }
 
     public Optional<User> getUserByUsername(String username) {
@@ -131,33 +130,42 @@ public class UserService {
 
     public void uploadProfilePicture(Long id, MultipartFile file) {
         String dir = "users/"+id+"/profilePictures";
-        if (file == null) {
-            throw new IllegalArgumentException("File cannot be null");
-        }
-        Optional<User> user = userRepository.findById(id);
-        if (user.isEmpty()) {
-            throw new UserNotFoundException("User with id " + id + " not found");
+
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("File cannot be null or empty");
         }
 
-        if (user.get().getProfilePicturePath() != null) {
-            fileStorageService.delete(user.get().getProfilePicturePath());
+        User user = getOrElseThrow(id);
+
+        if (user.getProfilePicturePath() != null) {
+            try {
+                storageService.delete(user.getProfilePicturePath());
+            } catch (RuntimeException e) {
+
+            }
         }
 
-        String filename = fileStorageService.storeImage(file, dir);
-        user.get().setProfilePicturePath(filename);
-        userRepository.save(user.get());
+        String filename = storageService.storeImage(file, dir);
+        user.setProfilePicturePath(filename);
+        userRepository.save(user);
     }
 
     @Transactional(readOnly = true)
     public Resource getProfilePicture(Long id) {
-        Optional<User> user = userRepository.findById(id);
-        if (user.isEmpty()) {
-            throw new UserNotFoundException("User with id " + id + " not found");
-        }
-        String filename = user.get().getProfilePicturePath();
+        User user = getOrElseThrow(id);
+        String filename = user.getProfilePicturePath();
         if (filename == null) {
             throw new RuntimeException("User does not have a profile picture");
         }
-        return fileStorageService.loadFile(filename);
+        return storageService.loadFile(filename);
+    }
+
+    public void deleterProfilePicture(Long id) {
+        User user = getOrElseThrow(id);
+        storageService.delete(user.getProfilePicturePath());
+    }
+
+    private User getOrElseThrow(Long id) {
+        return userRepository.findById(id).orElseThrow(() -> new UserNotFoundException("User with id " + id + " not found"));
     }
 }

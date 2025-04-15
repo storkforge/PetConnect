@@ -155,10 +155,7 @@ public class PetService {
     public Pet updatePet(Long id, PetUpdateInputDTO petUpdate, String currentUsername) {
         logger.info("Updating pet with ID: {} for user: {}", id, currentUsername);
 
-        Optional<Pet> optionalPet = petRepository.findById(id);
-
-        Pet existingPet = optionalPet
-                .orElseThrow(() -> new PetNotFoundException("Pet with id " + id + " not found"));
+        Pet existingPet = getOrElseThrow(id);
 
         OwnershipValidator.validateOwnership(existingPet, currentUsername);
 
@@ -171,8 +168,7 @@ public class PetService {
     public void deletePet(Long id, String currentUsername) {
         logger.info("Deleting pet with ID: {} for user: {}", id, currentUsername);
 
-        Pet pet = petRepository.findById(id)
-                .orElseThrow(() -> new PetNotFoundException("Pet with id " + id + " not found"));
+        Pet pet = getOrElseThrow(id);
 
         OwnershipValidator.validateOwnership(pet, currentUsername);
 
@@ -189,14 +185,14 @@ public class PetService {
 
     @Transactional
     public void uploadProfilePicture(Long id, MultipartFile file) {
+        String dir = "pets/"+id+"/profilePictures";
         logger.info("Uploading profile picture for pet with ID: {}", id);
 
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("File cannot be null or empty");
         }
 
-        Pet pet = petRepository.findById(id)
-                .orElseThrow(() -> new PetNotFoundException("Pet with id " + id + " not found"));
+        Pet pet = getOrElseThrow(id);
 
         if (pet.getProfilePicturePath() != null) {
             try {
@@ -206,7 +202,7 @@ public class PetService {
             }
         }
 
-        String filename = storageService.storeImage(file,"/pets/"+id+"/profile-picture");
+        String filename = storageService.storeImage(file,dir);
         pet.setProfilePicturePath(filename);
         petRepository.save(pet);
     }
@@ -214,9 +210,7 @@ public class PetService {
     @Transactional(readOnly = true)
     public Resource getProfilePicture(Long id) {
         logger.info("Retrieving profile picture for pet with ID: {}", id);
-
-        Pet pet = petRepository.findById(id)
-                .orElseThrow(() -> new PetNotFoundException("Pet with id " + id + " not found"));
+        Pet pet = getOrElseThrow(id);
 
         if (pet.getProfilePicturePath() == null) {
             throw new RuntimeException("Pet does not have a profile picture");
@@ -224,4 +218,17 @@ public class PetService {
 
         return storageService.loadFile(pet.getProfilePicturePath());
     }
+
+    @Transactional
+    public void deleterProfilePicture(Long id) {
+        logger.info("Deleting profile picture for pet with ID: {}", id);
+        Pet pet = getOrElseThrow(id);
+        storageService.delete(pet.getProfilePicturePath());
+    }
+
+    private Pet getOrElseThrow(Long id) {
+        return petRepository.findById(id)
+                .orElseThrow(() -> new PetNotFoundException("Pet with id " + id + " not found"));
+    }
+
 }

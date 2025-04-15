@@ -72,7 +72,7 @@ public class UserController {
     }
 
     @PostMapping("/{id}/PFP")
-    public ResponseEntity<String> uploadPetProfilePicture(
+    public ResponseEntity<String> uploadProfilePicture(
             @PathVariable Long id, @RequestParam("file") MultipartFile file) {
         try {
             userService.uploadProfilePicture(id, file);
@@ -106,5 +106,15 @@ public class UserController {
             return MediaType.IMAGE_GIF;
         }
         return MediaType.IMAGE_JPEG;
+    }
+
+    @DeleteMapping("/{id}/PFP")
+    public ResponseEntity<Void> deleteProfilePicture (@PathVariable Long id) {
+        try {
+            userService.deleterProfilePicture(id);
+            return ResponseEntity.noContent().build();
+        } catch (UserNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 }

@@ -16,6 +16,7 @@ import se.storkforge.petconnect.dto.PetInputDTO;
 import se.storkforge.petconnect.dto.PetUpdateInputDTO;
 import se.storkforge.petconnect.entity.Pet;
 import se.storkforge.petconnect.exception.PetNotFoundException;
+import se.storkforge.petconnect.exception.UserNotFoundException;
 import se.storkforge.petconnect.service.PetFilter;
 import se.storkforge.petconnect.service.PetService;
 
@@ -144,6 +145,16 @@ public class PetController {
             return MediaType.IMAGE_GIF;
         }
         return MediaType.IMAGE_JPEG;
+    }
+
+    @DeleteMapping("/{id}/PFP")
+    public ResponseEntity<Void> deleteProfilePicture (@PathVariable Long id) {
+        try {
+            petService.deleterProfilePicture(id);
+            return ResponseEntity.noContent().build();
+        } catch (PetNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @ExceptionHandler(PetNotFoundException.class)
