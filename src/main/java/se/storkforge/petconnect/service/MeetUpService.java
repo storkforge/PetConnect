@@ -1,5 +1,8 @@
 package se.storkforge.petconnect.service;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.transaction.Transactional;
 import org.geolatte.geom.C2D;
 import org.geolatte.geom.G2D;
@@ -10,15 +13,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import se.storkforge.petconnect.entity.MeetUp;
+import se.storkforge.petconnect.entity.MeetUpStatus;
 import se.storkforge.petconnect.entity.User;
+import se.storkforge.petconnect.exception.UserOverbookedException;
 import se.storkforge.petconnect.repository.MeetUpRepository;
 import se.storkforge.petconnect.repository.UserRepository;
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.geolatte.geom.crs.CoordinateReferenceSystems.WGS84;
@@ -125,33 +127,32 @@ public class MeetUpService {
             throw new IllegalArgumentException("Date time cannot be null");
         if (participantIds == null || participantIds.isEmpty())
             throw new IllegalArgumentException("Participants cannot be null or empty");
-        List<User> participants = userRepository.findAllById(participantIds);
-        if (participants.size() != participantIds.size())
-            throw new NoSuchElementException("Some users were not found");
-        if (participants.stream().anyMatch(user -> !isUserAvailable(user, dateTime)))
-            throw new IllegalStateException("Some users are not available at this time.");
         if (latitude < -90 || latitude > 90)
             throw new IllegalArgumentException("Latitude must be between -90 and 90");
         if (longitude < -180 || longitude > 180)
             throw new IllegalArgumentException("Longitude must be between -180 and 180");
 
-        Point<G2D> location = DSL.point(
-                WGS84,
-                new G2D(longitude, latitude)
-        );
+        List<User> participants = userRepository.findAllById(participantIds);
+        if (participants.size() != participantIds.size())
+            throw new NoSuchElementException("Some users were not found");
+        if (participants.stream().anyMatch(user -> !isUserAvailable(user, dateTime)))
+            throw new UserOverbookedException("Some users are not available at this time.");
 
+        Point<G2D> location = DSL.point(WGS84, new G2D(longitude, latitude));
 
         MeetUp meetUp = new MeetUp();
         meetUp.setLocation(location);
         meetUp.setDateTime(dateTime);
         meetUp.setParticipants(new HashSet<>(participants));
-        meetUp.setStatus("PLANNED");
+        meetUp.setStatus(MeetUpStatus.PLANNED.name());
 
         MeetUp savedMeetUp = meetUpRepository.save(meetUp);
-        // Automatically Notifies participants via email and SMS
         notifyParticipants(savedMeetUp);
-        return meetUpRepository.save(meetUp);
+        return savedMeetUp;
     }
+
+
+
 
     /**
      * Adds a participant to the specified meet-up, if the user is available at the scheduled time.
@@ -213,30 +214,40 @@ public class MeetUpService {
 
 
     void notifyParticipants(MeetUp meetUp) {
-        String subject = "You've been invited to a pet meet-up!";
-        String text = String.format(
-                "A meet-up is scheduled for %s at location [%.5f, %.5f]. Status: %s.",
+        String subject = "Pet Connect: You've been invited to a meet-up!";
+        String message = String.format(
+                "Hello! You've been invited to a pet meet-up scheduled for %s at latitude %.5f, longitude %.5f. " +
+                        "Please confirm your attendance. Status: %s.",
                 meetUp.getDateTime(),
                 meetUp.getLocation().getPosition().getLat(),
                 meetUp.getLocation().getPosition().getLon(),
                 meetUp.getStatus()
         );
 
+        List<String> failedNotifications = new ArrayList<>();
+
         for (User user : meetUp.getParticipants()) {
-            // Send email
+            // Email
             try {
-                mailService.sendMeetUpNotification(user.getEmail(), subject, text);
+                mailService.sendMeetUpNotification(user.getEmail(), subject, message);
             } catch (Exception e) {
-                logger.warn("Failed to send email to {}", user.getEmail(), e);
+                logger.warn(" Failed to send email to {}.", user.getEmail(), e);
+                failedNotifications.add("Email to " + user.getEmail());
             }
 
-            // Send SMS
+            // SMS
             try {
-                smsService.sendSms(user.getPhoneNumber(), text);
+                smsService.sendSms(user.getPhoneNumber(), message);
             } catch (Exception e) {
-                logger.warn("Failed to send SMS to {}", user.getPhoneNumber(), e);
+                logger.warn(" Failed to send SMS to {}.", user.getPhoneNumber(), e);
+                failedNotifications.add("SMS to " + user.getPhoneNumber());
             }
         }
 
+        if (!failedNotifications.isEmpty()) {
+            logger.error(" {} notification(s) failed: {}", failedNotifications.size(),
+                    String.join(", ", failedNotifications));
+        }
     }
+
 }
