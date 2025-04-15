@@ -10,16 +10,18 @@ import java.util.stream.Collectors;
 
 public class MeetUpRequestDTO {
 
-    @Min(value = -90, message = "Latitude must be greater or equal to -90")
-    @Max(value = 90, message = "Latitude must be less or equal to 90")
-    private double latitude;
+    @NotNull(message = "Latitude is required")
+    @DecimalMin(value = "-90.0", message = "Latitude must be >= -90")
+    @DecimalMax(value = "90.0", message = "Latitude must be <= 90")
+    private Double latitude;
 
-    @Min(value = -180, message = "Longitude must be greater or equal to -180")
-    @Max(value = 180, message = "Longitude must be less or equal to 180")
-    private double longitude;
+    @NotNull(message = "Longitude is required")
+    @DecimalMin(value = "-180.0", message = "Longitude must be >= -180")
+    @DecimalMax(value = "180.0", message = "Longitude must be <= 180")
+    private Double longitude;
 
-    @NotNull(message = "Date and time must not be null")
-    @Future(message = "Date and time must be in the future")
+    @NotNull(message = "Date and time is required")
+    @FutureOrPresent(message = "Date and time must be in the future or now")
     private LocalDateTime dateTime;
 
     @NotNull(message = "Participant list cannot be null")
