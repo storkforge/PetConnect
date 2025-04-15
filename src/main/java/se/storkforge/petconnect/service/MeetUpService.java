@@ -208,7 +208,7 @@ public class MeetUpService {
     }
 
 
-    private void notifyParticipants(MeetUp meetUp) {
+    void notifyParticipants(MeetUp meetUp) {
         String subject = "You've been invited to a pet meet-up!";
         String text = String.format(
                 "A meet-up is scheduled for %s at location [%.5f, %.5f]. Status: %s.",

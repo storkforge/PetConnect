@@ -27,7 +27,10 @@ class MeetUpServiceTest {
 
     @Mock
     private MeetUpRepository meetUpRepository;
-
+    @Mock
+    private MailService mailService;
+    @Mock
+    private SmsService smsService;
     @Mock
     private UserRepository userRepository;
 
@@ -35,10 +38,6 @@ class MeetUpServiceTest {
     private MeetUpService meetUpService;
 
     private MeetUp createMeetUp(Point<G2D> location, LocalDateTime dateTime, List<User> participants) {
-        double latitude = 0;
-        double longitude = 0;
-        location = DSL.point(WGS84, new G2D(longitude, latitude));
-
         MeetUp meetUp = new MeetUp();
         meetUp.setLocation(location);
         meetUp.setDateTime(dateTime);
@@ -49,32 +48,35 @@ class MeetUpServiceTest {
 
     @Test
     void searchMeetUps_validCriteria_shouldReturnMeetUps() {
-
         double testLongitude = 11.97;
         double testLatitude = 57.70;
         double radiusInKm = 10.0;
 
-        LocalDateTime inRangeDate = LocalDateTime.now().plusDays(1);
-        LocalDateTime outOfRangeDate = LocalDateTime.now().plusDays(5);
+        // ✅ Single reference time to avoid mismatch
+        LocalDateTime now = LocalDateTime.of(2025, 4, 14, 12, 0);
 
-        Point<G2D> centerPoint = DSL.point(WGS84, new G2D(testLongitude, testLatitude));
+        LocalDateTime inRangeDate = now.plusDays(1);        // Inside range
+        LocalDateTime outOfRangeDate = now.plusDays(5);     // Outside range
 
-        MeetUp inRangeMeetUp = createMeetUp(centerPoint, inRangeDate, new ArrayList<>());
-        MeetUp outOfRangeMeetUp = createMeetUp(centerPoint, outOfRangeDate, new ArrayList<>());
-        List<MeetUp> allMeetUps = Arrays.asList(inRangeMeetUp, outOfRangeMeetUp);
+        Point<G2D> location = DSL.point(WGS84, new G2D(testLongitude, testLatitude));
 
-        when(meetUpRepository.findAll()).thenReturn(allMeetUps);
+        MeetUp inRangeMeetUp = createMeetUp(location, inRangeDate, List.of());
+        MeetUp outOfRangeMeetUp = createMeetUp(location, outOfRangeDate, List.of());
 
+        when(meetUpRepository.findAll()).thenReturn(List.of(inRangeMeetUp, outOfRangeMeetUp));
 
-        LocalDateTime startDate = LocalDateTime.now();
-        LocalDateTime endDate = LocalDateTime.now().plusDays(2);
+        LocalDateTime startDate = now;
+        LocalDateTime endDate = now.plusDays(2); // Only includes the first meet-up
+
         List<MeetUp> result = meetUpService.searchMeetUps(testLongitude, testLatitude, radiusInKm, startDate, endDate);
 
 
         assertNotNull(result);
         assertFalse(result.isEmpty());
-        assertTrue(result.contains(inRangeMeetUp));
-        assertFalse(result.contains(outOfRangeMeetUp));
+        assertTrue(result.stream().anyMatch(m -> m.getDateTime().equals(inRangeDate)));
+
+        // Confirm the out-of-range meet-up is excluded
+        assertTrue(result.stream().noneMatch(m -> m.getDateTime().equals(outOfRangeDate)));
     }
     @Test
     void isUserAvailable_userAvailable_shouldReturnTrue() {
@@ -193,4 +195,26 @@ class MeetUpServiceTest {
         assertEquals(2, result.size());
         assertTrue(result.contains(user1));
     }
+
+    @Test
+    void notifyParticipants_validMeetUp_shouldSendEmailsAndSmsToAll() {
+        // Arrange
+        User user = new User();
+        user.setEmail("test@example.com");
+        user.setPhoneNumber("+46762373333");
+
+        MeetUp meetUp = new MeetUp();
+        meetUp.setParticipants(Set.of(user));
+        meetUp.setDateTime(LocalDateTime.now().plusDays(1));
+        meetUp.setLocation(DSL.point(WGS84, new G2D(11.97, 57.70)));
+        meetUp.setStatus("PLANNED");
+
+        // Act
+        meetUpService.notifyParticipants(meetUp);
+
+        // Assert
+        verify(mailService).sendMeetUpNotification(eq("test@example.com"), anyString(), anyString());
+        verify(smsService).sendSms(eq("+46762373333"), anyString());
+    }
+
 }
