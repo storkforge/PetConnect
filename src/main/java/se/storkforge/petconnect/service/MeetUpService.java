@@ -31,6 +31,7 @@ public class MeetUpService {
     @Autowired private MeetUpRepository meetUpRepository;
     @Autowired private MailService mailService;
     @Autowired private SmsService smsService;
+    @Autowired private NotificationService notificationService;
 
     private static final Logger logger = LoggerFactory.getLogger(MeetUpService.class);
     @Autowired
@@ -147,7 +148,7 @@ public class MeetUpService {
         meetUp.setStatus(MeetUpStatus.PLANNED.name());
 
         MeetUp savedMeetUp = meetUpRepository.save(meetUp);
-        notifyParticipants(savedMeetUp);
+        notifyAllParticipants(savedMeetUp);
         return savedMeetUp;
     }
 
@@ -187,7 +188,7 @@ public class MeetUpService {
         meetUp.getParticipants().add(verifiedUser);
         MeetUp updatedMeetUp = meetUpRepository.save(meetUp);
 
-        notifyParticipant(updatedMeetUp, verifiedUser);
+        notifySingleParticipant(updatedMeetUp, verifiedUser);
 
         return updatedMeetUp;
     }
@@ -228,8 +229,7 @@ public class MeetUpService {
         return meetUp.getParticipants();
     }
 
-
-    void notifyParticipants(MeetUp meetUp) {
+    void notifyAllParticipants(MeetUp meetUp) {
         String subject = "Pet Connect: You've been invited to a meet-up!";
         String message = buildNotificationMessage(meetUp);
 
@@ -237,10 +237,10 @@ public class MeetUpService {
 
         for (User user : meetUp.getParticipants()) {
             try {
-                sendNotification(user, subject, message);
+                notificationService.notifyUser(user, subject, message);
             } catch (Exception e) {
                 failedNotifications.add(user.getEmail() + " / " + user.getPhoneNumber());
-                logger.warn("Failed to send notification to {} / {}", user.getEmail(), user.getPhoneNumber(), e);
+                logger.warn("Failed to notify participant: {} / {}", user.getEmail(), user.getPhoneNumber(), e);
             }
         }
 
@@ -250,11 +250,10 @@ public class MeetUpService {
         }
     }
 
-    private void notifyParticipant(MeetUp meetUp, User participant) {
+    private void notifySingleParticipant(MeetUp meetUp, User participant) {
         String subject = "Pet Connect: You've been invited to a meet-up!";
         String message = buildNotificationMessage(meetUp);
-
-        sendNotification(participant, subject, message);
+        notificationService.notifyUser(participant, subject, message);
     }
 
     private String buildNotificationMessage(MeetUp meetUp) {
@@ -266,22 +265,6 @@ public class MeetUpService {
                 meetUp.getLocation().getPosition().getLon(),
                 meetUp.getStatus()
         );
-    }
-
-    private void sendNotification(User user, String subject, String message) {
-        try {
-            mailService.sendMeetUpNotification(user.getEmail(), subject, message);
-        } catch (Exception e) {
-            logger.warn("Failed to send email to {}.", user.getEmail(), e);
-            throw e;
-        }
-
-        try {
-            smsService.sendSms(user.getPhoneNumber(), message);
-        } catch (Exception e) {
-            logger.warn("Failed to send SMS to {}.", user.getPhoneNumber(), e);
-            throw e;
-        }
     }
 
 }

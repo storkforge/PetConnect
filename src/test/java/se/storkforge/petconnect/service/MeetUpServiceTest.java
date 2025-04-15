@@ -28,11 +28,9 @@ class MeetUpServiceTest {
     @Mock
     private MeetUpRepository meetUpRepository;
     @Mock
-    private MailService mailService;
-    @Mock
-    private SmsService smsService;
-    @Mock
     private UserRepository userRepository;
+    @Mock
+    private NotificationService notificationService;
 
     @InjectMocks
     private MeetUpService meetUpService;
@@ -212,11 +210,10 @@ class MeetUpServiceTest {
         meetUp.setStatus("PLANNED");
 
         // Act
-        meetUpService.notifyParticipants(meetUp);
+        meetUpService.notifyAllParticipants(meetUp);
 
-        // Assert
-        verify(mailService).sendMeetUpNotification(eq("test@example.com"), anyString(), anyString());
-        verify(smsService).sendSms(eq("+46762373333"), anyString());
+        // Assert: just verify notificationService was called with the correct user
+        verify(notificationService).notifyUser(eq(user), anyString(), anyString());
     }
 
 }
