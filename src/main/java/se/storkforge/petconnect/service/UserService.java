@@ -12,6 +12,7 @@ import se.storkforge.petconnect.exception.UserNotFoundException;
 import se.storkforge.petconnect.repository.UserRepository;
 import se.storkforge.petconnect.service.storageService.RestrictedFileStorageService;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
@@ -127,6 +128,8 @@ public class UserService {
         Matcher matcher = emailPattern.matcher(email);
         return !matcher.matches();
     }
+
+
 
     public void uploadProfilePicture(Long id, MultipartFile file) {
         String dir = "users/"+ id +"/profilePictures";

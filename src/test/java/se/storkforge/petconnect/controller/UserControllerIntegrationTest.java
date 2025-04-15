@@ -56,6 +56,7 @@ public class UserControllerIntegrationTest {
         testUser.setUsername("testuser");
         testUser.setEmail("test@example.com");
         testUser.setPassword("password");
+        testUser.setPhoneNumber("+46762373333");
     }
 
     @Test
@@ -70,7 +71,8 @@ public class UserControllerIntegrationTest {
         when(userService.getAllUsers()).thenReturn(users);
 
         // Test & Verify
-        mockMvc.perform(get("/api/users"))
+        mockMvc.perform(get("/api/users")
+                        .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$", hasSize(2)))
@@ -82,7 +84,8 @@ public class UserControllerIntegrationTest {
     void testGetUserByIdEndpoint() throws Exception {
         when(userService.getUserById(1L)).thenReturn(testUser);
 
-        mockMvc.perform(get("/api/users/1"))
+        mockMvc.perform(get("/api/users/1")
+                        .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.username", is("testuser")))
@@ -103,7 +106,8 @@ public class UserControllerIntegrationTest {
 
         mockMvc.perform(post("/api/users")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(testUser)))
+                        .content(objectMapper.writeValueAsString(testUser))
+                        .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isCreated())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.username", is("testuser")));
@@ -120,7 +124,8 @@ public class UserControllerIntegrationTest {
 
         mockMvc.perform(put("/api/users/1")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(testUser)))
+                        .content(objectMapper.writeValueAsString(testUser))
+                        .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.username", is("updated")));
     }
@@ -160,7 +165,8 @@ public class UserControllerIntegrationTest {
 
         mockMvc.perform(post("/api/users")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(testUser)))
+                        .content(objectMapper.writeValueAsString(testUser))
+                        .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().string(errorMessage));
     }
@@ -171,7 +177,8 @@ public class UserControllerIntegrationTest {
         User userWithDuplicateEmail = new User();
         userWithDuplicateEmail.setUsername("newuser");
         userWithDuplicateEmail.setEmail(testUser.getEmail()); // Use the existing test user's email
-        userWithDuplicateEmail.setPassword("someSecurePassword"); // Add a valid password
+        userWithDuplicateEmail.setPassword("someSecurePassword");// Add a valid password
+        userWithDuplicateEmail.setPhoneNumber("+46762373333");
         userWithDuplicateEmail.setId(null); // Explicitly set ID to null
 
         when(userService.createUser(any(User.class)))
@@ -179,7 +186,8 @@ public class UserControllerIntegrationTest {
 
         mockMvc.perform(post("/api/users")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(userWithDuplicateEmail)))
+                        .content(objectMapper.writeValueAsString(userWithDuplicateEmail))
+                        .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().string(errorMessage));
     }
