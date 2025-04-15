@@ -1,12 +1,19 @@
 package se.storkforge.petconnect.entity;
 
 import jakarta.persistence.*;
+
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
+
 import jakarta.validation.constraints.*;
 import se.storkforge.petconnect.entity.Role;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.JoinColumn;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.*;
 
 @Entity
@@ -29,6 +36,20 @@ public class User {
     @Size(min = 8, message = "Password must be at least 8 characters")
     private String password;
 
+    @NotBlank(message = "Phone number is required")
+    @Pattern(
+            regexp = "^\\+46[1-9]\\d{7,8}$",
+            message = "Phone number must be a valid Swedish number in international format starting with +46"
+    )
+    private String phoneNumber;
+
+    @ManyToMany
+    @JoinTable(
+            name = "user_meetup",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "meetup_id")
+    )
+    private Set<MeetUp> meetUps = new HashSet<>();
     // might need to be looked over more clearly
     @Pattern(regexp = "^(https?://)?(www\\.)?[a-zA-Z0-9._%+-]+\\.[a-zA-Z]{2,6}/?[a-zA-Z0-9._%+-]*$", message = "Invalid URL format")
     private String profilePicturePath;
@@ -94,9 +115,14 @@ public class User {
         this.password = password;
     }
 
-    public String getProfilePicturePath() {
-        return profilePicturePath;
+    public Set<MeetUp> getMeetUps() {
+        return meetUps;
     }
+
+    public void setMeetUps(Set<MeetUp> meetUps) {
+        this.meetUps = meetUps;
+    }
+    public String getProfilePicturePath() { return profilePicturePath; }
 
     public void setProfilePicturePath(String profilePicturePath) {
         this.profilePicturePath = profilePicturePath;
@@ -118,6 +144,14 @@ public class User {
     public void removePet(Pet pet) {
         pets.remove(pet);
         pet.setOwner(null);
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
     }
 
     @Override
