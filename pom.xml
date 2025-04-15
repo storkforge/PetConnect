@@ -62,7 +62,16 @@
             <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
         </dependency>
-
+        <dependency>
+            <groupId>org.hibernate.orm</groupId>
+            <artifactId>hibernate-spatial</artifactId>
+            <version>6.6.1.Final</version>
+        </dependency>
+        <dependency>
+            <groupId>org.geolatte</groupId>
+            <artifactId>geolatte-geojson</artifactId>
+            <version>1.9.0</version>
+        </dependency>
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
@@ -82,6 +91,10 @@
             <artifactId>spring-boot-starter-graphql</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
             <scope>test</scope>
@@ -94,6 +107,11 @@
         <dependency>
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-starter-model-openai</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.twilio.sdk</groupId>
+            <artifactId>twilio</artifactId>
+            <version>10.7.2</version>
         </dependency>
         <dependency>
             <groupId>io.github.cdimascio</groupId>
