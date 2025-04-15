@@ -76,7 +76,7 @@ public class FileStorageService {
             if (resource.exists() && resource.isReadable()) {
                 return resource;
             } else {
-                throw new RuntimeException("Could not read file: " + filename);
+                throw new RuntimeException(filename + "isn't readable or does not exist");
             }
         } catch (MalformedURLException e) {
             throw new RuntimeException("Could not read file: " + filename, e);

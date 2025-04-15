@@ -4,10 +4,12 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import se.storkforge.petconnect.entity.User;
+import se.storkforge.petconnect.exception.PetNotFoundException;
 import se.storkforge.petconnect.exception.UserNotFoundException;
 import se.storkforge.petconnect.service.UserService;
 
@@ -72,14 +74,37 @@ public class UserController {
     @PostMapping("/{id}/PFP")
     public ResponseEntity<String> uploadPetProfilePicture(
             @PathVariable Long id, @RequestParam("file") MultipartFile file) {
-        userService.uploadProfilePicture(id, file);
-        return ResponseEntity.ok().build();
+        try {
+            userService.uploadProfilePicture(id, file);
+            return ResponseEntity.ok("Profile picture uploaded successfully");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (PetNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to upload picture: " + e.getMessage());
+        }
     }
 
     @GetMapping("/{id}/PFP")
-    public ResponseEntity<Resource> getPetProfilePicture(
+    public ResponseEntity<Resource> getProfilePicture(
             @PathVariable Long id) {
         Resource resource = userService.getProfilePicture(id);
-        return new ResponseEntity<>(resource, HttpStatus.OK);
+        MediaType mediaType = determineMediaType(resource.getFilename());
+        return ResponseEntity.ok()
+                .contentType(mediaType)
+                .body(resource);
+    }
+    private MediaType determineMediaType(String filename) {
+        if (filename == null) {
+            return MediaType.IMAGE_JPEG;
+        }
+        if (filename.toLowerCase().endsWith(".png")) {
+            return MediaType.IMAGE_PNG;
+        } else if (filename.toLowerCase().endsWith(".gif")) {
+            return MediaType.IMAGE_GIF;
+        }
+        return MediaType.IMAGE_JPEG;
     }
 }

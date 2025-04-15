@@ -14,6 +14,7 @@ import se.storkforge.petconnect.dto.PetUpdateInputDTO;
 import se.storkforge.petconnect.entity.Pet;
 import se.storkforge.petconnect.exception.PetNotFoundException;
 import se.storkforge.petconnect.repository.PetRepository;
+import se.storkforge.petconnect.service.storageService.RestrictedFileStorageService;
 import se.storkforge.petconnect.util.OwnershipValidator;
 import se.storkforge.petconnect.util.PetOwnershipHelper;
 import se.storkforge.petconnect.util.PetValidator;
@@ -27,16 +28,16 @@ public class PetService {
     private static final Logger logger = LoggerFactory.getLogger(PetService.class);
 
     private final PetRepository petRepository;
-    private final FileStorageService fileStorageService;
+    private final RestrictedFileStorageService storageService;
     private final UserService userService;
     private final PetOwnershipHelper petOwnershipHelper;
 
     public PetService(PetRepository petRepository,
-                      FileStorageService fileStorageService,
+                      RestrictedFileStorageService storageService,
                       UserService userService,
                       PetOwnershipHelper petOwnershipHelper) {
         this.petRepository = petRepository;
-        this.fileStorageService = fileStorageService;
+        this.storageService = storageService;
         this.userService = userService;
         this.petOwnershipHelper = petOwnershipHelper;
     }
@@ -180,7 +181,7 @@ public class PetService {
         }
 
         if (pet.getProfilePicturePath() != null) {
-            fileStorageService.delete(pet.getProfilePicturePath());
+            storageService.delete(pet.getProfilePicturePath());
         }
 
         petRepository.delete(pet);
@@ -199,13 +200,13 @@ public class PetService {
 
         if (pet.getProfilePicturePath() != null) {
             try {
-                fileStorageService.delete(pet.getProfilePicturePath());
+                storageService.delete(pet.getProfilePicturePath());
             } catch (RuntimeException e) {
                 logger.warn("Failed to delete old profile picture: {}", e.getMessage());
             }
         }
 
-        String filename = fileStorageService.store(file);
+        String filename = storageService.storeImage(file,"/pets/"+id+"/profile-picture");
         pet.setProfilePicturePath(filename);
         petRepository.save(pet);
     }
@@ -221,6 +222,6 @@ public class PetService {
             throw new RuntimeException("Pet does not have a profile picture");
         }
 
-        return fileStorageService.loadFile(pet.getProfilePicturePath());
+        return storageService.loadFile(pet.getProfilePicturePath());
     }
 }

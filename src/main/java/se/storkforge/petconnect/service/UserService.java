@@ -130,7 +130,7 @@ public class UserService {
     }
 
     public void uploadProfilePicture(Long id, MultipartFile file) {
-        String dir = "users/profilePictures";
+        String dir = "users/"+id+"/profilePictures";
         if (file == null) {
             throw new IllegalArgumentException("File cannot be null");
         }

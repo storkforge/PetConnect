@@ -108,7 +108,7 @@ public class PetController {
         }
     }
 
-    @PostMapping("/{id}/picture")
+    @PostMapping("/{id}/PFP")
     public ResponseEntity<String> uploadProfilePicture(
             @PathVariable Long id,
             @RequestParam("file") MultipartFile file) {
@@ -125,7 +125,7 @@ public class PetController {
         }
     }
 
-    @GetMapping(value = "/{id}/picture")
+    @GetMapping(value = "/{id}/PFP")
     public ResponseEntity<Resource> getProfilePicture(
             @PathVariable Long id) {
         Resource resource = petService.getProfilePicture(id);
