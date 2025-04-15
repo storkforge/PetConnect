@@ -148,7 +148,7 @@ public class PetController {
     @DeleteMapping("/{id}/PFP")
     public ResponseEntity<Void> deleteProfilePicture (@PathVariable Long id) {
         try {
-            petService.deleterProfilePicture(id);
+            petService.deleteProfilePicture(id);
             return ResponseEntity.noContent().build();
         } catch (PetNotFoundException e) {
             return ResponseEntity.notFound().build();

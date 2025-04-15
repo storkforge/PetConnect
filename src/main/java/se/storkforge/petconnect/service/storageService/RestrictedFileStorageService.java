@@ -23,15 +23,13 @@ public class RestrictedFileStorageService extends FileStorageService{
     private List<String> allowedFileTypes;
 
     public String storeImage(MultipartFile file, String dir){
-        if (isValidFile(file, maxImageSize, allowedImageTypes))
-            return super.store(file, dir);
-        return null;
+        isValidFile(file, maxImageSize, allowedImageTypes);
+        return super.store(file, dir);
     }
 
     public String storeFile(MultipartFile file, String dir){
-        if (isValidFile(file, maxFileSize, allowedFileTypes))
-            return super.store(file, dir);
-        return null;
+        isValidFile(file, maxFileSize, allowedFileTypes);
+        return super.store(file, dir);
     }
 
     @Override

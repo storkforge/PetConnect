@@ -185,7 +185,7 @@ public class PetService {
 
     @Transactional
     public void uploadProfilePicture(Long id, MultipartFile file) {
-        String dir = "pets/"+id+"/profilePictures";
+        String dir = "pets/"+ id +"/profilePictures";
         logger.info("Uploading profile picture for pet with ID: {}", id);
 
         if (file == null || file.isEmpty()) {
@@ -220,7 +220,7 @@ public class PetService {
     }
 
     @Transactional
-    public void deleterProfilePicture(Long id) {
+    public void deleteProfilePicture(Long id) {
         logger.info("Deleting profile picture for pet with ID: {}", id);
         Pet pet = getOrElseThrow(id);
         storageService.delete(pet.getProfilePicturePath());

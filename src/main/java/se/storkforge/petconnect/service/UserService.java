@@ -129,7 +129,7 @@ public class UserService {
     }
 
     public void uploadProfilePicture(Long id, MultipartFile file) {
-        String dir = "users/"+id+"/profilePictures";
+        String dir = "users/"+ id +"/profilePictures";
 
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("File cannot be null or empty");
@@ -160,7 +160,7 @@ public class UserService {
         return storageService.loadFile(filename);
     }
 
-    public void deleterProfilePicture(Long id) {
+    public void deleteProfilePicture(Long id) {
         User user = getOrElseThrow(id);
         storageService.delete(user.getProfilePicturePath());
     }

@@ -79,7 +79,7 @@ public class UserController {
             return ResponseEntity.ok("Profile picture uploaded successfully");
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
-        } catch (PetNotFoundException e) {
+        } catch (UserNotFoundException e) {
             return ResponseEntity.notFound().build();
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -111,7 +111,7 @@ public class UserController {
     @DeleteMapping("/{id}/PFP")
     public ResponseEntity<Void> deleteProfilePicture (@PathVariable Long id) {
         try {
-            userService.deleterProfilePicture(id);
+            userService.deleteProfilePicture(id);
             return ResponseEntity.noContent().build();
         } catch (UserNotFoundException e) {
             return ResponseEntity.notFound().build();

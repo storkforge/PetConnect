@@ -27,11 +27,11 @@ public class FileStorageService {
     @PostConstruct //Runs after properties
     private void init() {
         this.root = Paths.get(uploadDir);
-        creatDir(root);
+        createDir(root);
     }
 
     String store(MultipartFile file, String dir) {
-        creatDir(root.resolve(dir));
+        createDir(root.resolve(dir));
         try {
             String contentType = file.getContentType();
             String filename = UUID.randomUUID() + "." + contentType.split("/")[1];
@@ -82,8 +82,7 @@ public class FileStorageService {
         }
     }
 
-    private void creatDir(Path root) {
-        System.out.println(root.toString());
+    private void createDir(Path root) {
         try {
             Files.createDirectories(root);
         } catch (IOException e) {

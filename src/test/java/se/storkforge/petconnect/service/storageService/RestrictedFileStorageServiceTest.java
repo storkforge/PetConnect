@@ -65,7 +65,6 @@ class RestrictedFileStorageServiceTest {
     @Test
     void successfulDelete(){
         String path = rfs.storeFile(file,"test");
-        System.out.println(path);
         rfs.delete(path);
         assertThat(Files.exists(Path.of(path))).isFalse();
     }
