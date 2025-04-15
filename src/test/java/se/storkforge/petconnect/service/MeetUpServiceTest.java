@@ -52,32 +52,32 @@ class MeetUpServiceTest {
         double testLatitude = 57.70;
         double radiusInKm = 10.0;
 
-        // ✅ Single reference time to avoid mismatch
         LocalDateTime now = LocalDateTime.of(2025, 4, 14, 12, 0);
+        LocalDateTime inRangeDate = now.plusDays(1);
+        LocalDateTime outOfRangeDate = now.plusDays(5);
 
-        LocalDateTime inRangeDate = now.plusDays(1);        // Inside range
-        LocalDateTime outOfRangeDate = now.plusDays(5);     // Outside range
+        LocalDateTime startDate = now;
+        LocalDateTime endDate = now.plusDays(2);
 
         Point<G2D> location = DSL.point(WGS84, new G2D(testLongitude, testLatitude));
 
         MeetUp inRangeMeetUp = createMeetUp(location, inRangeDate, List.of());
         MeetUp outOfRangeMeetUp = createMeetUp(location, outOfRangeDate, List.of());
 
-        when(meetUpRepository.findAll()).thenReturn(List.of(inRangeMeetUp, outOfRangeMeetUp));
 
-        LocalDateTime startDate = now;
-        LocalDateTime endDate = now.plusDays(2); // Only includes the first meet-up
+        when(meetUpRepository.findByDateTimeBetween(startDate, endDate))
+                .thenReturn(List.of(inRangeMeetUp));
 
-        List<MeetUp> result = meetUpService.searchMeetUps(testLongitude, testLatitude, radiusInKm, startDate, endDate);
-
+        List<MeetUp> result = meetUpService.searchMeetUps(
+                testLongitude, testLatitude, radiusInKm, startDate, endDate
+        );
 
         assertNotNull(result);
         assertFalse(result.isEmpty());
         assertTrue(result.stream().anyMatch(m -> m.getDateTime().equals(inRangeDate)));
-
-        // Confirm the out-of-range meet-up is excluded
         assertTrue(result.stream().noneMatch(m -> m.getDateTime().equals(outOfRangeDate)));
     }
+
     @Test
     void isUserAvailable_userAvailable_shouldReturnTrue() {
         // Arrange
@@ -141,20 +141,22 @@ class MeetUpServiceTest {
 
     @Test
     void addParticipant_userAvailable_shouldAddUser() {
-
+        // Arrange
         User user = new User();
         user.setId(1L);
         user.setMeetUps(new HashSet<>());
 
         Point<G2D> point = DSL.point(WGS84, new G2D(11.97, 57.70));
-
         MeetUp meetUp = createMeetUp(point, LocalDateTime.now().plusDays(1), new ArrayList<>());
 
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user)); // ✅ this line is now required
         when(meetUpRepository.findById(anyLong())).thenReturn(Optional.of(meetUp));
         when(meetUpRepository.save(any(MeetUp.class))).thenReturn(meetUp);
 
+        // Act
         MeetUp updated = meetUpService.addParticipant(1L, user);
 
+        // Assert
         assertTrue(updated.getParticipants().contains(user));
         verify(meetUpRepository).save(meetUp);
     }
