@@ -1,7 +1,6 @@
 package se.storkforge.petconnect.controller;
 
 import jakarta.validation.constraints.Min;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -16,7 +15,6 @@ import se.storkforge.petconnect.dto.PetInputDTO;
 import se.storkforge.petconnect.dto.PetUpdateInputDTO;
 import se.storkforge.petconnect.entity.Pet;
 import se.storkforge.petconnect.exception.PetNotFoundException;
-import se.storkforge.petconnect.exception.UserNotFoundException;
 import se.storkforge.petconnect.service.PetFilter;
 import se.storkforge.petconnect.service.PetService;
 
