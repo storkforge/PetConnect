@@ -56,18 +56,16 @@ public class RegistrationController {
             return "auth/register";
         }
 
-        Optional<User> existingUser = userRepository.findByUsername(form.getUsername());
-        if (existingUser.isPresent()) {
+        if (userRepository.findByUsername(form.getUsername()).isPresent()) {
             bindingResult.rejectValue("username", "error.username", "Username already exists.");
             log.warn("Attempt to register with existing username: {}", form.getUsername());
             return "auth/register";
         }
 
-        Optional<User> existingEmail = userRepository.findByEmail(form.getEmail());
-        if (existingEmail.isPresent()) {
-                 bindingResult.rejectValue("email", "error.email", "Email already exists.");
-                 log.warn("Attempt to register with existing email: {}", form.getEmail());
-                 return "auth/register";
+        if (userRepository.findByEmail(form.getEmail()).isPresent()) {
+            bindingResult.rejectValue("email", "error.email", "Email already exists.");
+            log.warn("Attempt to register with existing email: {}", form.getEmail());
+            return "auth/register";
         }
 
         Role userRole = roleRepository.findByName("ROLE_USER")
@@ -77,12 +75,16 @@ public class RegistrationController {
         user.setUsername(form.getUsername());
         user.setEmail(form.getEmail());
         user.setPassword(passwordEncoder.encode(form.getPassword()));
+        user.setPhoneNumber(form.getPhoneNumber());
         user.setRoles(Set.of(userRole));
 
         userRepository.save(user);
         log.info("User registered successfully: {}", user.getUsername());
 
-        return "redirect:/login?registered";
+        // Provide a flash-style success message after registration
+        model.addAttribute("successMessage", "Account created successfully! You can now log in.");
+        model.addAttribute("registrationForm", new RegistrationForm()); // Reset form
+        return "auth/register";
     }
 
 }
