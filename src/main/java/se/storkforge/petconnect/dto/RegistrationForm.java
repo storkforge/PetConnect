@@ -20,14 +20,28 @@ public class RegistrationForm {
     @NotEmpty(message = "You need to confirm your password")
     private String confirmPassword;
 
+    @NotBlank(message = "Phone number is required")
+    @Pattern(regexp = "^[+]?[(]?[0-9]{1,4}[)]?[-\\s./0-9]*$", message = "Invalid phone number format")
+    private String phoneNumber;
+
     public RegistrationForm() {
     }
 
-    public RegistrationForm(String username, String email, String password, String confirmPassword) {
+    public RegistrationForm(String username, String email, String password, String confirmPassword, String phoneNumber) {
         this.username = username;
         this.email = email;
         this.password = password;
         this.confirmPassword = confirmPassword;
+        this.phoneNumber = phoneNumber;
+    }
+
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
     }
 
     public String getUsername() {
