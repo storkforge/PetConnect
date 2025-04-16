@@ -36,6 +36,7 @@ public class DataInitializer {
                 user.setEmail("test@example.com");
                 user.setPassword(passwordEncoder.encode("password"));
                 user.setRoles(Set.of(userRole));
+                user.setPhoneNumber("0000000000");
                 userRepository.save(user);
                 System.out.println("Created user: " + user.getUsername()); // log user existing
             } else { System.out.println("User already exists"); }
@@ -46,13 +47,12 @@ public class DataInitializer {
                 user.setUsername("premiumuser");
                 user.setEmail("premium@example.com");
                 user.setPassword(passwordEncoder.encode("password"));
+                user.setPhoneNumber("0000000000");
                 user.setRoles(Set.of(premiumRole));
                 userRepository.save(user);
             }
         };
     }
-
-
 
     // Helper method using lambda to create a role if it doesn't exist
     private Role createRoleIfNotFound(RoleRepository repo, String roleName) {
