@@ -4,6 +4,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
 import org.springframework.ui.ConcurrentModel;
+import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import se.storkforge.petconnect.dto.RegistrationForm;
 import se.storkforge.petconnect.entity.Role;
@@ -14,8 +15,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -39,47 +39,42 @@ class RegistrationControllerUnitTest {
     }
 
     @Test
-    void processRegistration_ShouldRedirectOnSuccess() {
+    void processRegistration_ShouldShowSuccessMessageAndStayOnRegisterPage() {
         // ARRANGE
         Role userRole = new Role("ROLE_USER");
         userRole.setId(1L);
 
-        // Whenever userRepository.findByUsername("newuser") => return empty
         when(userRepository.findByUsername("newuser"))
                 .thenReturn(Optional.empty());
 
-        // Whenever roleRepository.findByName("ROLE_USER") => return userRole
         when(roleRepository.findByName("ROLE_USER"))
                 .thenReturn(Optional.of(userRole));
 
-        // Mock password encoding
         when(passwordEncoder.encode("Password123!"))
                 .thenReturn("encodedPassword");
 
-        // Create a registration form
         RegistrationForm form = new RegistrationForm(
-                "newuser",                // username
-                "newuser@example.com",            // email
-                "Password123!",                  // password
-                "Password123!"                  // confirmPassword
+                "newuser",
+                "newuser@example.com",
+                "Password123!",
+                "Password123!",
+                "+46701234567"
         );
 
-        // We also need a mock BindingResult
         BindingResult mockBindingResult = mock(BindingResult.class);
+        when(mockBindingResult.hasErrors()).thenReturn(false);
 
-        // ACT: call the controller method directly
-        String viewName = registrationController.processRegistration(
-                form,
-                mockBindingResult,
-                new ConcurrentModel() // or mock(Model.class)
-        );
+        Model model = new ConcurrentModel();
 
-        // ASSERT: confirm it redirects
-        assertEquals("redirect:/login?registered", viewName);
+        // ACT
+        String viewName = registrationController.processRegistration(form, mockBindingResult, model);
 
-        // confirm that user is saved
+        // ASSERT
+        assertEquals("auth/register", viewName);
+        assertTrue(model.containsAttribute("successMessage"));
         verify(userRepository).save(any(User.class));
     }
+
 
     @Test
     void processRegistration_ShouldThrowIfRoleMissing() {
@@ -87,7 +82,7 @@ class RegistrationControllerUnitTest {
         when(roleRepository.findByName("ROLE_USER")).thenReturn(Optional.empty()); // simulate missing role
 
         RegistrationForm form = new RegistrationForm(
-                "newuser", "email@example.com", "Password123!", "Password123!"
+                "newuser", "email@example.com", "Password123!", "Password123!","+46701111222"
         );
         BindingResult mockBindingResult = mock(BindingResult.class);
 
@@ -107,7 +102,7 @@ class RegistrationControllerUnitTest {
                 .thenReturn(Optional.of(new User())); // Simulate existing user
 
         RegistrationForm form = new RegistrationForm(
-                "existinguser", "email@example.com", "Password123!", "Password123!"
+                "existinguser", "email@example.com", "Password123!", "Password123!", "+46701111222"
         );
         BindingResult mockBindingResult = mock(BindingResult.class);
 
@@ -125,7 +120,8 @@ class RegistrationControllerUnitTest {
         when(userRepository.findByUsername("newuser")).thenReturn(Optional.empty());
 
         RegistrationForm form = new RegistrationForm(
-                "newuser", "email@example.com", "Password123!", "WrongConfirm!"
+                "newuser", "email@example.com", "Password123!", "WrongConfirm!","+46701111222"
+
         );
         BindingResult mockBindingResult = mock(BindingResult.class);
 
@@ -145,7 +141,8 @@ class RegistrationControllerUnitTest {
                 "Alice",
                 "bad-email",      // invalid format
                 "Pass1234",       // valid password
-                "Pass1234"        // valid confirm
+                "Pass1234",        // valid confirm
+                "+46701111222"
         );
 
         // We simulate that "bad-email" triggered a validation error.
@@ -175,7 +172,8 @@ class RegistrationControllerUnitTest {
                 "Bob",
                 "bob@example.com",
                 "short",    // too short
-                "short"
+                "short",
+                "+46701111222"
         );
 
         BindingResult mockBindingResult = mock(BindingResult.class);
@@ -190,7 +188,4 @@ class RegistrationControllerUnitTest {
         assertEquals("auth/register", viewName);
         verify(userRepository, never()).save(any(User.class));
     }
-
-
-
 }
