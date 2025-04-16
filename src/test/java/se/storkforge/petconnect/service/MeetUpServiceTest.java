@@ -62,9 +62,10 @@ class MeetUpServiceTest {
         MeetUp inRangeMeetUp = createMeetUp(location, inRangeDate, List.of());
         MeetUp outOfRangeMeetUp = createMeetUp(location, outOfRangeDate, List.of());
 
-
-        when(meetUpRepository.findByDateTimeBetween(startDate, endDate))
-                .thenReturn(List.of(inRangeMeetUp));
+        // ✅ Updated to match the new repository method
+        when(meetUpRepository.findMeetUpsNearAndWithinTime(
+                eq(testLongitude), eq(testLatitude), eq(radiusInKm * 1000), eq(startDate), eq(endDate)
+        )).thenReturn(List.of(inRangeMeetUp));
 
         List<MeetUp> result = meetUpService.searchMeetUps(
                 testLongitude, testLatitude, radiusInKm, startDate, endDate
@@ -75,6 +76,7 @@ class MeetUpServiceTest {
         assertTrue(result.stream().anyMatch(m -> m.getDateTime().equals(inRangeDate)));
         assertTrue(result.stream().noneMatch(m -> m.getDateTime().equals(outOfRangeDate)));
     }
+
 
     @Test
     void isUserAvailable_userAvailable_shouldReturnTrue() {
@@ -214,6 +216,40 @@ class MeetUpServiceTest {
 
         // Assert: just verify notificationService was called with the correct user
         verify(notificationService).notifyUser(eq(user), anyString(), anyString());
+    }
+
+    @Test
+    void searchMeetUps_noMatchingMeetUps_shouldReturnEmptyList() {
+        double longitude = 11.97;
+        double latitude = 57.70;
+        double radiusInKm = 10.0;
+        LocalDateTime start = LocalDateTime.of(2025, 4, 14, 12, 0);
+        LocalDateTime end = start.plusDays(1);
+
+        when(meetUpRepository.findMeetUpsNearAndWithinTime(
+                anyDouble(), anyDouble(), anyDouble(), any(), any())
+        ).thenReturn(Collections.emptyList());
+
+        List<MeetUp> result = meetUpService.searchMeetUps(longitude, latitude, radiusInKm, start, end);
+
+        assertNotNull(result);
+        assertTrue(result.isEmpty(), "Expected no meetups within range");
+    }
+
+    @Test
+    void searchMeetUps_invalidDateRange_shouldThrowException() {
+        double longitude = 11.97;
+        double latitude = 57.70;
+        double radiusInKm = 10.0;
+
+        LocalDateTime start = LocalDateTime.of(2025, 4, 16, 12, 0);
+        LocalDateTime end = LocalDateTime.of(2025, 4, 14, 12, 0); // Start is after end
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                meetUpService.searchMeetUps(longitude, latitude, radiusInKm, start, end)
+        );
+
+        assertEquals("Start date must be before end date", exception.getMessage());
     }
 
 }

@@ -6,13 +6,18 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-
 import jakarta.validation.constraints.*;
+import se.storkforge.petconnect.entity.Role;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.JoinColumn;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.*;
 
-@Entity(name = "user_table")
+@Entity
+        @Table(name = "user_table")
 public class User {
 
     @Id
@@ -31,24 +36,38 @@ public class User {
     @Size(min = 8, message = "Password must be at least 8 characters")
     private String password;
 
+    @Column(nullable = false)
     @NotBlank(message = "Phone number is required")
-    @Pattern(
-            regexp = "^\\+46[1-9]\\d{7,8}$",
-            message = "Phone number must be a valid Swedish number in international format starting with +46"
-    )
+    @Pattern(regexp = "^\\+?[0-9]{7,15}$", message = "Invalid phone number format")
     private String phoneNumber;
 
-    @ManyToMany
-    @JoinTable(
-            name = "user_meetup",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "meetup_id")
-    )
+    // In User.java
+    @ManyToMany(mappedBy = "participants") // now inverse side
     private Set<MeetUp> meetUps = new HashSet<>();
+
+    // might need to be looked over more clearly
+    @Pattern(regexp = "^(https?://)?(www\\.)?[a-zA-Z0-9._%+-]+\\.[a-zA-Z]{2,6}/?[a-zA-Z0-9._%+-]*$", message = "Invalid URL format")
     private String profilePicturePath;
 
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Pet> pets = new ArrayList<>();
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "user_roles",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
+    private Set<Role> roles = new HashSet<>();
+
+
+    public Set<Role> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(Set<Role> roles) {
+        this.roles = roles;
+    }
 
     public User() {
     }
@@ -95,6 +114,7 @@ public class User {
         return meetUps;
     }
 
+
     public void setMeetUps(Set<MeetUp> meetUps) {
         this.meetUps = meetUps;
     }
@@ -135,7 +155,7 @@ public class User {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         User user = (User) o;
-        return Objects.equals(id, user.id) && Objects.equals(username, user.username) && Objects.equals(email, user.email) && Objects.equals(password, user.password);
+        return Objects.equals(id, user.id) && Objects.equals(username, user.username) && Objects.equals(email, user.email);
     }
 
     @Override
@@ -151,4 +171,27 @@ public class User {
                 ", email='" + email + '\'' +
                 '}';
     }
+
+
+    // helper method to check if the user has a specific role
+    public boolean hasRole(String roleName) {
+        return roles.stream()
+                .anyMatch(role -> role.getName().equalsIgnoreCase(roleName));
+    }
+
+    // helper method to check if the user has any of the specified roles
+    public boolean hasAnyRole(String... roleNames) {
+        return Arrays.stream(roleNames)
+                .anyMatch(this::hasRole);
+    }
+
+    // helper methods to check for specific roles
+    public boolean isAdmin() {
+        return hasRole("ROLE_ADMIN");
+    }
+    // helper method to check if the user is a regular user
+    public boolean isPremium() {
+        return hasRole("ROLE_PREMIUM");
+    }
+
 }

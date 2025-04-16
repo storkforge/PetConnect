@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import se.storkforge.petconnect.dto.MeetUpRequestDTO;
@@ -119,4 +120,16 @@ public class MeetUpController {
         }
 
     }
+
+    @GetMapping("/meetups/nearby")
+    public String findNearbyMeetups(@RequestParam double lon,
+                                    @RequestParam double lat,
+                                    @RequestParam(defaultValue = "1000") double radius,
+                                    Model model) {
+        List<MeetUp> nearby = meetUpService.findNearbyMeetups(lon, lat, radius);
+        model.addAttribute("meetups", nearby);
+        return "meetup/placeholder"; // Replaced with our actual view name
+    }
+
+
 }

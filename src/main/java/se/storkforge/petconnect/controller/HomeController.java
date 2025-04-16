@@ -7,16 +7,25 @@ import org.springframework.web.bind.annotation.GetMapping;
 @Controller
 public class HomeController {
 
-    @GetMapping("/home")
+    @GetMapping("/")
     public String home(Model model) {
-        model.addAttribute("pageTitle", "Home");
-        model.addAttribute("content", "index :: content");
-        return "layout";
+        model.addAttribute("pageTitle", "Welcome");
+        return "index";
     }
 
-    @GetMapping("/")
+
+    @GetMapping("/homepage")
     public String index(Model model) {
         model.addAttribute("pageTitle", "Welcome");
-        return "layout"; // layout.html will include the fragment from index.html
+        return "layout/layout"; // layout.html will include the fragment from index.html
+    }
+
+    @Controller
+    public class AuthController {
+
+        @GetMapping("/login")
+        public String loginPage() {
+            return "auth/login"; // This maps to login.html in templates
+        }
     }
 }
