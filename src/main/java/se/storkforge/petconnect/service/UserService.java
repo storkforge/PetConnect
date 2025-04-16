@@ -48,6 +48,9 @@ public class UserService {
         if (isInvalidEmail(user.getEmail())) {
             throw new IllegalArgumentException("Invalid email format.");
         }
+        if (!isStrongPassword(user.getPassword())) {
+            throw new IllegalArgumentException("Password must contain at least 8 characters, one number, and one special character.");
+        }
     }
 
     public User getUserById(Long id) {
@@ -129,8 +132,6 @@ public class UserService {
         return !matcher.matches();
     }
 
-
-
     public void uploadProfilePicture(Long id, MultipartFile file) {
         if (file == null) {
             throw new IllegalArgumentException("File cannot be null");
@@ -160,5 +161,11 @@ public class UserService {
             throw new RuntimeException("User does not have a profile picture");
         }
         return fileStorageService.loadFile(filename);
+    }
+
+    private boolean isStrongPassword(String password) {
+        return password != null && password.matches(
+                "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$"
+        );
     }
 }

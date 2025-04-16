@@ -56,14 +56,8 @@ public class MeetUpService {
         if (start.isAfter(end)) {
             throw new IllegalArgumentException("Start date must be before end date");
         }
-
-        Point<G2D> center = DSL.point(WGS84, new G2D(longitude, latitude));
-        List<MeetUp> dateFilteredMeetUps = meetUpRepository.findByDateTimeBetween(start, end);
-
-        return dateFilteredMeetUps.stream()
-                .filter(m -> m.getLocation() != null)
-                .filter(m -> isWithinRadius(center, m.getLocation(), radiusInKm))
-                .collect(Collectors.toList());
+        double radiusInMeters = radiusInKm * 1000;
+        return meetUpRepository.findMeetUpsNearAndWithinTime(longitude, latitude, radiusInMeters, start, end);
     }
 
     private boolean isWithinRadius(Point<G2D> center, Point<G2D> point, double radiusKm) {
@@ -265,6 +259,10 @@ public class MeetUpService {
                 meetUp.getLocation().getPosition().getLon(),
                 meetUp.getStatus()
         );
+    }
+
+    public List<MeetUp> findNearbyMeetups(double longitude, double latitude, double radiusMeters) {
+        return meetUpRepository.findMeetUpsNear(longitude, latitude, radiusMeters);
     }
 
 }

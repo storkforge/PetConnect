@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Register</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
+    <!-- Redirect after success -->
+    <script th:if="${successMessage}" type="text/javascript">
+        setTimeout(() => window.location.href = '/login', 5000);
+    </script>
+</head>
+<body th:replace="~{layout/layout :: layout}">
+
+<div th:fragment="content">
+    <div class="max-w-md mx-auto mt-12">
+
+        <h1 class="text-3xl font-bold mb-6 text-center">Create Account</h1>
+
+        <!-- Success Message -->
+        <div th:if="${successMessage}" class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6 text-center">
+            <p th:text="${successMessage}"></p>
+            <p class="text-sm text-green-600 mt-2">Redirecting to login in 5 seconds...</p>
+        </div>
+
+        <!-- Only show form if no success -->
+        <form th:action="@{/register}" th:object="${registrationForm}" method="post"
+              th:unless="${successMessage}" class="space-y-6">
+
+            <!-- Error Message Block -->
+            <div th:if="${#fields.hasAnyErrors()}"
+                 class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                <p class="font-semibold">Please fix the errors below:</p>
+            </div>
+
+            <!-- Username -->
+            <div>
+                <label class="block font-medium text-gray-700">Username</label>
+                <input type="text" th:field="*{username}" class="mt-1 w-full border p-2 rounded"/>
+                <p th:if="${#fields.hasErrors('username')}" th:errors="*{username}"
+                   class="text-red-600 text-sm mt-1"></p>
+            </div>
+
+            <!-- Email -->
+            <div>
+                <label class="block font-medium text-gray-700">Email</label>
+                <input type="email" th:field="*{email}" class="mt-1 w-full border p-2 rounded"/>
+                <p th:if="${#fields.hasErrors('email')}" th:errors="*{email}"
+                   class="text-red-600 text-sm mt-1"></p>
+            </div>
+
+            <!-- Password -->
+            <div>
+                <label class="block font-medium text-gray-700">Password</label>
+                <input type="password" th:field="*{password}" class="mt-1 w-full border p-2 rounded"/>
+                <p th:if="${#fields.hasErrors('password')}" th:errors="*{password}"
+                   class="text-red-600 text-sm mt-1"></p>
+            </div>
+
+            <!-- Confirm Password -->
+            <div>
+                <label class="block font-medium text-gray-700">Confirm Password</label>
+                <input type="password" th:field="*{confirmPassword}" class="mt-1 w-full border p-2 rounded"/>
+                <p th:if="${#fields.hasErrors('confirmPassword')}" th:errors="*{confirmPassword}"
+                   class="text-red-600 text-sm mt-1"></p>
+            </div>
+
+            <!-- Phone Number -->
+            <div>
+                <label class="block font-medium text-gray-700">Phone Number</label>
+                <input type="text" th:field="*{phoneNumber}" class="mt-1 w-full border p-2 rounded"
+                       placeholder="+46701234567"/>
+                <p th:if="${#fields.hasErrors('phoneNumber')}" th:errors="*{phoneNumber}"
+                   class="text-red-600 text-sm mt-1"></p>
+            </div>
+
+            <!-- Submit -->
+            <div>
+                <button type="submit"
+                        class="w-full bg-blue-600 text-white font-semibold py-2 rounded hover:bg-blue-700">
+                    Register
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+</body>
+</html>

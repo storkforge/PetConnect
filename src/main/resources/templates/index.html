@@ -1,9 +1,18 @@
-<!-- src/main/resources/templates/index.html -->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title>Home</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
+</head>
+<body th:replace="layout/layout :: layout">
+
 <div th:fragment="content">
-  <h2 class="text-xl font-semibold mb-4" th:text="#{greeting}">Welcome to our site!</h2>
-  <p class="mb-4" th:text="#{language.switch}">Your language is automatically detected based on your browser settings.</p>
-  <div class="space-x-2">
-    <button class="bg-blue-500 text-white px-4 py-2 rounded">Login</button>
-    <button class="bg-gray-300 text-black px-4 py-2 rounded">Logout</button>
+  <div class="text-center mt-12">
+    <h1 class="text-4xl font-bold mb-4">Welcome to PetConnect 🐾</h1>
+    <p class="text-gray-600">Connect with pet lovers, share your furry friends, and more!</p>
   </div>
 </div>
+
+</body>
+</html>
