@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -68,7 +69,7 @@ class ReminderControllerTest {
 
         ReminderResponseDTO createdResponse = new ReminderResponseDTO();
         createdResponse.setId(123L);
-        createdResponse.setPetId(inputDTO.getPetId()); // Set the petId in the mock response
+        createdResponse.setPetId(inputDTO.getPetId());
         createdResponse.setTitle(inputDTO.getTitle());
         createdResponse.setType(inputDTO.getType());
         createdResponse.setScheduledDate(inputDTO.getScheduledDate());
@@ -80,14 +81,18 @@ class ReminderControllerTest {
         // Simulate an authenticated user
         Principal mockPrincipal = () -> "testUser";
 
-        mockMvc.perform(post("/api/reminders")
+        MvcResult result = mockMvc.perform(post("/api/reminders")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(inputDTO))
                         .principal(mockPrincipal))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").value(123L)); // Verify the ID in the response
+                .andExpect(jsonPath("$.id").value(123L)) // Verify the ID in the response directly
+                .andReturn(); // Get the MvcResult if you need to inspect further
 
-        verify(reminderService).createReminder(any(ReminderInputDTO.class), eq("testUser")); // Verify the service method was called
+        String responseContent = result.getResponse().getContentAsString();
+        System.out.println("Response Content: " + responseContent); // You can still print the content
+
+        verify(reminderService).createReminder(any(ReminderInputDTO.class), eq("testUser")); // Verify the service method was called once
     }
 
     @Test
@@ -135,3 +140,5 @@ class ReminderControllerTest {
                 .andExpect(status().isBadRequest());
     }
 }
+
+

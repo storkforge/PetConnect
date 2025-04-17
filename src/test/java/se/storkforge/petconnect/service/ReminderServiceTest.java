@@ -60,17 +60,34 @@ public class ReminderServiceTest {
         Pet pet = new Pet();
         pet.setId(petId);
 
+        Reminder reminderToSave = new Reminder();
+        reminderToSave.setUser(user);
+        reminderToSave.setPet(pet);
+        reminderToSave.setTitle(inputDTO.getTitle());
+        reminderToSave.setType(inputDTO.getType());
+        reminderToSave.setScheduledDate(inputDTO.getScheduledDate());
+        reminderToSave.setNotes(inputDTO.getNotes());
+
         when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
         when(petRepository.findById(petId)).thenReturn(Optional.of(pet));
-        when(reminderRepository.save(any(Reminder.class))).thenReturn(new Reminder()); // Returnera en dummy
+
+        // Capture the Reminder object passed to save
+        when(reminderRepository.save(any(Reminder.class))).thenAnswer(invocation -> {
+            Reminder saved = invocation.getArgument(0);
+            saved.setId(123L); // Simulate the ID being set upon saving
+            saved.setPet(pet); // Ensure the saved reminder has the pet
+            return saved;
+        });
 
         // Act
-        reminderService.createReminder(inputDTO, username);
+        ReminderResponseDTO responseDTO = reminderService.createReminder(inputDTO, username);
 
         // Assert
         verify(reminderRepository, times(1)).save(any(Reminder.class));
+        assertNotNull(responseDTO);
+        assertEquals(petId, responseDTO.getPetId());
+        assertEquals("Vaccination", responseDTO.getTitle());
     }
-
     @Test
     void createReminder_shouldThrowUserNotFoundException_whenUserDoesNotExist() {
         // Arrange
