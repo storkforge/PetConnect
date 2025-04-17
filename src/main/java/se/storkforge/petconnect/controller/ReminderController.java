@@ -9,6 +9,7 @@ import se.storkforge.petconnect.dto.ReminderInputDTO;
 import se.storkforge.petconnect.dto.ReminderResponseDTO;
 import se.storkforge.petconnect.service.ReminderService;
 
+import jakarta.validation.Valid; // Import the @Valid annotation
 import java.net.URI;
 import java.security.Principal;
 import java.time.LocalDateTime;
@@ -26,16 +27,16 @@ public class ReminderController {
     }
 
     @PostMapping
-    public ResponseEntity<Void> createReminder(@RequestBody ReminderInputDTO reminderInputDTO, Principal principal) {
+    public ResponseEntity<ReminderResponseDTO> createReminder(@Valid @RequestBody ReminderInputDTO reminderInputDTO, Principal principal) {
         String username = principal.getName();
-        reminderService.createReminder(reminderInputDTO, username);
+        ReminderResponseDTO createdReminder = reminderService.createReminder(reminderInputDTO, username);
 
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
-                .path("/{id}") // Vi vet inte ID:t här, men det är standard för 201 Created
-                .buildAndExpand()
+                .path("/{id}")
+                .buildAndExpand(createdReminder.getId())
                 .toUri();
 
-        return ResponseEntity.created(location).build();
+        return ResponseEntity.created(location).body(createdReminder); // Now return the DTO in the body
     }
 
     @GetMapping("/upcoming")

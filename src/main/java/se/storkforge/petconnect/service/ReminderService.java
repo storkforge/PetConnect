@@ -34,7 +34,7 @@ public class ReminderService {
         this.ownershipValidator = ownershipValidator;
     }
 
-    public void createReminder(ReminderInputDTO reminderInputDTO, String username) {
+    public ReminderResponseDTO createReminder(ReminderInputDTO reminderInputDTO, String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UserNotFoundException("User not found with username: " + username));
         Pet pet = petRepository.findById(reminderInputDTO.getPetId())
@@ -48,7 +48,8 @@ public class ReminderService {
         reminder.setScheduledDate(reminderInputDTO.getScheduledDate());
         reminder.setNotes(reminderInputDTO.getNotes());
 
-        reminderRepository.save(reminder);
+        Reminder savedReminder = reminderRepository.save(reminder);
+        return convertToResponseDTO(savedReminder); // Convert and return the DTO
     }
 
     public List<ReminderResponseDTO> getUpcomingReminders(String username, LocalDateTime from, LocalDateTime to) {
