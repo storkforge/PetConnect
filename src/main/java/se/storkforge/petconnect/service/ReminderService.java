@@ -74,7 +74,7 @@ public class ReminderService {
         reminderRepository.deleteById(id);
     }
 
-    private ReminderResponseDTO convertToResponseDTO(Reminder reminder) {
+    public ReminderResponseDTO convertToResponseDTO(Reminder reminder) {
         return new ReminderResponseDTO(
                 reminder.getId(),
                 reminder.getTitle(),

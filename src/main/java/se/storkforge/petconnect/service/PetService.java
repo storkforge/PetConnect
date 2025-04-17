@@ -30,15 +30,18 @@ public class PetService {
     private final FileStorageService fileStorageService;
     private final UserService userService;
     private final PetOwnershipHelper petOwnershipHelper;
+    private final OwnershipValidator ownershipValidator;
 
     public PetService(PetRepository petRepository,
                       FileStorageService fileStorageService,
                       UserService userService,
-                      PetOwnershipHelper petOwnershipHelper) {
+                      PetOwnershipHelper petOwnershipHelper,
+                      OwnershipValidator ownershipValidator) {
         this.petRepository = petRepository;
         this.fileStorageService = fileStorageService;
         this.userService = userService;
         this.petOwnershipHelper = petOwnershipHelper;
+        this.ownershipValidator = ownershipValidator;
     }
 
     @Transactional(readOnly = true)
@@ -159,7 +162,7 @@ public class PetService {
         Pet existingPet = optionalPet
                 .orElseThrow(() -> new PetNotFoundException("Pet with id " + id + " not found"));
 
-        OwnershipValidator.validateOwnership(existingPet, currentUsername);
+        ownershipValidator.validateOwnership(existingPet, currentUsername);
 
         applyPetUpdates(existingPet, petUpdate, currentUsername);
 
@@ -173,7 +176,7 @@ public class PetService {
         Pet pet = petRepository.findById(id)
                 .orElseThrow(() -> new PetNotFoundException("Pet with id " + id + " not found"));
 
-        OwnershipValidator.validateOwnership(pet, currentUsername);
+        ownershipValidator.validateOwnership(pet, currentUsername);
 
         if (pet.getOwner() != null) {
             pet.getOwner().getPets().remove(pet);
