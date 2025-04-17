@@ -43,16 +43,13 @@ public class ReminderController {
     @GetMapping("/upcoming")
     public ResponseEntity<List<ReminderResponseDTO>> getUpcomingReminders(Principal principal) {
         String username = principal.getName();
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime future = now.plusDays(7); // Exempel: Hämta påminnelser för nästa 7 dagar
-        List<ReminderResponseDTO> upcomingReminders = reminderService.getUpcomingReminders(username, now, future);
+        List<ReminderResponseDTO> upcomingReminders = reminderService.getUpcomingReminders(username); // Ändrat anropet här
         if (upcomingReminders.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         } else {
             return ResponseEntity.ok(upcomingReminders);
         }
     }
-
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteReminder(@PathVariable Long id, Principal principal) {
         String username = principal.getName();

@@ -2,6 +2,7 @@ package se.storkforge.petconnect.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.stereotype.Service;
@@ -13,6 +14,7 @@ import se.storkforge.petconnect.entity.User;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 @Service
 public class RecommendationService {
@@ -98,5 +100,28 @@ public class RecommendationService {
     public String fallback(RuntimeException e, User user) {
         logger.error("AI recommendation failed after retries. User: {}", user != null ? user.getUsername() : "null", e);
         return "Our recommendation engine is currently unavailable. Please try again later.";
+    }
+    public String generateCareTip(String petType) {
+        String prompt = String.format("Provide one useful health care tip for %s. Keep the tip under 150 characters.", petType);
+        Prompt chatPrompt = new Prompt(List.of(new UserMessage(prompt)));
+        try {
+            return aiExecutor.callAi(chatPrompt);
+        } catch (RuntimeException e) {
+            logger.error("Failed to generate care tip for {} after retries.", petType, e);
+            return "Sorry, I couldn't generate a care tip right now. Please try again later.";
+        }
+    }
+
+    public List<String> generateCareTips(String petType, int numberOfTips) {
+        String prompt = String.format("Provide %d useful health care tips for %s. Keep each tip under 150 characters.", numberOfTips, petType);
+        Prompt chatPrompt = new Prompt(List.of(new UserMessage(prompt)));
+        try {
+            String rawResponse = aiExecutor.callAi(chatPrompt);
+            // Försöker dela upp svaret på radbrytningar. Kan behöva finjusteras.
+            return Stream.of(rawResponse.split("\n")).map(String::trim).filter(s -> !s.isEmpty()).toList();
+        } catch (RuntimeException e) {
+            logger.error("Failed to generate {} care tips for {} after retries.", numberOfTips, petType, e);
+            return List.of("Sorry, I couldn't generate care tips right now. Please try again later.");
+        }
     }
 }

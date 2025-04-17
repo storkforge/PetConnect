@@ -103,11 +103,8 @@ class ReminderControllerTest {
     @Test
     void getUpcomingReminders_ShouldReturnOkStatusAndList() throws Exception {
         // Arrange (set up specific mock behavior for this test)
-        when(reminderService.getUpcomingReminders(
-                anyString(),
-                Mockito.any(LocalDateTime.class),
-                Mockito.any(LocalDateTime.class)
-        )).thenReturn(reminders);
+        when(reminderService.getUpcomingReminders(eq("testUser"))) // Ändrat mock-anropet
+                .thenReturn(reminders);
 
         mockMvc.perform(get("/api/reminders/upcoming")
                         .principal(() -> "testUser")
@@ -116,8 +113,8 @@ class ReminderControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$[0].title").value("Upcoming Reminder"));
 
-        // Verifiera att metoden anropades (argumentfångarna verifieras inte här längre)
-        verify(reminderService).getUpcomingReminders(anyString(), any(LocalDateTime.class), any(LocalDateTime.class));
+        // Verifiera att metoden anropades med endast användarnamnet
+        verify(reminderService).getUpcomingReminders(eq("testUser"));
     }
 
     @Test
@@ -224,7 +221,7 @@ class ReminderControllerTest {
         // Arrange
         Principal mockPrincipal = () -> "testUser";
 
-        when(reminderService.getUpcomingReminders(eq("testUser"), any(LocalDateTime.class), any(LocalDateTime.class)))
+        when(reminderService.getUpcomingReminders(eq("testUser"))) // Korrigerad rad
                 .thenReturn(reminders);
 
         // Act & Assert
@@ -235,7 +232,7 @@ class ReminderControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$[0].title").value("Upcoming Reminder"));
 
-        verify(reminderService).getUpcomingReminders(eq("testUser"), any(LocalDateTime.class), any(LocalDateTime.class));
+        verify(reminderService).getUpcomingReminders(eq("testUser")); // Korrigerad rad
     }
 
     @Test
@@ -243,7 +240,7 @@ class ReminderControllerTest {
         // Arrange
         Principal mockPrincipal = () -> "testUser";
 
-        when(reminderService.getUpcomingReminders(eq("testUser"), any(LocalDateTime.class), any(LocalDateTime.class)))
+        when(reminderService.getUpcomingReminders(eq("testUser"))) // Ändrat mock-anropet
                 .thenReturn(Collections.emptyList());
 
         // Act & Assert
@@ -253,7 +250,8 @@ class ReminderControllerTest {
                 .andExpect(status().isNoContent())
                 .andExpect(content().string(""));
 
-        verify(reminderService).getUpcomingReminders(eq("testUser"), any(LocalDateTime.class), any(LocalDateTime.class));
+        // Verifiera att metoden anropades med endast användarnamnet
+        verify(reminderService).getUpcomingReminders(eq("testUser"));
     }
     @Test
     void deleteReminder_ShouldReturnNoContentOnSuccessfulDeletion() throws Exception {

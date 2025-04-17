@@ -126,23 +126,21 @@ public class ReminderServiceTest {
         String username = "testuser";
         User user = new User();
         user.setUsername(username);
-        LocalDateTime from = LocalDateTime.now();
-        LocalDateTime to = from.plusDays(7);
 
         Pet pet1 = new Pet();
         pet1.setName("Doggo");
         Pet pet2 = new Pet();
         pet2.setName("Catto");
 
-        Reminder reminder1 = new Reminder(user, pet1, "Walk", "Activity", from.plusDays(1), "Morning walk");
-        Reminder reminder2 = new Reminder(user, pet2, "Feed", "Care", from.plusDays(3), "Evening feed");
+        Reminder reminder1 = new Reminder(user, pet1, "Walk", "Activity", LocalDateTime.now().plusDays(1), "Morning walk");
+        Reminder reminder2 = new Reminder(user, pet2, "Feed", "Care", LocalDateTime.now().plusDays(3), "Evening feed");
         List<Reminder> reminders = Arrays.asList(reminder1, reminder2);
 
         when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
-        when(reminderRepository.findByUserAndScheduledDateBetween(user, from, to)).thenReturn(reminders);
+        when(reminderRepository.findByUserOrderByScheduledDateAsc(user)).thenReturn(reminders); // Ändrat repository-anrop
 
         // Act
-        List<ReminderResponseDTO> responseDTOs = reminderService.getUpcomingReminders(username, from, to);
+        List<ReminderResponseDTO> responseDTOs = reminderService.getUpcomingReminders(username); // Anropar med bara användarnamn
 
         // Assert
         assertEquals(2, responseDTOs.size());
@@ -151,21 +149,18 @@ public class ReminderServiceTest {
         assertEquals("Feed", responseDTOs.get(1).getTitle());
         assertEquals("Catto", responseDTOs.get(1).getPetName());
     }
-
     @Test
     void getUpcomingReminders_shouldReturnEmptyList_whenNoRemindersFound() {
         // Arrange
         String username = "testuser";
         User user = new User();
         user.setUsername(username);
-        LocalDateTime from = LocalDateTime.now();
-        LocalDateTime to = from.plusDays(7);
 
         when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
-        when(reminderRepository.findByUserAndScheduledDateBetween(user, from, to)).thenReturn(List.of());
+        when(reminderRepository.findByUserOrderByScheduledDateAsc(user)).thenReturn(List.of()); // Ändrat repository-anrop
 
         // Act
-        List<ReminderResponseDTO> responseDTOs = reminderService.getUpcomingReminders(username, from, to);
+        List<ReminderResponseDTO> responseDTOs = reminderService.getUpcomingReminders(username); // Anropar med bara användarnamn
 
         // Assert
         assertTrue(responseDTOs.isEmpty());

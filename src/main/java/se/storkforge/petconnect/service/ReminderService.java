@@ -52,11 +52,13 @@ public class ReminderService {
         return convertToResponseDTO(savedReminder); // Convert and return the DTO
     }
 
-    public List<ReminderResponseDTO> getUpcomingReminders(String username, LocalDateTime from, LocalDateTime to) {
+    // Ändrad getUpcomingReminders-metod
+    public List<ReminderResponseDTO> getUpcomingReminders(String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UserNotFoundException("User not found with username: " + username));
-        List<Reminder> reminders = reminderRepository.findByUserAndScheduledDateBetween(user, from, to);
+        List<Reminder> reminders = reminderRepository.findByUserOrderByScheduledDateAsc(user); // Hämta alla sorterade
         return reminders.stream()
+                .filter(reminder -> reminder.getScheduledDate().isAfter(LocalDateTime.now())) // Filtrera på framtida
                 .map(this::convertToResponseDTO)
                 .collect(Collectors.toList());
     }
