@@ -219,6 +219,42 @@ class ReminderControllerTest {
                 .andExpect(jsonPath("$.notes").doesNotExist()); // Or .isNull() depending on Jackson's handling
 
         verify(reminderService).createReminder(any(ReminderInputDTO.class), eq("testUser"));
+    }
+    @Test
+    void getUpcomingReminders_ShouldReturnOkStatusAndListOfReminders() throws Exception {
+        // Arrange
+        Principal mockPrincipal = () -> "testUser";
+
+        when(reminderService.getUpcomingReminders(eq("testUser"), any(LocalDateTime.class), any(LocalDateTime.class)))
+                .thenReturn(reminders);
+
+        // Act & Assert
+        mockMvc.perform(get("/api/reminders/upcoming")
+                        .principal(mockPrincipal)
+                        .accept(MediaType.APPLICATION_JSON)) // Explicitly set Accept header
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$[0].title").value("Upcoming Reminder"));
+
+        verify(reminderService).getUpcomingReminders(eq("testUser"), any(LocalDateTime.class), any(LocalDateTime.class));
+    }
+
+    @Test
+    void getUpcomingReminders_ShouldReturnNoContentStatusWhenNoReminders() throws Exception {
+        // Arrange
+        Principal mockPrincipal = () -> "testUser";
+
+        when(reminderService.getUpcomingReminders(eq("testUser"), any(LocalDateTime.class), any(LocalDateTime.class)))
+                .thenReturn(Collections.emptyList());
+
+        // Act & Assert
+        mockMvc.perform(get("/api/reminders/upcoming")
+                        .principal(mockPrincipal)
+                        .accept(MediaType.APPLICATION_JSON)) // Explicitly set Accept header
+                .andExpect(status().isNoContent())
+                .andExpect(content().string(""));
+
+        verify(reminderService).getUpcomingReminders(eq("testUser"), any(LocalDateTime.class), any(LocalDateTime.class));
     }}
 
 

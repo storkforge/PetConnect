@@ -46,7 +46,11 @@ public class ReminderController {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime future = now.plusDays(7); // Exempel: Hämta påminnelser för nästa 7 dagar
         List<ReminderResponseDTO> upcomingReminders = reminderService.getUpcomingReminders(username, now, future);
-        return ResponseEntity.ok(upcomingReminders);
+        if (upcomingReminders.isEmpty()) {
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        } else {
+            return ResponseEntity.ok(upcomingReminders);
+        }
     }
 
     @DeleteMapping("/{id}")
