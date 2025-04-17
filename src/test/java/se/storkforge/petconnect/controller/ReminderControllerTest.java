@@ -30,8 +30,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 @Import(TestWebMvcConfig.class) // Import our test configuration
@@ -255,6 +254,23 @@ class ReminderControllerTest {
                 .andExpect(content().string(""));
 
         verify(reminderService).getUpcomingReminders(eq("testUser"), any(LocalDateTime.class), any(LocalDateTime.class));
+    }
+    @Test
+    void deleteReminder_ShouldReturnNoContentOnSuccessfulDeletion() throws Exception {
+        // Arrange
+        Principal mockPrincipal = () -> "testUser";
+        Long reminderIdToDelete = 1L;
+
+        // Do not need to mock the return value of deleteReminder as it's void.
+        // We are primarily interested in verifying that it's called.
+        doNothing().when(reminderService).deleteReminder(eq(reminderIdToDelete), eq("testUser"));
+
+        // Act & Assert
+        mockMvc.perform(delete("/api/reminders/{id}", reminderIdToDelete)
+                        .principal(mockPrincipal))
+                .andExpect(status().isNoContent());
+
+        verify(reminderService).deleteReminder(eq(reminderIdToDelete), eq("testUser"));
     }}
 
 
