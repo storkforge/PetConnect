@@ -7,6 +7,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +16,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import se.storkforge.petconnect.config.TestWebMvcConfig;
 import se.storkforge.petconnect.dto.ReminderInputDTO;
 import se.storkforge.petconnect.dto.ReminderResponseDTO;
 import se.storkforge.petconnect.service.ReminderService;
@@ -26,17 +28,20 @@ import java.time.ZoneId;
 import java.util.Collections;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+@Import(TestWebMvcConfig.class) // Import our test configuration
 
 @ExtendWith(MockitoExtension.class)
 class ReminderControllerTest {
 
     private MockMvc mockMvc;
-    private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
+
+    private ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
     @Mock
     private ReminderService reminderService;
@@ -51,6 +56,7 @@ class ReminderControllerTest {
 
     @BeforeEach
     void setUp() {
+        objectMapper = new ObjectMapper().registerModule(new JavaTimeModule()); // Ensure our ObjectMapper is correctly configured
         mockMvc = MockMvcBuilders.standaloneSetup(reminderController).build();
         now = LocalDateTime.now(swedishTimeZone);
         future = now.plus(Duration.ofDays(7).plusSeconds(5));
@@ -139,6 +145,81 @@ class ReminderControllerTest {
                         .principal(mockPrincipal)) // Add the mock Principal here!
                 .andExpect(status().isBadRequest());
     }
-}
+
+    @Test
+    void createReminder_WithDifferentValidData_ShouldReturnCreatedStatusAndCorrectDetails() throws Exception {
+        ReminderInputDTO inputDTO = new ReminderInputDTO();
+        inputDTO.setPetId(2L);
+        inputDTO.setTitle("Walk in the park");
+        inputDTO.setType("Activity");
+        LocalDateTime scheduledDateTime = LocalDateTime.now().plusDays(2).withHour(10).withMinute(0).withSecond(0).withNano(0);
+        inputDTO.setScheduledDate(scheduledDateTime);
+        inputDTO.setNotes("Remember to bring a leash!");
+
+        ReminderResponseDTO createdResponse = new ReminderResponseDTO();
+        createdResponse.setId(456L);
+        createdResponse.setPetId(inputDTO.getPetId());
+        createdResponse.setTitle(inputDTO.getTitle());
+        createdResponse.setType(inputDTO.getType());
+        createdResponse.setScheduledDate(scheduledDateTime);
+        createdResponse.setNotes(inputDTO.getNotes());
+
+        when(reminderService.createReminder(any(ReminderInputDTO.class), eq("testUser")))
+                .thenReturn(createdResponse);
+
+        Principal mockPrincipal = () -> "testUser";
+
+        MvcResult result = mockMvc.perform(post("/api/reminders")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(inputDTO))
+                        .principal(mockPrincipal))
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        String responseContent = result.getResponse().getContentAsString();
+        ReminderResponseDTO actualResponse = objectMapper.readValue(responseContent, ReminderResponseDTO.class);
+
+        assertEquals(456L, actualResponse.getId());
+        assertEquals(2L, actualResponse.getPetId());
+        assertEquals("Walk in the park", actualResponse.getTitle());
+        assertEquals("Activity", actualResponse.getType());
+        assertEquals(scheduledDateTime, actualResponse.getScheduledDate()); // Compare LocalDateTime objects directly
+        assertEquals("Remember to bring a leash!", actualResponse.getNotes());
+
+        verify(reminderService).createReminder(any(ReminderInputDTO.class), eq("testUser"));
+    }
+    @Test
+    void createReminder_WithNullNotes_ShouldReturnCreatedStatusAndNullNotes() throws Exception {
+        ReminderInputDTO inputDTO = new ReminderInputDTO();
+        inputDTO.setPetId(1L);
+        inputDTO.setTitle("Feeding time");
+        inputDTO.setType("Care");
+        inputDTO.setScheduledDate(LocalDateTime.now().plusHours(1));
+        inputDTO.setNotes(null);
+
+        ReminderResponseDTO createdResponse = new ReminderResponseDTO();
+        createdResponse.setId(789L);
+        createdResponse.setPetId(inputDTO.getPetId());
+        createdResponse.setTitle(inputDTO.getTitle());
+        createdResponse.setType(inputDTO.getType());
+        createdResponse.setScheduledDate(inputDTO.getScheduledDate());
+        createdResponse.setNotes(null);
+
+        when(reminderService.createReminder(any(ReminderInputDTO.class), eq("testUser")))
+                .thenReturn(createdResponse);
+
+        Principal mockPrincipal = () -> "testUser";
+
+        mockMvc.perform(post("/api/reminders")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(inputDTO))
+                        .principal(mockPrincipal))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(789L))
+                .andExpect(jsonPath("$.notes").doesNotExist()); // Or .isNull() depending on Jackson's handling
+
+        verify(reminderService).createReminder(any(ReminderInputDTO.class), eq("testUser"));
+    }}
+
 
 
