@@ -78,6 +78,7 @@ public class ReminderService {
     public ReminderResponseDTO convertToResponseDTO(Reminder reminder) {
         return new ReminderResponseDTO(
                 reminder.getId(),
+                reminder.getPet().getId(), // Get petId from the Pet entity
                 reminder.getTitle(),
                 reminder.getPet().getName(),
                 reminder.getType(),
