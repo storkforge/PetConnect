@@ -70,9 +70,7 @@ public class ReminderService {
                 .orElseThrow(() -> new IllegalArgumentException("Reminder not found with ID: " + id));
 
         // Ägarskapsvalidering för Reminder
-        if (reminder.getUser() == null || !reminder.getUser().getUsername().equals(username)) {
-            throw new SecurityException("You do not have permission to delete this reminder.");
-        }
+        ownershipValidator.validateOwnership(reminder.getPet(), username);
 
         reminderRepository.deleteById(id);
     }
