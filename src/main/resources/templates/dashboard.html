@@ -12,8 +12,24 @@
         <h1 class="text-3xl font-bold text-center mb-6">Welcome back, <span th:text="${username}">User</span>!</h1>
         <p class="text-lg text-center mb-4">Here's what's happening in your cat world today 🐾</p>
 
-        <div class="grid gap-4">
-            <div class="p-4 bg-white rounded shadow">📅 Upcoming vet visits</div>
+        <div class="grid gap-4 mb-6">
+            <div class="p-6 bg-white rounded shadow">
+                <h2 class="text-xl font-semibold mb-3">📅 Upcoming Reminders</h2>
+                <ul th:if="${not #lists.isEmpty(upcomingReminders)}">
+                    <li th:each="reminder : ${upcomingReminders}" class="mb-2">
+                        <span th:text="${reminder.title}" class="font-semibold"></span> -
+                        <span th:text="${reminder.petName}"></span> (<span th:text="${reminder.type}"></span>) -
+                        <span th:text="${#temporals.format(reminder.scheduledDate, 'yyyy-MM-dd HH:mm')}"></span>
+                    </li>
+                </ul>
+                <p th:if="${#lists.isEmpty(upcomingReminders)}">No upcoming reminders.</p>
+            </div>
+
+            <div class="p-6 bg-white rounded shadow">
+                <h2 class="text-xl font-semibold mb-3">💡 Care Tip</h2>
+                <p th:text="${careTip}">Logga in för att se påminnelser och vårdtips.</p>
+            </div>
+
             <div class="p-4 bg-white rounded shadow">🧠 AI-powered toy & food suggestions</div>
             <div class="p-4 bg-white rounded shadow">📸 Your latest shared stories</div>
         </div>

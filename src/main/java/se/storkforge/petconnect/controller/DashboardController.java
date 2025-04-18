@@ -1,13 +1,12 @@
 package se.storkforge.petconnect.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import se.storkforge.petconnect.dto.ReminderResponseDTO; // Importera ReminderResponseDTO
+import se.storkforge.petconnect.dto.ReminderResponseDTO;
 import se.storkforge.petconnect.entity.User;
 import se.storkforge.petconnect.service.RecommendationService;
 import se.storkforge.petconnect.service.ReminderService;
@@ -23,8 +22,9 @@ public class DashboardController {
     private final UserService userService;
     private final ReminderService reminderService;
 
-    @Autowired
-    public DashboardController(RecommendationService recommendationService, UserService userService, ReminderService reminderService) {
+    public DashboardController(RecommendationService recommendationService,
+                               UserService userService,
+                               ReminderService reminderService) {
         this.recommendationService = recommendationService;
         this.userService = userService;
         this.reminderService = reminderService;
@@ -37,37 +37,62 @@ public class DashboardController {
 
         if (authentication != null) {
             Object principal = authentication.getPrincipal();
-
-            if (principal instanceof UserDetails userDetails) {
-                username = userDetails.getUsername();
-                userOptional = userService.getUserByUsername(username);
-            } else if (principal instanceof OAuth2User oauthUser) {
-                username = oauthUser.getAttribute("name"); // or "email", etc
-                // För OAuth2-användare kan du behöva ett annat sätt att hämta User-entiteten
-                // baserat på t.ex. email eller sub från OAuth2-providern.
-                userOptional = userService.getUserByUsername(username); // Anpassa detta!
-            }
+            username = getUsernameFromPrincipal(principal);
+            userOptional = userService.getUserByUsername(username);
         }
 
         model.addAttribute("username", username);
 
         if (userOptional.isPresent()) {
             User user = userOptional.get();
-
-            // Steg 6: Hämta och visa kommande påminnelser
-            List<ReminderResponseDTO> upcomingReminders = // Ändrad typ här
-                    reminderService.getUpcomingReminders(username).stream().limit(3).toList();
-            model.addAttribute("upcomingReminders", upcomingReminders);
-
-            // Steg 7: Hämta och visa vårdtips
-            String petType = "cat"; // Exempel: Hårdkodat. Behöver dynamisk hämtning baserat på user.getPets()
-            String careTip = recommendationService.generateCareTip(petType);
-            model.addAttribute("careTip", careTip);
+            setupUserDashboard(model, user);
         } else {
-            model.addAttribute("upcomingReminders", List.of());
-            model.addAttribute("careTip", "Logga in för att se påminnelser och vårdtips.");
+            setupGuestDashboard(model);
         }
 
         return "dashboard";
+    }
+
+    private String getUsernameFromPrincipal(Object principal) {
+        if (principal instanceof UserDetails userDetails) {
+            return userDetails.getUsername();
+        } else if (principal instanceof OAuth2User oauthUser) {
+            return oauthUser.getAttribute("name");
+        }
+        return "Guest";
+    }
+
+    private void setupUserDashboard(Model model, User user) {
+        // Get upcoming reminders
+        List<ReminderResponseDTO> upcomingReminders =
+                reminderService.getUpcomingReminders(user.getUsername())
+                        .stream()
+                        .limit(3)
+                        .toList();
+        model.addAttribute("upcomingReminders", upcomingReminders);
+
+        // Get care tip based on user's pets
+        String petType = determinePetType(user);
+        String careTip = recommendationService.generateCareTip(petType);
+        model.addAttribute("careTip", careTip);
+
+        // Add pet recommendation if needed
+        String recommendation = recommendationService.generateRecommendation(user);
+        model.addAttribute("recommendation", recommendation);
+    }
+
+    private void setupGuestDashboard(Model model) {
+        model.addAttribute("upcomingReminders", List.of());
+        model.addAttribute("careTip", "Log in to see reminders and care tips.");
+    }
+
+    private String determinePetType(User user) {
+        // First try to get from user's pets
+        if (user.getPets() != null && !user.getPets().isEmpty()) {
+            return user.getPets().getFirst().getSpecies(); // Default to first pet's species
+        }
+
+        // Fallback logic if no pets
+        return "pet"; // Generic fallback
     }
 }
