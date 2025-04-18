@@ -41,6 +41,9 @@ public class User {
     @Pattern(regexp = "^\\+?[0-9]{7,15}$", message = "Invalid phone number format")
     private String phoneNumber;
 
+    @Embedded
+    private ReminderPreferences reminderPreferences;
+
     // In User.java
     @ManyToMany(mappedBy = "participants") // now inverse side
     private Set<MeetUp> meetUps = new HashSet<>();
@@ -114,6 +117,13 @@ public class User {
         return meetUps;
     }
 
+    public ReminderPreferences getReminderPreferences() {
+        return reminderPreferences;
+    }
+
+    public void setReminderPreferences(ReminderPreferences reminderPreferences) {
+        this.reminderPreferences = reminderPreferences;
+    }
 
     public void setMeetUps(Set<MeetUp> meetUps) {
         this.meetUps = meetUps;
