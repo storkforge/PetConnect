@@ -1,5 +1,7 @@
 package se.storkforge.petconnect.service;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -54,6 +56,7 @@ public class UserService {
         }
     }
 
+    @Cacheable(value = "userCache", key = "#id")
     public User getUserById(Long id) {
         return getOrElseThrow(id);
     }
@@ -74,6 +77,7 @@ public class UserService {
         return userRepository.findAll();
     }
 
+    @CacheEvict(value = "userCache", key = "#id")
     public User updateUser(Long id, User updatedUser) {
         User existingUser = getUserById(id);
         updateUserFields(existingUser, updatedUser);
@@ -112,7 +116,7 @@ public class UserService {
             throw new IllegalArgumentException("Email already exists.");
         }
     }
-
+    @CacheEvict(value = "userCache", key = "#id")
     public void deleteUser(Long id) {
         if (!userRepository.existsById(id)) {
             throw new UserNotFoundException("User with id " + id + " not found");
@@ -132,6 +136,7 @@ public class UserService {
         return !matcher.matches();
     }
 
+    @CacheEvict(value = "userCache", key = "#id")
     public void uploadProfilePicture(Long id, MultipartFile file) {
         String dir = "users/"+ id +"/profilePictures";
 
@@ -164,6 +169,7 @@ public class UserService {
         return storageService.loadFile(filename);
     }
 
+    @CacheEvict(value = "userCache", key = "#id")
     public void deleteProfilePicture(Long id) {
         User user = getOrElseThrow(id);
         storageService.delete(user.getProfilePicturePath());
