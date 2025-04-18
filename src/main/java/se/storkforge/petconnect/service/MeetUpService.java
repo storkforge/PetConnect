@@ -140,13 +140,19 @@ public class MeetUpService {
         meetUp.setDateTime(dateTime);
         meetUp.setParticipants(new HashSet<>(participants));
         meetUp.setStatus(MeetUpStatus.PLANNED.name());
-
+        meetUp.setReminders(createReminders(participants));
         MeetUp savedMeetUp = meetUpRepository.save(meetUp);
         notifyAllParticipants(savedMeetUp);
         return savedMeetUp;
     }
 
-
+    private Map<User, Boolean> createReminders(List<User> participants) {
+        Map<User, Boolean> reminders = new HashMap<>();
+        for (User user : participants) {
+            reminders.put(user, true);
+        }
+        return reminders;
+    }
 
 
     /**
