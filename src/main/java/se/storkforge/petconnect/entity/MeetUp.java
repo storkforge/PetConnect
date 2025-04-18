@@ -9,9 +9,7 @@ import org.hibernate.proxy.HibernateProxy;
 import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 @Entity
 public class MeetUp {
@@ -26,6 +24,11 @@ public class MeetUp {
 
     @Future(message = "Date and time must be in the future")
     private LocalDateTime dateTime;
+
+    @ElementCollection
+    @CollectionTable(name="meetup_user_reminder")
+    @MapKeyColumn(name="Participant")
+    private Map<User, Boolean> reminders = new HashMap<>();
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
@@ -77,6 +80,14 @@ public class MeetUp {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public Map<User, Boolean> getReminders() {
+        return reminders;
+    }
+
+    public void setReminders(Map<User, Boolean> reminders) {
+        this.reminders = reminders;
     }
 
     @Override
