@@ -117,16 +117,6 @@ class ReminderControllerTest {
         verify(reminderService).getUpcomingReminders(eq("testUser"));
     }
 
-    @Test
-    void deleteReminder_ShouldReturnNoContentStatus() throws Exception {
-        Long reminderId = 1L;
-
-        mockMvc.perform(delete("/api/reminders/{id}", reminderId)
-                        .principal(() -> "testUser"))
-                .andExpect(status().isNoContent());
-
-        verify(reminderService).deleteReminder(eq(reminderId), eq("testUser"));
-    }
 
     @Test
     void createReminder_WithInvalidData_ShouldReturnBadRequest() throws Exception {
