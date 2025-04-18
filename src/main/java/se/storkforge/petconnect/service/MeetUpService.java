@@ -36,9 +36,6 @@ public class MeetUpService {
     @Autowired
     UserRepository userRepository;
 
-    public MeetUpService(MeetUpRepository meetUpRepository) {
-    }
-
 
     /**
      * Searches for meet-ups within a specified radius from a given location and time range.
