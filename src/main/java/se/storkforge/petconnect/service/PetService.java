@@ -2,6 +2,7 @@ package se.storkforge.petconnect.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -18,6 +19,7 @@ import se.storkforge.petconnect.service.storageService.RestrictedFileStorageServ
 import se.storkforge.petconnect.util.OwnershipValidator;
 import se.storkforge.petconnect.util.PetOwnershipHelper;
 import se.storkforge.petconnect.util.PetValidator;
+import org.springframework.cache.annotation.Cacheable;
 
 import java.util.List;
 import java.util.Optional;
@@ -100,6 +102,7 @@ public class PetService {
         return spec;
     }
 
+    @Cacheable(value = "petCache", key = "#id")
     @Transactional(readOnly = true)
     public Optional<Pet> getPetById(Long id) {
         logger.info("Retrieving pet by ID: {}", id);
@@ -151,6 +154,7 @@ public class PetService {
         }
     }
 
+    @CacheEvict(value = "petCache", key = "#id")
     @Transactional
     public Pet updatePet(Long id, PetUpdateInputDTO petUpdate, String currentUsername) {
         logger.info("Updating pet with ID: {} for user: {}", id, currentUsername);
@@ -164,6 +168,7 @@ public class PetService {
         return petRepository.save(existingPet);
     }
 
+    @CacheEvict(value = "petCache", key = "#id")
     @Transactional
     public void deletePet(Long id, String currentUsername) {
         logger.info("Deleting pet with ID: {} for user: {}", id, currentUsername);
