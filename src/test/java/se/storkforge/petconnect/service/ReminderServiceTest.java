@@ -200,20 +200,26 @@ public class ReminderServiceTest {
         Reminder reminder = new Reminder();
         reminder.setId(reminderId);
         reminder.setUser(owner);
+        Pet pet = new Pet();
+        pet.setId(1L);
+        reminder.setPet(pet);
 
         when(userRepository.findByUsername(otherUsername)).thenReturn(Optional.of(attacker));
         when(reminderRepository.findById(reminderId)).thenReturn(Optional.of(reminder));
+
+        doThrow(new SecurityException("Not the owner")).when(ownershipValidator).validateOwnership(pet, otherUsername);
 
         // Act & Assert
         assertThrows(SecurityException.class, () -> reminderService.deleteReminder(reminderId, otherUsername));
         verify(reminderRepository, never()).deleteById(reminderId);
     }
 
+
     @Test
     void deleteReminder_shouldThrowIllegalArgumentException_whenReminderNotFound() {
         // Arrange
         Long reminderId = 1L;
-        String username = "testuser";
+        String username = "user";
         User user = new User();
         user.setUsername(username);
 
