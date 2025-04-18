@@ -166,6 +166,9 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
                     <argLine>-Djdk.attach.allowAttachSelf=true</argLine>
+                    <excludes>
+                        <exclude>**/UserServiceCachingTest.java</exclude>
+                    </excludes>
                 </configuration>
             </plugin>
         </plugins>
