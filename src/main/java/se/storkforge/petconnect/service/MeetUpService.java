@@ -36,6 +36,17 @@ public class MeetUpService {
     @Autowired
     UserRepository userRepository;
 
+    public MeetUpService(MeetUpRepository meetUpRepository,
+                         MailService mailService,
+                         SmsService smsService,
+                         NotificationService notificationService,
+                         UserRepository userRepository) {
+        this.meetUpRepository    = meetUpRepository;
+        this.mailService         = mailService;
+        this.smsService          = smsService;
+        this.notificationService = notificationService;
+        this.userRepository      = userRepository;
+    }
 
     /**
      * Searches for meet-ups within a specified radius from a given location and time range.
