@@ -5,46 +5,62 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.chat.model.Generation;
+import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.retry.annotation.EnableRetry;
 import org.springframework.retry.backoff.ExponentialBackOffPolicy;
 import org.springframework.retry.policy.SimpleRetryPolicy;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.util.StringUtils;
+import reactor.core.publisher.Flux;
 
-import java.time.Duration;
+import java.util.List;
 
 @Configuration
 @EnableRetry
 public class AiConfig {
     private static final Logger logger = LoggerFactory.getLogger(AiConfig.class);
 
-    @Value("${spring.ai.openai.api-key:}")
+    @Value("${spring.ai.openai.api-key}")
     private String openAiApiKey;
 
-    @Value("${spring.ai.openai.model:gpt-3.5-turbo}")
+    @Value("${spring.ai.openai.chat.options.model:gpt-3.5-turbo}")
     private String model;
 
-    @Value("${spring.ai.openai.temperature:0.7}")
+    @Value("${spring.ai.openai.chat.options.temperature:0.7}")
     private Double temperature;
 
-    @Value("${spring.ai.openai.max-tokens:200}")
+    @Value("${spring.ai.openai.chat.options.max-tokens:100}")
     private Integer maxTokens;
 
-    @Value("${spring.ai.system-message:You are PetConnect AI, a helpful pet care assistant}")
+    @Value("${petconnect.ai.system-message:You are PetConnect AI, a helpful pet care assistant}")
     private String systemMessage;
 
-    @Value("${spring.retry.initial-interval:1000}")
-    private long initialInterval;
-
-    @Value("${spring.retry.max-attempts:3}")
+    @Value("${petconnect.ai.retry.max-attempts:3}")
     private int maxAttempts;
 
-    @Value("${spring.ai.openai.timeout:30s}")
-    private Duration timeout;
+    @Value("${petconnect.ai.retry.initial-interval:1000}")
+    private long initialInterval;
+
+    @Value("${petconnect.ai.retry.multiplier:2}")
+    private double multiplier;
+
+    @Value("${petconnect.ai.retry.max-interval:10000}")
+    private long maxInterval;
+
+    @Value("${petconnect.ai.fallback.enabled:false}")
+    private boolean fallbackEnabled;
 
     @PostConstruct
     public void validateConfig() {
@@ -54,18 +70,29 @@ public class AiConfig {
         if (temperature < 0 || temperature > 2) {
             throw new IllegalStateException("Temperature must be between 0 and 2");
         }
-        if (maxTokens < 50 || maxTokens > 4096) {  // Considering typical model limits
-            throw new IllegalStateException("Max tokens must be between 50 and 4096");
-        }
-        if (timeout == null || timeout.isNegative() || timeout.isZero()) {
-            throw new IllegalStateException("Timeout must be a positive duration");
+        if (maxTokens < 1 || maxTokens > 4096) {
+            throw new IllegalStateException("Max tokens must be between 1 and 4096");
         }
         logger.info("AI configuration validated");
     }
 
+    @Primary
     @Bean
-    public ChatClient chatClient(ChatModel chatModel) {
-        return ChatClient.builder(chatModel)
+    public OpenAiChatModel openAiChatModel(OpenAiChatOptions openAiChatOptions) {
+        return OpenAiChatModel.builder()
+                .defaultOptions(openAiChatOptions)
+                .build();
+    }
+    @Bean
+    public ChatClient chatClient(
+            @Qualifier("openAiChatModel") ChatModel chatModel,
+            @Autowired(required = false) @Qualifier("fallbackChatModel") ChatModel fallbackModel) {
+
+        ChatModel modelToUse = fallbackEnabled && fallbackModel != null ?
+                new RetryableChatModel(chatModel, fallbackModel, maxAttempts) :
+                chatModel;
+
+        return ChatClient.builder(modelToUse)
                 .defaultOptions(openAiChatOptions())
                 .defaultSystem(systemMessage)
                 .build();
@@ -73,19 +100,19 @@ public class AiConfig {
 
     @Bean
     public OpenAiChatOptions openAiChatOptions() {
-        return OpenAiChatOptions.builder()
-                .model(model)
-                .temperature(temperature)
-                .maxTokens(maxTokens)
-                .build();
+        OpenAiChatOptions options = new OpenAiChatOptions();
+        options.setModel(model);
+        options.setTemperature(temperature);
+        options.setMaxTokens(maxTokens);
+        return options;
     }
 
     @Bean
     public RetryTemplate aiRetryTemplate() {
         ExponentialBackOffPolicy backOffPolicy = new ExponentialBackOffPolicy();
         backOffPolicy.setInitialInterval(initialInterval);
-        backOffPolicy.setMultiplier(2.0);
-        backOffPolicy.setMaxInterval(10000);
+        backOffPolicy.setMultiplier(multiplier);
+        backOffPolicy.setMaxInterval(maxInterval);
 
         SimpleRetryPolicy retryPolicy = new SimpleRetryPolicy();
         retryPolicy.setMaxAttempts(maxAttempts);
@@ -96,4 +123,44 @@ public class AiConfig {
 
         return retryTemplate;
     }
+
+    @Bean
+    @ConditionalOnProperty(name = "petconnect.ai.fallback.enabled", havingValue = "true")
+    public ChatModel fallbackChatModel() {
+        return new ChatModel() {
+            @Override
+            public ChatResponse call(Prompt prompt) {
+                return new ChatResponse(List.of(
+                        new Generation(new AssistantMessage("Our AI service is temporarily unavailable. Please try again later."))
+                ));
+            }
+
+            @Override
+            public Flux<ChatResponse> stream(Prompt prompt) {
+                return Flux.just(call(prompt));
+            }
+        };
+    }
+
+    private record RetryableChatModel(ChatModel primary, ChatModel fallback, int maxAttempts) implements ChatModel {
+
+        @Override
+            public ChatResponse call(Prompt prompt) {
+                for (int attempt = 0; attempt < maxAttempts; attempt++) {
+                    try {
+                        return primary.call(prompt);
+                    } catch (Exception e) {
+                        if (attempt == maxAttempts - 1) {
+                            return fallback.call(prompt);
+                        }
+                    }
+                }
+                return fallback.call(prompt);
+            }
+
+            @Override
+            public Flux<ChatResponse> stream(Prompt prompt) {
+                return primary.stream(prompt).onErrorResume(e -> fallback.stream(prompt));
+            }
+        }
 }
