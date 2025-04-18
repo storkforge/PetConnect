@@ -11,6 +11,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 import se.storkforge.petconnect.entity.Pet;
 import se.storkforge.petconnect.entity.User;
 import se.storkforge.petconnect.repository.PetRepository;
+import se.storkforge.petconnect.service.storageService.FileStorageService;
+import se.storkforge.petconnect.service.storageService.RestrictedFileStorageService;
 import se.storkforge.petconnect.util.OwnershipValidator;
 import se.storkforge.petconnect.util.PetOwnershipHelper;
 
@@ -30,7 +32,7 @@ class FileStorageServiceTest {
     private User owner;
     private Optional<Pet> optionalPet;
     private MockMultipartFile file;
-    private FileStorageService fileStorageService;
+    private RestrictedFileStorageService fileStorageService;
     private PetService petService;
     private Path testDir;
 
@@ -65,15 +67,28 @@ class FileStorageServiceTest {
         this.testDir = Files.createTempDirectory("test-uploads");
         this.optionalPet = Optional.of(pet);
         this.file = new MockMultipartFile("file", "test.jpg", "image/jpeg", "test".getBytes());
-        this.fileStorageService = new FileStorageService();
-        this.petService = new PetService(petRepository, fileStorageService, userService, petOwnershipHelper, ownershipValidator); // Korrigerad rad
+
+        // ✅ Use RestrictedFileStorageService instead of FileStorageService
+        this.fileStorageService = new RestrictedFileStorageService();
+
+        // ✅ Manually inject @Value properties using ReflectionTestUtils
+        ReflectionTestUtils.setField(fileStorageService, "maxImageSize", 100L);
+        ReflectionTestUtils.setField(fileStorageService, "allowedImageTypes", List.of("image/jpeg"));
+        ReflectionTestUtils.setField(fileStorageService, "maxFileSize", 100L);
+        ReflectionTestUtils.setField(fileStorageService, "allowedFileTypes", List.of("image/jpeg"));
+        ReflectionTestUtils.setField(fileStorageService, "root", testDir);
+
+        // Create PetService with all mocked dependencies
+        this.petService = new PetService(
+                petRepository,
+                fileStorageService,
+                userService,
+                petOwnershipHelper,
+                ownershipValidator
+        );
 
         // Ensure directory exists
         Files.createDirectories(testDir);
-
-        ReflectionTestUtils.setField(fileStorageService, "maxFileSize", 100L);
-        ReflectionTestUtils.setField(fileStorageService, "allowedTypes", List.of("image/jpeg"));
-        ReflectionTestUtils.setField(fileStorageService, "root", testDir);
     }
 
     @Test

@@ -14,6 +14,7 @@ import se.storkforge.petconnect.dto.PetUpdateInputDTO;
 import se.storkforge.petconnect.entity.Pet;
 import se.storkforge.petconnect.exception.PetNotFoundException;
 import se.storkforge.petconnect.repository.PetRepository;
+import se.storkforge.petconnect.service.storageService.RestrictedFileStorageService;
 import se.storkforge.petconnect.util.OwnershipValidator;
 import se.storkforge.petconnect.util.PetOwnershipHelper;
 import se.storkforge.petconnect.util.PetValidator;
@@ -27,18 +28,18 @@ public class PetService {
     private static final Logger logger = LoggerFactory.getLogger(PetService.class);
 
     private final PetRepository petRepository;
-    private final FileStorageService fileStorageService;
+    private final RestrictedFileStorageService storageService;
     private final UserService userService;
     private final PetOwnershipHelper petOwnershipHelper;
     private final OwnershipValidator ownershipValidator;
 
     public PetService(PetRepository petRepository,
-                      FileStorageService fileStorageService,
+                      RestrictedFileStorageService storageService,
                       UserService userService,
                       PetOwnershipHelper petOwnershipHelper,
                       OwnershipValidator ownershipValidator) {
         this.petRepository = petRepository;
-        this.fileStorageService = fileStorageService;
+        this.storageService = storageService;
         this.userService = userService;
         this.petOwnershipHelper = petOwnershipHelper;
         this.ownershipValidator = ownershipValidator;
@@ -157,10 +158,7 @@ public class PetService {
     public Pet updatePet(Long id, PetUpdateInputDTO petUpdate, String currentUsername) {
         logger.info("Updating pet with ID: {} for user: {}", id, currentUsername);
 
-        Optional<Pet> optionalPet = petRepository.findById(id);
-
-        Pet existingPet = optionalPet
-                .orElseThrow(() -> new PetNotFoundException("Pet with id " + id + " not found"));
+        Pet existingPet = getOrElseThrow(id);
 
         ownershipValidator.validateOwnership(existingPet, currentUsername);
 
@@ -173,8 +171,7 @@ public class PetService {
     public void deletePet(Long id, String currentUsername) {
         logger.info("Deleting pet with ID: {} for user: {}", id, currentUsername);
 
-        Pet pet = petRepository.findById(id)
-                .orElseThrow(() -> new PetNotFoundException("Pet with id " + id + " not found"));
+        Pet pet = getOrElseThrow(id);
 
         ownershipValidator.validateOwnership(pet, currentUsername);
 
@@ -183,7 +180,7 @@ public class PetService {
         }
 
         if (pet.getProfilePicturePath() != null) {
-            fileStorageService.delete(pet.getProfilePicturePath());
+            storageService.delete(pet.getProfilePicturePath());
         }
 
         petRepository.delete(pet);
@@ -191,24 +188,24 @@ public class PetService {
 
     @Transactional
     public void uploadProfilePicture(Long id, MultipartFile file) {
+        String dir = "pets/"+ id +"/profilePictures";
         logger.info("Uploading profile picture for pet with ID: {}", id);
 
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("File cannot be null or empty");
         }
 
-        Pet pet = petRepository.findById(id)
-                .orElseThrow(() -> new PetNotFoundException("Pet with id " + id + " not found"));
+        Pet pet = getOrElseThrow(id);
 
         if (pet.getProfilePicturePath() != null) {
             try {
-                fileStorageService.delete(pet.getProfilePicturePath());
+                storageService.delete(pet.getProfilePicturePath());
             } catch (RuntimeException e) {
                 logger.warn("Failed to delete old profile picture: {}", e.getMessage());
             }
         }
 
-        String filename = fileStorageService.store(file);
+        String filename = storageService.storeImage(file,dir);
         pet.setProfilePicturePath(filename);
         petRepository.save(pet);
     }
@@ -216,14 +213,25 @@ public class PetService {
     @Transactional(readOnly = true)
     public Resource getProfilePicture(Long id) {
         logger.info("Retrieving profile picture for pet with ID: {}", id);
-
-        Pet pet = petRepository.findById(id)
-                .orElseThrow(() -> new PetNotFoundException("Pet with id " + id + " not found"));
+        Pet pet = getOrElseThrow(id);
 
         if (pet.getProfilePicturePath() == null) {
             throw new RuntimeException("Pet does not have a profile picture");
         }
 
-        return fileStorageService.loadFile(pet.getProfilePicturePath());
+        return storageService.loadFile(pet.getProfilePicturePath());
     }
+
+    @Transactional
+    public void deleteProfilePicture(Long id) {
+        logger.info("Deleting profile picture for pet with ID: {}", id);
+        Pet pet = getOrElseThrow(id);
+        storageService.delete(pet.getProfilePicturePath());
+    }
+
+    private Pet getOrElseThrow(Long id) {
+        return petRepository.findById(id)
+                .orElseThrow(() -> new PetNotFoundException("Pet with id " + id + " not found"));
+    }
+
 }

@@ -1,7 +1,6 @@
 package se.storkforge.petconnect.controller;
 
 import jakarta.validation.constraints.Min;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -108,7 +107,7 @@ public class PetController {
         }
     }
 
-    @PostMapping("/{id}/picture")
+    @PostMapping("/{id}/PFP")
     public ResponseEntity<String> uploadProfilePicture(
             @PathVariable Long id,
             @RequestParam("file") MultipartFile file) {
@@ -125,7 +124,7 @@ public class PetController {
         }
     }
 
-    @GetMapping(value = "/{id}/picture")
+    @GetMapping(value = "/{id}/PFP")
     public ResponseEntity<Resource> getProfilePicture(
             @PathVariable Long id) {
         Resource resource = petService.getProfilePicture(id);
@@ -144,6 +143,16 @@ public class PetController {
             return MediaType.IMAGE_GIF;
         }
         return MediaType.IMAGE_JPEG;
+    }
+
+    @DeleteMapping("/{id}/PFP")
+    public ResponseEntity<Void> deleteProfilePicture (@PathVariable Long id) {
+        try {
+            petService.deleteProfilePicture(id);
+            return ResponseEntity.noContent().build();
+        } catch (PetNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @ExceptionHandler(PetNotFoundException.class)

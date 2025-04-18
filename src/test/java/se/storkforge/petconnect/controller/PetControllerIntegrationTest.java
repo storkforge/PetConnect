@@ -234,7 +234,7 @@ public class PetControllerIntegrationTest {
                 "file", "test.jpg", "image/jpeg", "test image content".getBytes());
         doNothing().when(petService).uploadProfilePicture(eq(testPetId), any(MultipartFile.class));
 
-        mockMvc.perform(multipart("/pets/{id}/picture", testPetId)
+        mockMvc.perform(multipart("/pets/{id}/PFP", testPetId)
                         .file(file))
                 .andExpect(status().isOk());
         verify(petService).uploadProfilePicture(eq(testPetId), any(MultipartFile.class));
@@ -246,7 +246,7 @@ public class PetControllerIntegrationTest {
         when(mockResource.getFilename()).thenReturn("test.png");
         when(petService.getProfilePicture(testPetId)).thenReturn(mockResource);
 
-        mockMvc.perform(get("/pets/{id}/picture", testPetId))
+        mockMvc.perform(get("/pets/{id}/PFP", testPetId))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.IMAGE_PNG));
     }
