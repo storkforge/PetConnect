@@ -1,16 +1,15 @@
 package se.storkforge.petconnect.service;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import jakarta.transaction.Transactional;
-import org.geolatte.geom.C2D;
 import org.geolatte.geom.G2D;
 import org.geolatte.geom.Point;
 import org.geolatte.geom.builder.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import se.storkforge.petconnect.entity.MeetUp;
 import se.storkforge.petconnect.entity.MeetUpStatus;
@@ -37,7 +36,17 @@ public class MeetUpService {
     @Autowired
     UserRepository userRepository;
 
-
+    public MeetUpService(MeetUpRepository meetUpRepository,
+                         MailService mailService,
+                         SmsService smsService,
+                         NotificationService notificationService,
+                         UserRepository userRepository) {
+        this.meetUpRepository    = meetUpRepository;
+        this.mailService         = mailService;
+        this.smsService          = smsService;
+        this.notificationService = notificationService;
+        this.userRepository      = userRepository;
+    }
 
     /**
      * Searches for meet-ups within a specified radius from a given location and time range.
@@ -49,6 +58,10 @@ public class MeetUpService {
      * @param end - the end date and time for filtering meet-ups.
      * @return a list of meet-ups that match the criteria.
      */
+    @Cacheable(
+            value = "nearbyMeetUpsCache",
+            key = "T(java.util.Objects).hash(#longitude, #latitude, #radiusInKm, #start, #end)"
+    )
     public List<MeetUp> searchMeetUps(double longitude, double latitude, double radiusInKm, LocalDateTime start, LocalDateTime end) {
         Objects.requireNonNull(start, "Start date cannot be null");
         Objects.requireNonNull(end, "End date cannot be null");
@@ -116,6 +129,10 @@ public class MeetUpService {
      * @throws NoSuchElementException if any participant is not found
      * @throws IllegalStateException if any user is not available at the given time
      */
+    @Caching(evict = {
+            @CacheEvict(value = "nearbyMeetUpsCache", allEntries = true),
+            @CacheEvict(value = "nearbySimpleMeetUpsCache", allEntries = true)
+    })
     @Transactional
     public MeetUp planMeetUp(double latitude, double longitude, LocalDateTime dateTime, List<Long> participantIds) {
         if (dateTime == null)
@@ -160,6 +177,7 @@ public class MeetUpService {
      * @throws IllegalStateException if the user is not available at the meet-up time.
      */
     @Transactional
+    @CacheEvict(value = "meetupParticipantsCache", key = "#meetUpId")
     public MeetUp addParticipant(Long meetUpId, User user) {
         if (user == null || user.getId() == null) {
             throw new IllegalArgumentException("User cannot be null and must have a valid ID.");
@@ -197,6 +215,7 @@ public class MeetUpService {
      * @throws NoSuchElementException if the meet-up or the user within the participants is not found.
      */
     @Transactional
+    @CacheEvict(value = "meetupParticipantsCache", key = "#meetUpId")
     public MeetUp removeParticipant(Long meetUpId, Long userId) {
         MeetUp meetUp = meetUpRepository.findById(meetUpId)
                 .orElseThrow(() -> new NoSuchElementException("Meet-up not found"));
@@ -216,6 +235,7 @@ public class MeetUpService {
      * @return a set of users participating in the meet-up.
      * @throws NoSuchElementException if the meet-up is not found.
      */
+    @Cacheable(value = "meetupParticipantsCache", key = "#meetUpId")
     public Set<User> getParticipants(Long meetUpId) {
         MeetUp meetUp = meetUpRepository.findById(meetUpId)
                 .orElseThrow(() -> new NoSuchElementException("Meet-up not found"));
@@ -261,6 +281,10 @@ public class MeetUpService {
         );
     }
 
+    @Cacheable(
+            value = "nearbySimpleMeetUpsCache",
+            key = "T(java.util.Objects).hash(#longitude, #latitude, #radiusMeters)"
+    )
     public List<MeetUp> findNearbyMeetups(double longitude, double latitude, double radiusMeters) {
         return meetUpRepository.findMeetUpsNear(longitude, latitude, radiusMeters);
     }
