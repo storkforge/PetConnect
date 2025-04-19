@@ -83,10 +83,25 @@ public class RecommendationService {
     }
 
     private String getDefaultCareTip(String petType) {
-        return switch (petType.toLowerCase()) {
+        return switch (petType == null ? "" : petType.toLowerCase()) {
             case "cat" -> "Regular brushing helps reduce hairballs in cats.";
             case "dog" -> "Daily walks are essential for a dog's physical and mental health.";
-            default -> "Regular veterinary check-ups are important for all pets.";
+            default -> getRandomGenericTip();
         };
     }
+
+    private static final List<String> GENERIC_TIPS = List.of(
+            "Always provide fresh water for your pet.",
+            "Regular exercise keeps pets healthy and happy.",
+            "Schedule yearly checkups with your vet.",
+            "Keep your pet's vaccinations up to date.",
+            "Brush your pet's fur regularly to reduce shedding."
+    );
+
+    private String getRandomGenericTip() {
+        int index = (int) (Math.random() * GENERIC_TIPS.size());
+        return GENERIC_TIPS.get(index);
+    }
+
+
 }
