@@ -2,13 +2,14 @@ package se.storkforge.petconnect.util;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 import se.storkforge.petconnect.entity.Pet;
 
+@Component
 public class OwnershipValidator {
-
     private static final Logger logger = LoggerFactory.getLogger(OwnershipValidator.class);
 
-    public static void validateOwnership(Pet pet, String username) {
+    public void validateOwnership(Pet pet, String username) {
         logger.debug("validateOwnership() called with: pet={}, username={}", pet, username);
 
         boolean validationFailed = false;

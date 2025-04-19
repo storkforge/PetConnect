@@ -19,11 +19,6 @@ public class AiRecommendationExecutor {
         this.chatClient = chatClient;
     }
 
-    @Retryable(
-            value = { RuntimeException.class },
-            maxAttempts = 3,
-            backoff = @Backoff(delay = 2000, multiplier = 2)
-    )
     public String callAi(Prompt prompt) {
         return chatClient.prompt(prompt).call().content();
     }

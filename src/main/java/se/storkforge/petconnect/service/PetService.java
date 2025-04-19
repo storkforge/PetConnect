@@ -31,15 +31,18 @@ public class PetService {
     private final RestrictedFileStorageService storageService;
     private final UserService userService;
     private final PetOwnershipHelper petOwnershipHelper;
+    private final OwnershipValidator ownershipValidator;
 
     public PetService(PetRepository petRepository,
                       RestrictedFileStorageService storageService,
                       UserService userService,
-                      PetOwnershipHelper petOwnershipHelper) {
+                      PetOwnershipHelper petOwnershipHelper,
+                      OwnershipValidator ownershipValidator) {
         this.petRepository = petRepository;
         this.storageService = storageService;
         this.userService = userService;
         this.petOwnershipHelper = petOwnershipHelper;
+        this.ownershipValidator = ownershipValidator;
     }
 
     @Transactional(readOnly = true)
@@ -157,7 +160,7 @@ public class PetService {
 
         Pet existingPet = getOrElseThrow(id);
 
-        OwnershipValidator.validateOwnership(existingPet, currentUsername);
+        ownershipValidator.validateOwnership(existingPet, currentUsername);
 
         applyPetUpdates(existingPet, petUpdate, currentUsername);
 
@@ -170,7 +173,7 @@ public class PetService {
 
         Pet pet = getOrElseThrow(id);
 
-        OwnershipValidator.validateOwnership(pet, currentUsername);
+        ownershipValidator.validateOwnership(pet, currentUsername);
 
         if (pet.getOwner() != null) {
             pet.getOwner().getPets().remove(pet);

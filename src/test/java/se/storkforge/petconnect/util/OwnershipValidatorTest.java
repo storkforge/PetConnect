@@ -11,6 +11,8 @@ import static org.mockito.Mockito.when;
 
 public class OwnershipValidatorTest {
 
+    private final OwnershipValidator ownershipValidator = new OwnershipValidator();
+
     @Test
     void validateOwnership_shouldNotThrowException_whenOwnerMatchesUsername() {
         Pet pet = mock(Pet.class);
@@ -18,7 +20,7 @@ public class OwnershipValidatorTest {
         when(pet.getOwner()).thenReturn(owner);
         when(owner.getUsername()).thenReturn("testUser");
 
-        assertDoesNotThrow(() -> OwnershipValidator.validateOwnership(pet, "testUser"));
+        assertDoesNotThrow(() -> ownershipValidator.validateOwnership(pet, "testUser"));
     }
 
     @Test
@@ -28,7 +30,7 @@ public class OwnershipValidatorTest {
         when(pet.getOwner()).thenReturn(owner);
         when(owner.getUsername()).thenReturn("anotherUser");
 
-        assertThrows(SecurityException.class, () -> OwnershipValidator.validateOwnership(pet, "testUser"));
+        assertThrows(SecurityException.class, () -> ownershipValidator.validateOwnership(pet, "testUser"));
     }
 
     @Test
@@ -36,6 +38,11 @@ public class OwnershipValidatorTest {
         Pet pet = mock(Pet.class);
         when(pet.getOwner()).thenReturn(null);
 
-        assertThrows(SecurityException.class, () -> OwnershipValidator.validateOwnership(pet, "testUser"));
+        assertThrows(SecurityException.class, () -> ownershipValidator.validateOwnership(pet, "testUser"));
+    }
+
+    @Test
+    void validateOwnership_shouldThrowException_whenPetIsNull() {
+        assertThrows(SecurityException.class, () -> ownershipValidator.validateOwnership(null, "testUser"));
     }
 }
