@@ -17,7 +17,7 @@ public class AiConfig {
     @PostConstruct
     public void loadEnvAndValidateApiKey() {
         Dotenv dotenv = Dotenv.configure()
-                .filename("OpenAI.env")  // make sure the filename matches and is in your project root
+                .filename("OpenAI.env")  // make sure the env filename matches and is in your project root
                 .load();
 
         openAiApiKey = dotenv.get("OPENAI_API_KEY");

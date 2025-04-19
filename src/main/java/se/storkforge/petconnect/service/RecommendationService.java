@@ -3,20 +3,18 @@ package se.storkforge.petconnect.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.ai.chat.prompt.PromptTemplate;
-import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
 import se.storkforge.petconnect.entity.Pet;
 import se.storkforge.petconnect.entity.User;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class RecommendationService {
-
     private static final Logger logger = LoggerFactory.getLogger(RecommendationService.class);
 
     private final PetService petService;
@@ -27,76 +25,83 @@ public class RecommendationService {
         this.aiExecutor = aiExecutor;
     }
 
-    private static final String RECOMMENDATION_TEMPLATE = """
-     Based on the following user information and available pets, provide a personalized pet recommendation.
-
-     User Details:
-     - Username: {username}
-     - Email: {email}
-
-     Available Pets:
-     {pets}
-
-     Please recommend the most suitable pet for this user.
-     Provide a brief explanation for your recommendation.
-     """;
-
     public String generateRecommendation(User user) {
         if (user == null) {
-            logger.warn("Attempted to generate recommendation for a null user");
+            logger.warn("Attempted to generate recommendation for null user");
             return "User information is missing. Cannot generate recommendation.";
         }
 
-        logger.info("Generating AI recommendation for user {}", user.getUsername());
-        List<Pet> availablePets = getAvailablePets();
-        if (availablePets.isEmpty()) {
+        Pageable pageable = PageRequest.of(0, 100);
+        Page<Pet> petsPage = petService.getAllPets(pageable, null);
+
+        if (petsPage.isEmpty()) {
             return "No available pets to recommend at this time.";
         }
 
-        Map<String, Object> promptVariables = createPromptVariables(user, availablePets);
-        Prompt prompt = createPrompt(promptVariables);
+        List<Pet> availablePets = petsPage.getContent();
+        String prompt = createPrompt(user, availablePets);
 
         try {
-            return aiExecutor.callAi(prompt); // <-- uses the executor here
-        } catch (RuntimeException e) {
-            return fallback(e, user); // Call fallback on exception
+            return aiExecutor.callAi(new Prompt(prompt));
+        } catch (Exception e) {
+            logger.error("AI recommendation failed for user {}", user.getUsername(), e);
+            return createFallbackRecommendation(availablePets);
         }
     }
 
-    private List<Pet> getAvailablePets() {
-        Pageable pageable = PageRequest.of(0, 100); // Fetch first 100 pets
-        return petService.getAllPets(pageable, null) // Pass null for PetFilter
-                .stream()
-                .filter(Pet::isAvailable)
-                .toList();
+    public String generateCareTip(String petType) {
+        try {
+            String prompt = "Provide one useful health care tip for " + petType +
+                    ". Keep it under 150 characters.";
+            return aiExecutor.callAi(new Prompt(prompt));
+        } catch (Exception e) {
+            logger.error("Failed to generate care tip for {}", petType, e);
+            return getDefaultCareTip(petType);
+        }
     }
 
-    private Map<String, Object> createPromptVariables(User user, List<Pet> availablePets) {
-        Map<String, Object> promptVariables = new HashMap<>();
-
-        String petsFormatted = formatPetsList(availablePets);
-
-        promptVariables.put("username", user.getUsername());
-        promptVariables.put("email", user.getEmail());
-        promptVariables.put("pets", petsFormatted);
-
-        return promptVariables;
+    private String createPrompt(User user, List<Pet> pets) {
+        return String.format(
+                "Generate a personalized pet recommendation for user %s (%s). " +
+                        "Available pets: %s",
+                user.getUsername(),
+                user.getEmail(),
+                pets.stream()
+                        .map(pet -> String.format("%s the %s (Age: %d, Location: %s)",
+                                pet.getName(), pet.getSpecies(), pet.getAge(), pet.getLocation()))
+                        .collect(Collectors.joining(", "))
+        );
     }
 
-    private String formatPetsList(List<Pet> pets) {
-        return pets.stream()
-                .map(pet -> String.format("- %s (%s), Age: %d, Location: %s",
-                        pet.getName(), pet.getSpecies(), pet.getAge(), pet.getLocation()))
-                .reduce("", (a, b) -> a + "\n" + b);
+    private String createFallbackRecommendation(List<Pet> pets) {
+        Pet fallbackPet = pets.getFirst();
+        return String.format(
+                "Our recommendation engine is unavailable. Based on basic matching, %s the %s might be a good fit.",
+                fallbackPet.getName(),
+                fallbackPet.getSpecies()
+        );
     }
 
-    private Prompt createPrompt(Map<String, Object> promptVariables) {
-        PromptTemplate promptTemplate = new PromptTemplate(RECOMMENDATION_TEMPLATE);
-        return promptTemplate.create(promptVariables);
+    private String getDefaultCareTip(String petType) {
+        return switch (petType == null ? "" : petType.toLowerCase()) {
+            case "cat" -> "Regular brushing helps reduce hairballs in cats.";
+            case "dog" -> "Daily walks are essential for a dog's physical and mental health.";
+            default -> getRandomGenericTip();
+        };
     }
 
-    public String fallback(RuntimeException e, User user) {
-        logger.error("AI recommendation failed after retries. User: {}", user != null ? user.getUsername() : "null", e);
-        return "Our recommendation engine is currently unavailable. Please try again later.";
+    private static final List<String> GENERIC_TIPS = List.of(
+            "Always provide fresh water for your pet.",
+            "Regular exercise keeps pets healthy and happy.",
+            "Schedule yearly checkups with your vet.",
+            "Keep your pet's vaccinations up to date.",
+            "Brush your pet's fur regularly to reduce shedding."
+    );
+
+    private String getRandomGenericTip() {
+        int index = (int) (Math.random() * GENERIC_TIPS.size());
+        return GENERIC_TIPS.get(index);
     }
+
+
 }

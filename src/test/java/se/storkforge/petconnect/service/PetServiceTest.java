@@ -17,6 +17,8 @@ import se.storkforge.petconnect.entity.Pet;
 import se.storkforge.petconnect.entity.User;
 import se.storkforge.petconnect.exception.PetNotFoundException;
 import se.storkforge.petconnect.repository.PetRepository;
+import se.storkforge.petconnect.util.OwnershipValidator; // Import OwnershipValidator
+import se.storkforge.petconnect.util.PetOwnershipHelper;
 
 import java.util.Collections;
 import java.util.List;
@@ -26,7 +28,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import org.mockito.ArgumentMatchers;
-import se.storkforge.petconnect.util.PetOwnershipHelper;
 
 @ExtendWith(MockitoExtension.class)
 public class PetServiceTest {
@@ -37,11 +38,14 @@ public class PetServiceTest {
     @Mock
     private UserService userService;
 
+    @Mock
+    private PetOwnershipHelper petOwnershipHelper;
+
+    @Mock
+    private OwnershipValidator ownershipValidator; // Mock OwnershipValidator
+
     @InjectMocks
     private PetService petService;
-    @Mock
-
-    private PetOwnershipHelper petOwnershipHelper;
 
     private PetFilter petFilter;
     private Pageable pageable;
@@ -170,19 +174,32 @@ public class PetServiceTest {
 
     @Test
     void testUpdatePet() {
+        // Arrange
         when(petRepository.findById(testPet.getId())).thenReturn(Optional.of(testPet));
         when(petRepository.save(any(Pet.class))).thenReturn(testPet);
+        // Importantly, you might need to mock the behavior of the ownershipValidator
+        // if your test relies on it not throwing an exception in this scenario.
+        doNothing().when(ownershipValidator).validateOwnership(any(Pet.class), anyString());
 
+        // Act
         Pet result = petService.updatePet(testPet.getId(), testPetUpdateInputDTO, testUsername);
 
+        // Assert
         assertEquals(testPet, result);
+        verify(petRepository).findById(testPet.getId());
+        verify(petRepository).save(any(Pet.class));
+        verify(ownershipValidator).validateOwnership(any(Pet.class), eq(testUsername));
     }
 
     @Test
     void testDeletePet() {
         when(petRepository.findById(testPet.getId())).thenReturn(Optional.of(testPet));
+        doNothing().when(ownershipValidator).validateOwnership(any(Pet.class), anyString()); // Mock ownership validation
 
         assertDoesNotThrow(() -> petService.deletePet(testPet.getId(), testUsername));
+        verify(petRepository).findById(testPet.getId());
+        verify(petRepository).delete(any(Pet.class));
+        verify(ownershipValidator).validateOwnership(any(Pet.class), eq(testUsername));
     }
 
     @Test
@@ -190,7 +207,11 @@ public class PetServiceTest {
         when(petRepository.findById(testPet.getId())).thenReturn(Optional.empty());
 
         assertThrows(PetNotFoundException.class, () -> petService.deletePet(testPet.getId(), testUsername));
+        verify(petRepository).findById(testPet.getId());
+        verifyNoMoreInteractions(petRepository); // Ensure delete is not called
+        verifyNoInteractions(ownershipValidator); // Ownership validation won't happen if pet is not found
     }
+
     @Test
     void updatePet_ByNonOwner_ShouldThrowException() {
         // Arrange
@@ -209,9 +230,15 @@ public class PetServiceTest {
         ownedPet.setOwner(testUser);
 
         when(petRepository.findById(1L)).thenReturn(Optional.of(ownedPet));
+        doThrow(new SecurityException("You do not have permission to perform this action"))
+                .when(ownershipValidator).validateOwnership(any(Pet.class), eq(nonOwnerUsername));
 
         // When/Then - Expect SecurityException because non-owner tries to update
         assertThrows(SecurityException.class,
                 () -> petService.updatePet(1L, update, nonOwnerUsername));
+
+        verify(petRepository).findById(1L);
+        verify(ownershipValidator).validateOwnership(any(Pet.class), eq(nonOwnerUsername));
+        verifyNoMoreInteractions(petRepository); // Ensure save is not called
     }
 }

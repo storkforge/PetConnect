@@ -1,5 +1,4 @@
 package se.storkforge.petconnect.service.storageService;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import jakarta.annotation.PostConstruct;
@@ -8,6 +7,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -54,7 +54,7 @@ public class FileStorageService {
         }
     }
 
-    void delete(String path) {
+    public void delete(String path) {
         if (path == null) {
             LOG.warn("Attempted to delete a null filename");
             return;

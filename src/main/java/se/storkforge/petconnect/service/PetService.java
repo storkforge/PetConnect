@@ -13,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 import se.storkforge.petconnect.dto.PetInputDTO;
 import se.storkforge.petconnect.dto.PetUpdateInputDTO;
 import se.storkforge.petconnect.entity.Pet;
+import se.storkforge.petconnect.entity.User;
 import se.storkforge.petconnect.exception.PetNotFoundException;
 import se.storkforge.petconnect.repository.PetRepository;
 import se.storkforge.petconnect.service.storageService.RestrictedFileStorageService;
@@ -33,15 +34,18 @@ public class PetService {
     private final RestrictedFileStorageService storageService;
     private final UserService userService;
     private final PetOwnershipHelper petOwnershipHelper;
+    private final OwnershipValidator ownershipValidator;
 
     public PetService(PetRepository petRepository,
                       RestrictedFileStorageService storageService,
                       UserService userService,
-                      PetOwnershipHelper petOwnershipHelper) {
+                      PetOwnershipHelper petOwnershipHelper,
+                      OwnershipValidator ownershipValidator) {
         this.petRepository = petRepository;
         this.storageService = storageService;
         this.userService = userService;
         this.petOwnershipHelper = petOwnershipHelper;
+        this.ownershipValidator = ownershipValidator;
     }
 
     @Transactional(readOnly = true)
@@ -161,7 +165,7 @@ public class PetService {
 
         Pet existingPet = getOrElseThrow(id);
 
-        OwnershipValidator.validateOwnership(existingPet, currentUsername);
+        ownershipValidator.validateOwnership(existingPet, currentUsername);
 
         applyPetUpdates(existingPet, petUpdate, currentUsername);
 
@@ -175,7 +179,7 @@ public class PetService {
 
         Pet pet = getOrElseThrow(id);
 
-        OwnershipValidator.validateOwnership(pet, currentUsername);
+        ownershipValidator.validateOwnership(pet, currentUsername);
 
         if (pet.getOwner() != null) {
             pet.getOwner().getPets().remove(pet);
@@ -234,6 +238,10 @@ public class PetService {
     private Pet getOrElseThrow(Long id) {
         return petRepository.findById(id)
                 .orElseThrow(() -> new PetNotFoundException("Pet with id " + id + " not found"));
+    }
+
+    public List<Pet> getPetsByOwner(User owner) {
+        return petRepository.findByOwner(owner);
     }
 
 }
