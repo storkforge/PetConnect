@@ -19,6 +19,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import se.storkforge.petconnect.config.TestWebMvcConfig;
 import se.storkforge.petconnect.dto.ReminderInputDTO;
 import se.storkforge.petconnect.dto.ReminderResponseDTO;
+import se.storkforge.petconnect.exception.GlobalExceptionHandler;
 import se.storkforge.petconnect.service.ReminderService;
 
 import java.security.Principal;
@@ -55,14 +56,20 @@ class ReminderControllerTest {
 
     @BeforeEach
     void setUp() {
-        objectMapper = new ObjectMapper().registerModule(new JavaTimeModule()); // Ensure our ObjectMapper is correctly configured
-        mockMvc = MockMvcBuilders.standaloneSetup(reminderController).build();
+        objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
+        mockMvc = MockMvcBuilders
+                .standaloneSetup(reminderController)
+                .setControllerAdvice(new GlobalExceptionHandler())
+                .build();
+
         now = LocalDateTime.now(swedishTimeZone);
         future = now.plus(Duration.ofDays(7).plusSeconds(5));
         ReminderResponseDTO responseDTO = new ReminderResponseDTO();
         responseDTO.setTitle("Upcoming Reminder");
         reminders = Collections.singletonList(responseDTO);
     }
+
+
 
     @Test
     void createReminder_ShouldReturnCreatedStatus() throws Exception {
@@ -130,6 +137,18 @@ class ReminderControllerTest {
                         .content(objectMapper.writeValueAsString(inputDTO))
                         .principal(mockPrincipal)) // Add the mock Principal here!
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void deleteReminder_WithUnauthorizedUser_ShouldReturnForbidden() throws Exception {
+        Long reminderId = 1L;
+        Principal mockPrincipal = () -> "unauthorizedUser";
+
+        doThrow(new SecurityException("Unauthorized")).when(reminderService).deleteReminder(eq(reminderId), eq("unauthorizedUser"));
+
+        mockMvc.perform(delete("/api/reminders/{id}", reminderId)
+                        .principal(mockPrincipal))
+                .andExpect(status().isForbidden());
     }
 
     @Test
