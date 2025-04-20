@@ -31,6 +31,7 @@ public class EditUserProfileController {
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         model.addAttribute("user", currentUser);
+        model.addAttribute("id", currentUser.getId());
         return "editProfile";
     }
 

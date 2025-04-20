@@ -1,6 +1,7 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>Edit Profile</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
@@ -22,7 +23,9 @@
 
             <div>
                 <label class="block text-sm font-medium text-gray-700">Profile Picture</label>
-                <input type="file" name="file" accept="image/*" class="mt-1">
+                <form method="post" th:action="@{/api/users/{id}/PFP(id=${id})}" enctype="multipart/form-data" class="upload-form">
+                    <input type="file" name="file" accept="image/*" class="mt-1">
+                </form>
             </div>
         </div>
 
