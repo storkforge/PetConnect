@@ -7,7 +7,6 @@ import java.util.Objects;
 import java.util.Set;
 
 import jakarta.validation.constraints.*;
-import se.storkforge.petconnect.entity.Role;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.JoinColumn;

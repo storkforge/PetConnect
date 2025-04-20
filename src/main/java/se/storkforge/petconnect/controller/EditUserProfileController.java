@@ -40,16 +40,15 @@ public class EditUserProfileController {
                                 @AuthenticationPrincipal UserDetails userDetails,
                                 RedirectAttributes redirectAttributes) {
 
+
         User currentUser = userService.getUserByUsername(userDetails.getUsername())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        String username = currentUser.getUsername();
 
         if (!file.isEmpty())
             userService.uploadProfilePicture(currentUser.getId(), file);
 
-//        User updatedUser = userService.updateUserProfile(
-//                userDetails.getUsername(),
-//                userUpdate
-//        );
+        userService.updateUser(currentUser.getId(), userUpdate);
 
         redirectAttributes.addFlashAttribute("success", "Profile updated successfully");
         return "redirect:/profile/" + currentUser.getUsername();

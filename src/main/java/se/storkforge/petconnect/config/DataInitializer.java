@@ -53,7 +53,7 @@ public class DataInitializer {
                 user.setRoles(Set.of(premiumRole));
                 userRepository.save(user);
             }
-
+            //Add a pet to premium user
             if (petRepository.findById(1L).isEmpty()){
                 Pet pet = new Pet();
                 pet.setName("Pelle");

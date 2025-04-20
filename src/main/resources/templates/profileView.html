@@ -47,7 +47,9 @@
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <div th:each="pet : ${pets}" class="border rounded-lg p-4">
-            <img th:src="'https://as2.ftcdn.net/v2/jpg/03/03/62/45/1000_F_303624505_u0bFT1Rnoj8CMUSs8wMCwoKlnWlh5Jiq.jpg'"
+            <img th:src="${pet.profilePicturePath != null} ?
+                 @{/pets/{id}/PFP(id=${pet.id})} :
+                 'https://as2.ftcdn.net/v2/jpg/03/03/62/45/1000_F_303624505_u0bFT1Rnoj8CMUSs8wMCwoKlnWlh5Jiq.jpg'"
                  alt="Pet Image"
                  class="w-full h-32 object-cover rounded mb-2">
             <h3 class="font-medium" th:text="${pet.name}">Pet Name</h3>
@@ -58,6 +60,7 @@
     </div>
   </div>
 
+  <!-- Posts Section (this does nothing, there is no way to post) -->
   <div class="bg-white rounded-lg shadow p-6">
     <h2 class="text-xl font-semibold mb-4">Recent Posts</h2>
 

@@ -68,7 +68,6 @@ public class FileStorageService {
         try {
             Path file = Path.of(filename);
 
-            // Security check - prevent directory traversal
             if (!file.startsWith(root)) {
                 throw new RuntimeException("Cannot access files outside upload directory");
             }
@@ -78,7 +77,6 @@ public class FileStorageService {
             if (resource.exists() && resource.isReadable()) {
                 return resource;
             } else {
-                // Log the full path being checked
                 System.out.println("Looking for file at: " + file);
                 throw new RuntimeException("File not found or not readable: " + filename);
             }
