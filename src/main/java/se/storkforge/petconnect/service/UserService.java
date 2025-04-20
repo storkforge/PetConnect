@@ -5,6 +5,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -183,6 +184,28 @@ public class UserService {
         return password != null && password.matches(
                 "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$"
         );
+    }
+// New code for profile
+    public User updateUserProfile(String username, User updates) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+//        if (updates.getBio() != null) {
+//            user.setBio(updates.getBio());
+//        }
+
+        if (updates.getEmail() != null) {
+            user.setEmail(updates.getEmail());
+        }
+
+        return userRepository.save(user);
+    }
+
+    public void updateProfilePicture(String username, String imagePath) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        user.setProfilePicturePath(imagePath);
+        userRepository.save(user);
     }
 
 

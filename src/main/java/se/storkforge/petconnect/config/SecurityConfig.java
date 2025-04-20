@@ -53,6 +53,7 @@ public class SecurityConfig {
                         .requestMatchers("/", "/login", "/register", "/register/**", "/css/**", "/js/**", "/images/**", "/graphql", "/error").permitAll()
                         .requestMatchers("/premium/**").hasRole("PREMIUM")
                         .requestMatchers("/user-profile/**").hasAnyRole("USER", "PREMIUM")
+                        .requestMatchers("/settings/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
