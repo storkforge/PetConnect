@@ -5,8 +5,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import se.storkforge.petconnect.entity.Pet;
 import se.storkforge.petconnect.entity.Role;
 import se.storkforge.petconnect.entity.User;
+import se.storkforge.petconnect.repository.PetRepository;
 import se.storkforge.petconnect.repository.RoleRepository;
 import se.storkforge.petconnect.repository.UserRepository;
 
@@ -23,7 +25,7 @@ public class DataInitializer {
     // initializes the database with test data at launch of the application
     CommandLineRunner initData(UserRepository userRepository,
                                RoleRepository roleRepository,
-                               PasswordEncoder passwordEncoder) {
+                               PasswordEncoder passwordEncoder, PetRepository petRepository) {
         return args -> {
             // Create roles if not present
             Role userRole = createRoleIfNotFound(roleRepository, "ROLE_USER");
@@ -50,6 +52,17 @@ public class DataInitializer {
                 user.setPhoneNumber("0000000000");
                 user.setRoles(Set.of(premiumRole));
                 userRepository.save(user);
+            }
+
+            if (petRepository.findById(1L).isEmpty()){
+                Pet pet = new Pet();
+                pet.setName("Pelle");
+                pet.setLocation("Göteborg");
+                pet.setSpecies("Cat");
+                Optional<User> user = userRepository.findByUsername("premiumuser");
+                pet.setOwner(user.get());
+                pet.setAvailable(true);
+                petRepository.save(pet);
             }
         };
     }
