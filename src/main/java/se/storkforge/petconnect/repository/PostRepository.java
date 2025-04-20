@@ -1,10 +1,12 @@
 package se.storkforge.petconnect.repository;
 
+import io.lettuce.core.dynamic.annotation.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import se.storkforge.petconnect.entity.Post;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface PostRepository extends JpaRepository<Post, Long> {
 
@@ -12,4 +14,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
     @Query("SELECT p FROM Post p ORDER BY p.createdAt DESC")
     List<Post> findAllOrderByCreatedAtDesc();
+
+    @Query("SELECT p FROM Post p JOIN FETCH p.author WHERE p.id = :id")
+    Optional<Post> findByIdWithAuthor(@Param("id") Long id);
 }

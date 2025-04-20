@@ -2,6 +2,7 @@ package se.storkforge.petconnect.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Size;
+import org.hibernate.proxy.HibernateProxy;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
@@ -11,7 +12,7 @@ import java.util.Objects;
 public class Post {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private Long id;
 
     @Size(max = 1000)
     private String content;
@@ -47,11 +48,11 @@ public class Post {
         this.imagePath = imagePath;
     }
 
-    public int getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
@@ -91,14 +92,18 @@ public class Post {
     }
 
     @Override
-    public boolean equals(Object o) {
+    public final boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof Post post)) return false;
-        return id == post.id && Objects.equals(content, post.content) && Objects.equals(imagePath, post.imagePath) && Objects.equals(createdAt, post.createdAt) && Objects.equals(author, post.author);
+        if (o == null) return false;
+        Class<?> oEffectiveClass = o instanceof HibernateProxy ? ((HibernateProxy) o).getHibernateLazyInitializer().getPersistentClass() : o.getClass();
+        Class<?> thisEffectiveClass = this instanceof HibernateProxy ? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass() : this.getClass();
+        if (thisEffectiveClass != oEffectiveClass) return false;
+        Post post = (Post) o;
+        return getId() != null && Objects.equals(getId(), post.getId());
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hash(id, content, imagePath, createdAt, author);
+    public final int hashCode() {
+        return this instanceof HibernateProxy ? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass().hashCode() : getClass().hashCode();
     }
 }
