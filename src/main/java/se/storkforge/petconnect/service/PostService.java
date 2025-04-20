@@ -32,6 +32,15 @@ public class PostService {
         this.userRepository = userRepository;
     }
 
+    /**
+     * Creates a new post with optional image and associates it with the logged-in user.
+     *
+     * @param dto Data transfer object containing the content of the post
+     * @param file Optional image file attached to the post (can be null)
+     * @param username The username of the user creating the post
+     * @return A PostResponseDTO representing the created post
+     * @throws UsernameNotFoundException if the user is not found
+     */
     public PostResponseDTO createPost(PostInputDTO dto, MultipartFile file, String username) {
         User author = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
@@ -47,18 +56,38 @@ public class PostService {
         return toDto(post);
     }
 
+    /**
+     * Retrieves a paginated list of all posts from the database.
+     *
+     * @param pageable Pagination and sorting information
+     * @return A list of PostResponseDTOs representing the posts
+     */
     public List<PostResponseDTO> getAllPosts(Pageable pageable) {
         return postRepository.findAll(pageable)
                 .map(this::toDto)
                 .toList();
     }
 
+    /**
+     * Retrieves all posts created by a specific user in reverse chronological order.
+     *
+     * @param username The username of the user whose posts should be retrieved
+     * @return A list of PostResponseDTOs representing the user's posts
+     */
     public List<PostResponseDTO> getUserPosts(String username) {
         return postRepository.findByAuthorUsernameOrderByCreatedAtDesc(username).stream()
                 .map(this::toDto)
                 .toList();
     }
 
+    /**
+     * Deletes a post if the current user is the owner of that post.
+     *
+     * @param postId The ID of the post to delete
+     * @param currentUsername The username of the currently logged-in user
+     * @throws EntityNotFoundException if the post is not found
+     * @throws SecurityException if the current user does not own the post
+     */
     public void deletePost(Long postId, String currentUsername) {
         Post post = postRepository.findByIdWithAuthor(postId)
                 .orElseThrow(() -> new EntityNotFoundException("Post not found"));
