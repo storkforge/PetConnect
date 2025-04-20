@@ -16,7 +16,7 @@
         <div class="flex flex-col items-center">
           <img th:src="${user.profilePicturePath != null} ?
             @{/api/users/{id}/PFP(id=${user.id})} :
-            'https://via.placeholder.com/200'"
+            'https://as1.ftcdn.net/v2/jpg/02/36/99/22/1000_F_236992283_sNOxCVQeFLd5pdqaKGh8DRGMZy7P4XKm.jpg'"
                alt="Profile Picture"
                class="w-32 h-32 rounded-full object-cover border-4 border-blue-100 mb-4">
 
@@ -47,7 +47,7 @@
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <div th:each="pet : ${pets}" class="border rounded-lg p-4">
-            <img th:src="'https://via.placeholder.com/200'"
+            <img th:src="'https://as2.ftcdn.net/v2/jpg/03/03/62/45/1000_F_303624505_u0bFT1Rnoj8CMUSs8wMCwoKlnWlh5Jiq.jpg'"
                  alt="Pet Image"
                  class="w-full h-32 object-cover rounded mb-2">
             <h3 class="font-medium" th:text="${pet.name}">Pet Name</h3>

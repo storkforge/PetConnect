@@ -18,7 +18,9 @@
 
         <!-- Profile Picture -->
         <div class="flex items-center space-x-4">
-            <img th:src="'https://via.placeholder.com/200'"
+            <img th:src="${user.profilePicturePath != null} ?
+            @{/api/users/{id}/PFP(id=${user.id})} :
+            'https://as1.ftcdn.net/v2/jpg/02/36/99/22/1000_F_236992283_sNOxCVQeFLd5pdqaKGh8DRGMZy7P4XKm.jpg'"
                  class="w-20 h-20 rounded-full object-cover border" alt="Profile Picture">
 
             <div>
