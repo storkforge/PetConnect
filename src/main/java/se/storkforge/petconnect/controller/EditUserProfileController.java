@@ -7,10 +7,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import se.storkforge.petconnect.entity.User;
 import se.storkforge.petconnect.service.UserService;
@@ -38,19 +36,22 @@ public class EditUserProfileController {
     @PostMapping("/profile")
     public String updateProfile(@ModelAttribute("user") @Valid User userUpdate,
                                 BindingResult result,
+                                @RequestParam("file") MultipartFile file,
                                 @AuthenticationPrincipal UserDetails userDetails,
                                 RedirectAttributes redirectAttributes) {
 
-        if (result.hasErrors()) {
-            return "editProfile";
-        }
+        User currentUser = userService.getUserByUsername(userDetails.getUsername())
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-        User updatedUser = userService.updateUserProfile(
-                userDetails.getUsername(),
-                userUpdate
-        );
+        if (!file.isEmpty())
+            userService.uploadProfilePicture(currentUser.getId(), file);
+
+//        User updatedUser = userService.updateUserProfile(
+//                userDetails.getUsername(),
+//                userUpdate
+//        );
 
         redirectAttributes.addFlashAttribute("success", "Profile updated successfully");
-        return "redirect:/profile/" + updatedUser.getUsername();
+        return "redirect:/profile/" + currentUser.getUsername();
     }
 }

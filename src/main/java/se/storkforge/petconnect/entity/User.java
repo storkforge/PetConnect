@@ -46,7 +46,6 @@ public class User {
     private Set<MeetUp> meetUps = new HashSet<>();
 
     // might need to be looked over more clearly
-    @Pattern(regexp = "^(https?://)?(www\\.)?[a-zA-Z0-9._%+-]+\\.[a-zA-Z]{2,6}/?[a-zA-Z0-9._%+-]*$", message = "Invalid URL format")
     private String profilePicturePath;
 
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
