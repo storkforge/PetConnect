@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 
+import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
@@ -65,13 +66,21 @@ public class FileStorageService {
 
     public Resource loadFile(String filename) {
         try {
-            Path file = root.resolve(filename);
+            Path file = Path.of(filename);
+
+            // Security check - prevent directory traversal
+            if (!file.startsWith(root)) {
+                throw new RuntimeException("Cannot access files outside upload directory");
+            }
+
             Resource resource = new UrlResource(file.toUri());
 
             if (resource.exists() && resource.isReadable()) {
                 return resource;
             } else {
-                throw new RuntimeException(filename + "isn't readable or does not exist");
+                // Log the full path being checked
+                System.out.println("Looking for file at: " + file);
+                throw new RuntimeException("File not found or not readable: " + filename);
             }
         } catch (MalformedURLException e) {
             throw new RuntimeException("Could not read file: " + filename, e);

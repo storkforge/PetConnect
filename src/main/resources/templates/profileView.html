@@ -15,8 +15,8 @@
       <div class="bg-white rounded-lg shadow p-6">
         <div class="flex flex-col items-center">
           <img th:src="${user.profilePicturePath != null} ?
-                               :
-                              'https://via.placeholder.com/200'"
+            @{/api/users/{id}/PFP(id=${user.id})} :
+            'https://via.placeholder.com/200'"
                alt="Profile Picture"
                class="w-32 h-32 rounded-full object-cover border-4 border-blue-100 mb-4">
 
