@@ -22,6 +22,12 @@
 
           <h1 class="text-2xl font-bold" th:text="${user.username}">Username</h1>
 
+          <!-- User Info (visible only to the owner) -->
+          <div th:if="${isOwner}" class="mt-2 text-center text-sm text-gray-600">
+            <p><strong>Email:</strong> <span th:text="${user.email}">email@example.com</span></p>
+            <p><strong>Phone:</strong> <span th:text="${user.phoneNumber}">123-456-7890</span></p>
+          </div>
+
           <div th:if="${user.hasRole('ROLE_PREMIUM')}"
                class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-semibold mt-2">
             PREMIUM
