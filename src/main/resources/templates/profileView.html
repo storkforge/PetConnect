@@ -14,11 +14,19 @@
     <div class="w-full md:w-1/3 lg:w-1/4">
       <div class="bg-white rounded-lg shadow p-6">
         <div class="flex flex-col items-center">
-          <img th:src="'https://via.placeholder.com/200'"
+          <img th:src="${user.profilePicturePath != null} ?
+            @{/api/users/{id}/PFP(id=${user.id})} :
+            'https://as1.ftcdn.net/v2/jpg/02/36/99/22/1000_F_236992283_sNOxCVQeFLd5pdqaKGh8DRGMZy7P4XKm.jpg'"
                alt="Profile Picture"
                class="w-32 h-32 rounded-full object-cover border-4 border-blue-100 mb-4">
 
           <h1 class="text-2xl font-bold" th:text="${user.username}">Username</h1>
+
+          <!-- User Info (visible only to the owner) -->
+          <div th:if="${isOwner}" class="mt-2 text-center text-sm text-gray-600">
+            <p><strong>Email:</strong> <span th:text="${user.email}">email@example.com</span></p>
+            <p><strong>Phone:</strong> <span th:text="${user.phoneNumber}">123-456-7890</span></p>
+          </div>
 
           <div th:if="${user.hasRole('ROLE_PREMIUM')}"
                class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-semibold mt-2">
@@ -45,7 +53,9 @@
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <div th:each="pet : ${pets}" class="border rounded-lg p-4">
-            <img th:src="'https://via.placeholder.com/200'"
+            <img th:src="${pet.profilePicturePath != null} ?
+                 @{/pets/{id}/PFP(id=${pet.id})} :
+                 'https://as2.ftcdn.net/v2/jpg/03/03/62/45/1000_F_303624505_u0bFT1Rnoj8CMUSs8wMCwoKlnWlh5Jiq.jpg'"
                  alt="Pet Image"
                  class="w-full h-32 object-cover rounded mb-2">
             <h3 class="font-medium" th:text="${pet.name}">Pet Name</h3>
@@ -55,6 +65,16 @@
       </div>
     </div>
   </div>
+
+  <!-- Posts Section (this does nothing, there is no way to post) -->
+  <div class="bg-white rounded-lg shadow p-6">
+    <h2 class="text-xl font-semibold mb-4">Recent Posts</h2>
+
+    <div class="text-gray-500">
+      No posts yet.
+    </div>
+  </div>
+
 </div>
 </body>
 </html>

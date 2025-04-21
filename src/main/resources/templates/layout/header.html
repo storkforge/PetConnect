@@ -15,6 +15,9 @@
            class="hover:underline"
                th:if="${#authorization.expression('isAuthenticated()')}">Profile</a></li>
 
+        <li th:if="${#authorization.expression('isAuthenticated()')}">
+          <a th:href="@{/dashboard}" class="hover:underline">Dashboard</a>
+        </li>
         <li><a th:href="@{/login}" class="hover:underline"
                th:if="${#authorization.expression('!isAuthenticated()')}">Login</a></li>
         <li><a th:href="@{/register}" class="hover:underline"

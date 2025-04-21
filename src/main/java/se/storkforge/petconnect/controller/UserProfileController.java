@@ -8,10 +8,13 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import se.storkforge.petconnect.entity.Pet;
 import se.storkforge.petconnect.entity.User;
 import se.storkforge.petconnect.service.PetService;
 import se.storkforge.petconnect.service.UserService;
 import se.storkforge.petconnect.service.storageService.FileStorageService;
+
+import java.util.List;
 
 @Controller
 @RequestMapping("/profile")
@@ -40,9 +43,11 @@ public class UserProfileController {
         boolean isOwner = currentUser != null &&
                 currentUser.getUsername().equals(username);
 
+
+
         model.addAttribute("user", profileUser);
         model.addAttribute("isOwner", isOwner);
-        model.addAttribute("pets");
+        model.addAttribute("pets", petService.getPetsByOwner(profileUser));
 
         return "profileView";
     }

@@ -14,7 +14,6 @@ import se.storkforge.petconnect.exception.UserNotFoundException;
 import se.storkforge.petconnect.repository.UserRepository;
 import se.storkforge.petconnect.service.storageService.RestrictedFileStorageService;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
@@ -185,5 +184,8 @@ public class UserService {
         );
     }
 
-
+    @CacheEvict(value = "userCache", key = "#user.id")
+    public void save(User user) {
+        userRepository.save(user);
+    }
 }
