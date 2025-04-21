@@ -29,28 +29,36 @@ public class EditUserProfileController {
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         model.addAttribute("user", currentUser);
-        model.addAttribute("id", currentUser.getId());
         return "editProfile";
     }
 
     @PostMapping("/profile")
-    public String updateProfile(@ModelAttribute("user") @Valid User userUpdate,
-                                BindingResult result,
-                                @RequestParam("file") MultipartFile file,
-                                @AuthenticationPrincipal UserDetails userDetails,
-                                RedirectAttributes redirectAttributes) {
+    public String updateUserProfile(@AuthenticationPrincipal UserDetails userDetails,
+                                    @ModelAttribute("user") User updatedUser,
+                                    @RequestParam(value = "file", required = false) MultipartFile file,
+                                    RedirectAttributes redirectAttributes) {
+        try {
+            User currentUser = userService.getUserByUsername(userDetails.getUsername())
+                    .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
+            // Update basic user details
+            currentUser.setUsername(updatedUser.getUsername());
+            currentUser.setEmail(updatedUser.getEmail());
+            currentUser.setPhoneNumber(updatedUser.getPhoneNumber());
 
-        User currentUser = userService.getUserByUsername(userDetails.getUsername())
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-        String username = currentUser.getUsername();
+            // Save updated user fields
+            userService.save(currentUser);
 
-        if (!file.isEmpty())
-            userService.uploadProfilePicture(currentUser.getId(), file);
+            // Update profile picture only if file is present and not empty
+            if (file != null && !file.isEmpty()) {
+                userService.uploadProfilePicture(currentUser.getId(), file);
+            }
 
-        userService.updateUser(currentUser.getId(), userUpdate);
+            redirectAttributes.addFlashAttribute("success", "Profile updated successfully!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Failed to update profile: " + e.getMessage());
+        }
 
-        redirectAttributes.addFlashAttribute("success", "Profile updated successfully");
-        return "redirect:/profile/" + currentUser.getUsername();
+        return "redirect:/settings/profile";
     }
 }
