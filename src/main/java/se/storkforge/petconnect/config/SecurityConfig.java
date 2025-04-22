@@ -16,7 +16,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import se.storkforge.petconnect.repository.UserRepository;
-import se.storkforge.petconnect.security.CustomOAuth2UserService;
+import se.storkforge.petconnect.util.CustomOAuth2UserService;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -37,7 +37,7 @@ public class SecurityConfig {
         return username -> userRepository.findByUsername(username)
                 .map(user -> {
                     List<GrantedAuthority> authorities = user.getRoles().stream()
-                            .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName()))
+                            .map(role -> new SimpleGrantedAuthority( role.getName()))
                             .collect(Collectors.toList());
 
                     return new org.springframework.security.core.userdetails.User(
