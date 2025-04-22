@@ -44,7 +44,7 @@ public class RecommendationController {
 
         if (loggedInUser.hasRole("ROLE_PREMIUM") || loggedInUser.hasRole("ROLE_ADMIN")) {
             List<Pet> pets = loggedInUser.getPets();
-            if (!pets.isEmpty()) {
+            if (pets != null && !pets.isEmpty()) {
                 Map<String, String> foodRecommendations = new HashMap<>();
                 Map<String, String> toyRecommendations = new HashMap<>();
                 for (Pet pet : pets) {
@@ -54,7 +54,6 @@ public class RecommendationController {
                 model.addAttribute("pets", pets);
                 model.addAttribute("foodRecommendations", foodRecommendations);
                 model.addAttribute("toyRecommendations", toyRecommendations);
-                System.out.println(foodRecommendations);
             }
         }
         return "foodandtoys";

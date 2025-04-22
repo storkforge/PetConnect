@@ -21,20 +21,21 @@ public class AiToyAndFoodRecommendationService {
                 Format the response with clear headings for each recommendation.
                 """,species, age);
         Prompt prompt = new Prompt(promptText);
-        return aiRecommendationExecutor.callAi(prompt);} catch (Exception e) {
-            return "Something went wrong";
+        return aiRecommendationExecutor.callAi(prompt);}
+        catch (Exception e) {
+            return "Sorry, we couldn't generate toy recommendations at this time. Please try again later.";
         }
 }
 
 public String getFoodRecommendation (int age, String species){
         try {String promptText = String.format("""
-                Sugget 3 healthy meal for a %s that is %d years old.
+                Sugget 3 healthy meals for a %s that is %d years old.
                 For each meal, include nutritional benefits.
                 Format the response with clear headings for each recommendation.
                 """,species, age);
         Prompt prompt = new Prompt(promptText);
         return aiRecommendationExecutor.callAi(prompt);} catch (Exception e) {
-            return "Something went wrong";
+            return "Sorry, we couldn't generate toy recommendations at this time. Please try again later.";
         }
 }
 

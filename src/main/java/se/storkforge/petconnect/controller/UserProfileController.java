@@ -22,8 +22,7 @@ public class UserProfileController {
     private final PetService petService;
 
     public UserProfileController(UserService userService,
-                                 PetService petService,
-                                 FileStorageService fileStorageService) {
+                                 PetService petService) {
         this.userService = userService;
         this.petService = petService;
     }
