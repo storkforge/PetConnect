@@ -3,7 +3,6 @@ package se.storkforge.petconnect.util;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.userinfo.*;
-import org.springframework.security.oauth2.client.*;
 import org.springframework.security.oauth2.core.user.*;
 import org.springframework.security.oauth2.core.*;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
