@@ -8,7 +8,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import se.storkforge.petconnect.dto.ReminderResponseDTO;
 import se.storkforge.petconnect.entity.User;
-import se.storkforge.petconnect.service.RecommendationService;
+import se.storkforge.petconnect.service.aiService.RecommendationService;
 import se.storkforge.petconnect.service.ReminderService;
 import se.storkforge.petconnect.service.UserService;
 

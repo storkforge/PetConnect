@@ -6,7 +6,6 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.boot.test.mock.mockito.*;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
@@ -18,6 +17,7 @@ import se.storkforge.petconnect.entity.MeetUp;
 import se.storkforge.petconnect.repository.MeetUpRepository;
 import se.storkforge.petconnect.repository.UserRepository;
 import se.storkforge.petconnect.service.*;
+import se.storkforge.petconnect.service.aiService.AiRecommendationExecutor;
 
 import java.time.LocalDateTime;
 import java.util.List;
