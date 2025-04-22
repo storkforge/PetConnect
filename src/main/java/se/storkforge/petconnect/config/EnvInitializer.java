@@ -1,7 +1,7 @@
 package se.storkforge.petconnect.config;
 
 import io.github.cdimascio.dotenv.Dotenv;
-import jakarta.annotation.PostConstruct;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Configuration;
@@ -14,7 +14,7 @@ public class EnvInitializer implements ApplicationContextInitializer<Configurabl
         return super.clone();
     }
 
-    public void initialize(ConfigurableApplicationContext context) {
+    public void initialize(@NotNull ConfigurableApplicationContext context) {
         loadEnvFile("OpenAI.env");
         loadEnvFile("2auth.env");
     }

@@ -5,12 +5,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.annotation.Import;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -25,7 +22,6 @@ import se.storkforge.petconnect.service.ReminderService;
 import java.security.Principal;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.Collections;
 import java.util.List;
 
@@ -49,9 +45,6 @@ class ReminderControllerTest {
     @InjectMocks
     private ReminderController reminderController;
 
-    private final ZoneId swedishTimeZone = ZoneId.of("Europe/Stockholm");
-    private LocalDateTime now;
-    private LocalDateTime future;
     private List<ReminderResponseDTO> reminders;
 
     @BeforeEach
@@ -62,8 +55,7 @@ class ReminderControllerTest {
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
 
-        now = LocalDateTime.now(swedishTimeZone);
-        future = now.plus(Duration.ofDays(7).plusSeconds(5));
+        Duration.ofDays(7).plusSeconds(5);
         ReminderResponseDTO responseDTO = new ReminderResponseDTO();
         responseDTO.setTitle("Upcoming Reminder");
         reminders = Collections.singletonList(responseDTO);

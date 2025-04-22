@@ -13,7 +13,6 @@ import se.storkforge.petconnect.service.ReminderService;
 import jakarta.validation.Valid; // Import the @Valid annotation
 import java.net.URI;
 import java.security.Principal;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController

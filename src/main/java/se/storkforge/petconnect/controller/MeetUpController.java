@@ -1,6 +1,5 @@
 package se.storkforge.petconnect.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,12 +20,15 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/meetups")
 public class MeetUpController {
-    @Autowired
-    private MeetUpService meetUpService;
+    private final MeetUpService meetUpService;
+
+    public MeetUpController(MeetUpService meetUpService) {
+        this.meetUpService = meetUpService;
+    }
 
     /**
      * Handles the creation of a new meet-up.
-     *
+     * <p>
      * Accepts a request body containing location coordinates (latitude and longitude),
      * date and time of the meet-up, and a list of participant user IDs.
      * Delegates to the service layer to validate and persist the meet-up.

@@ -21,11 +21,11 @@ public class HomeController {
     }
 
     @Controller
-    public class AuthController {
+    public static class AuthController {
 
         @GetMapping("/login")
         public String loginPage() {
-            return "auth/login"; // This maps to login.html in templates
+            return "auth/login"; // This maps to log in.html in templates
         }
     }
 }

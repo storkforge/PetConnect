@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 
-import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
@@ -25,7 +24,7 @@ public class FileStorageService {
     private String uploadDir;
     private Path root;
 
-    @PostConstruct //Runs after properties
+    @PostConstruct // Runs after properties are set
     private void init() {
         this.root = Paths.get(uploadDir);
         createDir(root);
@@ -35,6 +34,7 @@ public class FileStorageService {
         createDir(root.resolve(dir));
         try {
             String contentType = file.getContentType();
+            assert contentType != null;
             String filename = UUID.randomUUID() + "." + contentType.split("/")[1];
 
             Path tempDestination = root.resolve(dir);
@@ -92,5 +92,4 @@ public class FileStorageService {
             throw new RuntimeException("Unable to create directory", e);
         }
     }
-
 }

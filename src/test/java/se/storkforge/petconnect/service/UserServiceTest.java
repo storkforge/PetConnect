@@ -93,7 +93,7 @@ class UserServiceTest {
     @Test
     void getUserById_existingUser_shouldReturnUser() {
         User expected = createUserWithId(1L, "test", "test@test.com", "pass");
-        when(userRepository.findById(1L)).thenReturn(Optional.of(expected));
+        when(userRepository.findByIdWithPets(1L)).thenReturn(Optional.of(expected));
 
         User result = userService.getUserById(1L);
         assertEquals(expected, result);
@@ -101,17 +101,17 @@ class UserServiceTest {
 
     @Test
     void getUserById_nonExisting_shouldThrowException() {
-        when(userRepository.findById(99L)).thenReturn(Optional.empty());
+        when(userRepository.findByIdWithPets(99L)).thenReturn(Optional.empty());
         assertThrows(UserNotFoundException.class, () -> userService.getUserById(99L));
     }
 
-    // UPDATE USER TESTS  
+    // UPDATE USER TESTS
     @Test
     void updateUser_validUpdate_shouldSaveChanges() {
         User existing = createUserWithId(1L, "old", "old@test.com", "OldPassword1!");
         User update = createUserWithId(1L, "new", "new@test.com", "NewPassword1!");
 
-        when(userRepository.findById(1L)).thenReturn(Optional.of(existing));
+        when(userRepository.findByIdWithPets(1L)).thenReturn(Optional.of(existing));
         when(passwordEncoder.encode("NewPassword1!")).thenReturn("encodedNewPass");
         when(userRepository.save(any(User.class))).thenReturn(update);
 
@@ -120,13 +120,15 @@ class UserServiceTest {
         assertEquals("new", result.getUsername());
         assertEquals("new@test.com", result.getEmail());
         verify(passwordEncoder).encode("NewPassword1!");
+        verify(userRepository).save(existing);
     }
 
     @Test
     void updateUser_nonExisting_shouldThrowException() {
-        when(userRepository.findById(99L)).thenReturn(Optional.empty());
+        when(userRepository.findByIdWithPets(99L)).thenReturn(Optional.empty());
         assertThrows(UserNotFoundException.class,
                 () -> userService.updateUser(99L, new User()));
+        verify(userRepository, never()).save(any());
     }
 
     // DELETE USER TESTS
@@ -170,7 +172,7 @@ class UserServiceTest {
 
     @Test
     void createUser_weakPassword_shouldThrowException() {
-        User user = createUser("weakuser", "weak@example.com", "abc"); // invalid password
+        User user = createUser("weakuser", "weak@example.com", "abc");
 
         when(userRepository.findByUsername(user.getUsername())).thenReturn(Optional.empty());
         when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.empty());
@@ -181,7 +183,7 @@ class UserServiceTest {
 
     @Test
     void createUser_passwordExactly8CharValid_shouldCreate() {
-        User user = createUser("edgeuser", "edge@example.com", "Abc123!@"); // 8 char, valid
+        User user = createUser("edgeuser", "edge@example.com", "Abc123!@");
 
         when(userRepository.findByUsername(user.getUsername())).thenReturn(Optional.empty());
         when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.empty());
@@ -194,7 +196,7 @@ class UserServiceTest {
 
     @Test
     void createUser_passwordMissingUppercase_shouldThrowException() {
-        User user = createUser("user1", "user1@test.com", "valid1!@"); // no uppercase
+        User user = createUser("user1", "user1@test.com", "valid1!@");
 
         when(userRepository.findByUsername(user.getUsername())).thenReturn(Optional.empty());
         when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.empty());
@@ -204,7 +206,7 @@ class UserServiceTest {
 
     @Test
     void createUser_passwordMissingNumber_shouldThrowException() {
-        User user = createUser("user2", "user2@test.com", "Invalid!A"); // no number
+        User user = createUser("user2", "user2@test.com", "Invalid!A");
 
         when(userRepository.findByUsername(user.getUsername())).thenReturn(Optional.empty());
         when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.empty());
@@ -214,7 +216,7 @@ class UserServiceTest {
 
     @Test
     void createUser_passwordMissingSpecialChar_shouldThrowException() {
-        User user = createUser("user3", "user3@test.com", "InvalidA1"); // no special character
+        User user = createUser("user3", "user3@test.com", "InvalidA1");
 
         when(userRepository.findByUsername(user.getUsername())).thenReturn(Optional.empty());
         when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.empty());
@@ -224,14 +226,12 @@ class UserServiceTest {
 
     @Test
     void createUser_passwordTooShort_shouldThrowException() {
-        User user = createUser("shortie", "short@test.com", "Aa1!"); // too short
+        User user = createUser("shortie", "short@test.com", "Aa1!");
 
         when(userRepository.findByUsername(user.getUsername())).thenReturn(Optional.empty());
         when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.empty());
 
         assertThrows(IllegalArgumentException.class, () -> userService.createUser(user));
     }
-
-
 
 }

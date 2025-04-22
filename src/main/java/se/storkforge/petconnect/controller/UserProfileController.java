@@ -1,7 +1,5 @@
 package se.storkforge.petconnect.controller;
 
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -20,14 +18,12 @@ public class UserProfileController {
 
     private final UserService userService;
     private final PetService petService;
-    private final FileStorageService fileStorageService;
 
     public UserProfileController(UserService userService,
                                  PetService petService,
                                  FileStorageService fileStorageService) {
         this.userService = userService;
         this.petService = petService;
-        this.fileStorageService = fileStorageService;
     }
 
     @GetMapping("/{username}")

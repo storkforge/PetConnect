@@ -16,7 +16,7 @@ import java.util.Map;
 public class ExceptionHandlerController {
 
     @ExceptionHandler(UserNotFoundException.class)
-    public ResponseEntity<Void> handleUserNotFound(UserNotFoundException ex) {
+    public ResponseEntity<Void> handleUserNotFound() {
         return ResponseEntity.notFound().build();
     }
 

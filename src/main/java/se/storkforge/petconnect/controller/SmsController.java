@@ -1,6 +1,5 @@
 package se.storkforge.petconnect.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -10,8 +9,11 @@ import se.storkforge.petconnect.service.SmsService;
 @RequestMapping("/sms")
 public class SmsController {
 
-    @Autowired
-    private SmsService smsService;
+    private final SmsService smsService;
+
+    public SmsController(SmsService smsService) {
+        this.smsService = smsService;
+    }
 
     /**
      * Endpoint to send an SMS message.

@@ -40,9 +40,7 @@ public class PetWebController {
             @RequestParam(value = "image", required = false) MultipartFile imageFile,
             Authentication auth) {
 
-        userService.getUserByUsername(auth.getName()).ifPresent(user -> {
-            petInput.setOwnerId(user.getId());
-        });
+        userService.getUserByUsername(auth.getName()).ifPresent(user -> petInput.setOwnerId(user.getId()));
 
         Pet createdPet = petService.createPet(petInput, auth.getName());
 
