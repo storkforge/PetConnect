@@ -1,4 +1,4 @@
-package se.storkforge.petconnect.security;
+package se.storkforge.petconnect.util;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -30,6 +30,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         OAuth2User oauthUser = delegate.loadUser(userRequest);
+        System.out.println("Reached CustomOAuth2UserService");
 
         String email = getRequiredAttribute(oauthUser, "email");
         String name = oauthUser.getAttribute("name");
@@ -37,7 +38,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         User user = userService.getOrCreateOAuthUser(email, name);
 
         List<SimpleGrantedAuthority> authorities = user.getRoles().stream()
-                .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName()))
+                .map(role -> new SimpleGrantedAuthority(role.getName()))
                 .collect(Collectors.toList());
 
         // Debug log (optional)
@@ -47,10 +48,18 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
             System.out.println(" Authorities: " + auth.getAuthorities());
         }
 
+        Map<String, Object> enrichedAttributes = enrichAttributes(oauthUser, user);
+
+        System.out.println("✅ [OAuth Login] Username: " + enrichedAttributes.get("username"));
+        System.out.println("✅ [OAuth Login] Email: " + user.getEmail());
+        System.out.println("✅ [OAuth Login] Roles: " + user.getRoles());
+        System.out.println("✅ [OAuth Login] Granted Authorities: " + authorities);
+        System.out.println("✅ [OAuth Login] Attributes: " + enrichedAttributes);
+
         return new DefaultOAuth2User(
                 authorities,
-                enrichAttributes(oauthUser, user),
-                "username" // This must match a key in the attributes map
+                enrichedAttributes,
+                "username"
         );
     }
 
