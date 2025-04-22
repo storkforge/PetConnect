@@ -4,6 +4,7 @@ import jakarta.persistence.EntityNotFoundException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import se.storkforge.petconnect.dto.PostInputDTO;
 import se.storkforge.petconnect.dto.PostResponseDTO;
@@ -35,13 +36,20 @@ public class PostService {
     /**
      * Creates a new post with optional image and associates it with the logged-in user.
      *
-     * @param dto Data transfer object containing the content of the post
-     * @param file Optional image file attached to the post (can be null)
+     * @param dto      Data transfer object containing the content of the post
+     * @param file     Optional image file attached to the post (can be null)
      * @param username The username of the user creating the post
      * @return A PostResponseDTO representing the created post
      * @throws UsernameNotFoundException if the user is not found
      */
+    @Transactional
     public PostResponseDTO createPost(PostInputDTO dto, MultipartFile file, String username) {
+        if (dto == null || dto.getContent() == null || dto.getContent().trim().isEmpty())
+            throw new IllegalArgumentException("Post content cannot be empty");
+
+        if (dto.getContent().length() > 5000)
+            throw new IllegalArgumentException("Post content exceeds maximum length");
+
         User author = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
@@ -83,11 +91,12 @@ public class PostService {
     /**
      * Deletes a post if the current user is the owner of that post.
      *
-     * @param postId The ID of the post to delete
+     * @param postId          The ID of the post to delete
      * @param currentUsername The username of the currently logged-in user
      * @throws EntityNotFoundException if the post is not found
-     * @throws SecurityException if the current user does not own the post
+     * @throws SecurityException       if the current user does not own the post
      */
+    @Transactional
     public void deletePost(Long postId, String currentUsername) {
         Post post = postRepository.findByIdWithAuthor(postId)
                 .orElseThrow(() -> new EntityNotFoundException("Post not found"));
