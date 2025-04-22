@@ -1,4 +1,4 @@
-package se.storkforge.petconnect.service;
+package se.storkforge.petconnect.service.aiService;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import se.storkforge.petconnect.entity.Pet;
 import se.storkforge.petconnect.entity.User;
+import se.storkforge.petconnect.service.PetService;
 
 import java.util.List;
 import java.util.stream.Collectors;
