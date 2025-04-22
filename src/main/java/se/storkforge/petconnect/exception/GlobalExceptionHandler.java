@@ -3,6 +3,9 @@ package se.storkforge.petconnect.exception;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.MultipartException;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
@@ -21,4 +24,19 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> handleUserOverbooked(UserOverbookedException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
     }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public String handleMaxSizeException(RedirectAttributes redirectAttributes) {
+        redirectAttributes.addFlashAttribute("error", "File too large! Please upload a smaller image (max 1MB).");
+        return "redirect:/settings/profile";
+    }
+
+    // Optional: catch-all fallback for multipart issues
+    @ExceptionHandler(MultipartException.class)
+    public String handleMultipartError(RedirectAttributes redirectAttributes) {
+        redirectAttributes.addFlashAttribute("error", "An error occurred during file upload.");
+        return "redirect:/settings/profile";
+    }
+
+
 }

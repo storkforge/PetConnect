@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 
+import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
@@ -37,11 +38,7 @@ public class FileStorageService {
             String filename = UUID.randomUUID() + "." + contentType.split("/")[1];
 
             Path tempDestination = root.resolve(dir);
-            Path destination = tempDestination.resolve(filename).normalize().toAbsolutePath();
-
-            if (!destination.startsWith(root.toAbsolutePath())) {
-                 throw new RuntimeException("Invalid path outside upload directory.");
-            }
+            Path destination = tempDestination.resolve(filename);
 
             try (var inputStream = file.getInputStream()) {
                 Files.copy(inputStream, destination);
@@ -69,13 +66,19 @@ public class FileStorageService {
 
     public Resource loadFile(String filename) {
         try {
-            Path file = root.resolve(filename);
+            Path file = Path.of(filename);
+
+            if (!file.startsWith(root)) {
+                throw new RuntimeException("Cannot access files outside upload directory");
+            }
+
             Resource resource = new UrlResource(file.toUri());
 
             if (resource.exists() && resource.isReadable()) {
                 return resource;
             } else {
-                throw new RuntimeException(filename + "isn't readable or does not exist");
+                System.out.println("Looking for file at: " + file);
+                throw new RuntimeException("File not found or not readable: " + filename);
             }
         } catch (MalformedURLException e) {
             throw new RuntimeException("Could not read file: " + filename, e);

@@ -1,5 +1,6 @@
 package se.storkforge.petconnect.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.core.io.Resource;
@@ -9,16 +10,19 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import se.storkforge.petconnect.entity.Role;
 import se.storkforge.petconnect.entity.User;
 import se.storkforge.petconnect.exception.UserNotFoundException;
+import se.storkforge.petconnect.repository.RoleRepository;
 import se.storkforge.petconnect.repository.UserRepository;
 import se.storkforge.petconnect.service.storageService.RestrictedFileStorageService;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import se.storkforge.petconnect.security.Roles;
 
 @Service
 @Transactional
@@ -26,6 +30,8 @@ public class UserService {
     private final RestrictedFileStorageService storageService;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    @Autowired
+    private RoleRepository roleRepository;
     private static final String EMAIL_REGEX = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
     private final Pattern emailPattern = Pattern.compile(EMAIL_REGEX);
 
@@ -83,6 +89,26 @@ public class UserService {
         updateUserFields(existingUser, updatedUser);
         return userRepository.save(existingUser);
     }
+
+    public User getOrCreateOAuthUser(String email, String name) {
+        return userRepository.findByEmail(email)
+                .orElseGet(() -> {
+                    User newUser = new User();
+                    newUser.setUsername(name);
+                    newUser.setEmail(email);
+                    newUser.setPassword("oauth_dummy"); // Will not be used for login
+                    newUser.setPhoneNumber("0000000000");
+
+                    Role userRole = roleRepository.findByName(Roles.USER)
+                            .orElseThrow(() -> new IllegalStateException("Role USER not found"));
+                    newUser.setRoles(Set.of(userRole));
+
+                    return userRepository.save(newUser);
+                });
+    }
+
+
+
 
     private void updateUserFields(User existingUser, User updatedUser) {
         if (updatedUser.getUsername() != null && !updatedUser.getUsername().isEmpty()) {
@@ -185,5 +211,8 @@ public class UserService {
         );
     }
 
-
+    @CacheEvict(value = "userCache", key = "#user.id")
+    public void save(User user) {
+        userRepository.save(user);
+    }
 }
