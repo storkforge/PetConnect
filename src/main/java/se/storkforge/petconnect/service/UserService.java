@@ -215,4 +215,9 @@ public class UserService {
     public void save(User user) {
         userRepository.save(user);
     }
+
+    public User getUserByUsernameOrThrow(String username) {
+        return getUserByUsername(username)
+                .orElseThrow(() -> new UserNotFoundException("User with username " + username + " not found"));
+    }
 }

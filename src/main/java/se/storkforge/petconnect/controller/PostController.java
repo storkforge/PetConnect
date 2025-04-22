@@ -55,16 +55,14 @@ public class PostController {
      * Creates a new post with optional image.
      *
      * @param dto       The post content data
-     * @param file      Optional image file for the post
      * @param principal The currently authenticated user
      * @return The created post DTO
      */
     @PostMapping
     @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_PREMIUM')")
-    public PostResponseDTO createPost(@RequestPart("data") PostInputDTO dto,
-                                      @RequestPart(value = "file", required = false) MultipartFile file,
+    public PostResponseDTO createPost(@RequestBody PostInputDTO dto,
                                       Principal principal) {
-        return postService.createPost(dto, file, principal.getName());
+        return postService.createPost(dto, null, principal.getName());
     }
 
     /**
