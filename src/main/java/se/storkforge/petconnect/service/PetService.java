@@ -57,6 +57,10 @@ public class PetService {
         return petRepository.findAll(spec, pageable);
     }
 
+    public List<Pet> getPetsByUser(Long userId) {
+        return petRepository.findByOwnerId(userId);
+    }
+
     @Transactional(readOnly = true)
     public List<Pet> getPetsByFilter(PetFilter filter) {
         logger.info("Retrieving pets by filter: {}", filter);
@@ -106,6 +110,8 @@ public class PetService {
         return spec;
     }
 
+
+
     @Cacheable(value = "petCache", key = "#id")
     @Transactional(readOnly = true)
     public Optional<Pet> getPetById(Long id) {
@@ -123,16 +129,20 @@ public class PetService {
         PetValidator.validatePetInput(petInput);
 
         Pet pet = new Pet();
-        pet.setName(petInput.name());
-        pet.setSpecies(petInput.species());
-        pet.setAvailable(petInput.available());
-        pet.setAge(petInput.age());
-        pet.setLocation(petInput.location());
+        pet.setName(petInput.getName());
+        pet.setSpecies(petInput.getSpecies());
+        pet.setAvailable(petInput.isAvailable());
+        pet.setAge(petInput.getAge());
+        pet.setLocation(petInput.getLocation());
 
-        petOwnershipHelper.setPetOwner(pet, petInput.ownerId(), currentUsername, userService);
+        // Set owner by username only
+        User owner = userService.getUserByUsername(currentUsername)
+                .orElseThrow(() -> new SecurityException("Invalid owner reference"));
+        pet.setOwner(owner);
 
         return petRepository.save(pet);
     }
+
 
     private void applyPetUpdates(Pet pet, PetUpdateInputDTO petUpdate, String currentUsername) {
         PetValidator.validatePetUpdateInput(petUpdate);
