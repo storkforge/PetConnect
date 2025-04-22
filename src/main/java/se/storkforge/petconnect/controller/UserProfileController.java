@@ -12,6 +12,7 @@ import se.storkforge.petconnect.entity.User;
 import se.storkforge.petconnect.service.PetService;
 import se.storkforge.petconnect.service.UserService;
 import se.storkforge.petconnect.service.storageService.FileStorageService;
+import java.security.Principal;
 
 @Controller
 @RequestMapping("/profile")
@@ -31,14 +32,14 @@ public class UserProfileController {
 
     @GetMapping("/{username}")
     public String viewProfile(@PathVariable String username,
-                              Model model,
-                              @AuthenticationPrincipal UserDetails currentUser) {
+                              Principal principal,
+                              Model model) {
 
-        if (currentUser == null) {
+        if (principal == null) {
             throw new UsernameNotFoundException("User must be logged in to view profiles");
         }
 
-        User loggedInUser = userService.getUserByUsername(currentUser.getUsername())
+        User loggedInUser = userService.getUserByUsername(principal.getName())
                 .orElseThrow(() -> new UsernameNotFoundException("Logged in user not found"));
 
         User profileUser = userService.getUserByUsername(username)
@@ -55,5 +56,6 @@ public class UserProfileController {
 
         return "profileView";
     }
+
 
 }
