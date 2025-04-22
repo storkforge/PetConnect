@@ -1,23 +1,18 @@
 package se.storkforge.petconnect.entity;
 
 import jakarta.persistence.*;
-
+import jakarta.validation.constraints.*;
+import java.io.Serializable; // Lägg till detta import-statement
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-import jakarta.validation.constraints.*;
-import jakarta.persistence.ManyToMany;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.JoinColumn;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.*;
-
 @Entity
-        @Table(name = "user_table")
-public class User {
+@Table(name = "user_table")
+public class User implements Serializable { // Lägg till "implements Serializable"
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -31,17 +26,15 @@ public class User {
     @Email(message = "Email should be valid")
     private String email;
 
-    @Column(nullable = true) // allow null in DB
+    @Column() // allow null in DB
     private String password;
 
-    @Column(nullable = true) // allow null in DB
+    @Column() // allow null in DB
     private String phoneNumber;
 
-    // In User.java
     @ManyToMany(mappedBy = "participants") // now inverse side
     private Set<MeetUp> meetUps = new HashSet<>();
 
-    // might need to be looked over more clearly
     private String profilePicturePath;
 
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -113,7 +106,9 @@ public class User {
     public void setMeetUps(Set<MeetUp> meetUps) {
         this.meetUps = meetUps;
     }
-    public String getProfilePicturePath() { return profilePicturePath; }
+    public String getProfilePicturePath() {
+        return profilePicturePath;
+    }
 
     public void setProfilePicturePath(String profilePicturePath) {
         this.profilePicturePath = profilePicturePath;
@@ -184,9 +179,8 @@ public class User {
     public boolean isAdmin() {
         return hasRole("ROLE_ADMIN");
     }
-    // helper method to check if the user is a regular user
+
     public boolean isPremium() {
         return hasRole("ROLE_PREMIUM");
     }
-
 }

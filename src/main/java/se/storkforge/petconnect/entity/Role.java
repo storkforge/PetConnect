@@ -1,10 +1,11 @@
 package se.storkforge.petconnect.entity;
 
 import jakarta.persistence.*;
+import java.io.Serializable; // Lägg till denna import
 
 @Entity
 @Table(name = "roles")
-public class Role {
+public class Role implements Serializable { // Lägg till "implements Serializable"
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

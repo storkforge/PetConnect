@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body th:replace="~{layout/layout :: layout}">
+<div th:fragment="content">
+    <div class="max-w-5xl mx-auto mt-12">
+        <h1 class="text-3xl font-bold text-center mb-6">Admin Dashboard</h1>
+        <p class="text-lg text-center mb-4">Manage your PetConnect platform ⚙️</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div class="p-6 bg-white rounded shadow">
+                <h2 class="text-xl font-semibold mb-3">User Management</h2>
+                <ul>
+                    <li><a href="/admin/users" class="text-blue-500 hover:underline">View All Users</a></li>
+                    <li><a href="/admin/users/create" class="text-green-500 hover:underline">Create New User</a></li>
+                    <li><a href="/admin/users/premium" class="text-yellow-500 hover:underline">Manage Premium Users</a></li>
+                </ul>
+            </div>
+
+            <div class="p-6 bg-white rounded shadow">
+                <h2 class="text-xl font-semibold mb-3">Role Management</h2>
+                <ul>
+                    <li><a href="/admin/roles" class="text-blue-500 hover:underline">View All Roles</a></li>
+                    <li><a href="/admin/roles/create" class="text-green-500 hover:underline">Create New Role</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="p-6 bg-white rounded shadow">
+                <h2 class="text-xl font-semibold mb-3">Reports & Statistics</h2>
+                <p>Total Registered Users: <span th:text="${totalUsers}"></span></p>
+                <p>Premium Users: <span th:text="${premiumUsersCount}"></span></p>
+            </div>
+
+            <div class="p-6 bg-white rounded shadow">
+                <h2 class="text-xl font-semibold mb-3">System Settings</h2>
+                <ul>
+                    <li><a href="/admin/settings" class="text-blue-500 hover:underline">View System Settings</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

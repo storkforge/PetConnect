@@ -16,13 +16,15 @@ import se.storkforge.petconnect.exception.UserNotFoundException;
 import se.storkforge.petconnect.repository.RoleRepository;
 import se.storkforge.petconnect.repository.UserRepository;
 import se.storkforge.petconnect.service.storageService.RestrictedFileStorageService;
+import se.storkforge.petconnect.security.Roles;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import se.storkforge.petconnect.security.Roles;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -64,7 +66,7 @@ public class UserService {
 
     @Cacheable(value = "userCache", key = "#id")
     public User getUserById(Long id) {
-        return getOrElseThrow(id);
+        return getUserByIdWithPets(id).orElseThrow(() -> new UserNotFoundException("User with id " + id + " not found"));
     }
 
     public Optional<User> getUserByUsername(String username) {
@@ -86,7 +88,21 @@ public class UserService {
     @CacheEvict(value = "userCache", key = "#id")
     public User updateUser(Long id, User updatedUser) {
         User existingUser = getUserById(id);
-        updateUserFields(existingUser, updatedUser);
+        updateUserFields(existingUser, updatedUser); // Uppdatera användarnamn, e-post, lösenord
+
+        // Hantera uppdatering av roller
+        Set<Role> newRoles = new HashSet<>();
+        if (updatedUser.getRoles() != null) {
+            for (Role role : updatedUser.getRoles()) {
+                // Antag att Role-objekten i updatedUser har korrekta ID:n
+                Role existingRole = roleRepository.findById(role.getId()).orElse(null);
+                if (existingRole != null) {
+                    newRoles.add(existingRole);
+                }
+            }
+        }
+        existingUser.setRoles(newRoles);
+
         return userRepository.save(existingUser);
     }
 
@@ -106,9 +122,6 @@ public class UserService {
                     return userRepository.save(newUser);
                 });
     }
-
-
-
 
     private void updateUserFields(User existingUser, User updatedUser) {
         if (updatedUser.getUsername() != null && !updatedUser.getUsername().isEmpty()) {
@@ -142,6 +155,7 @@ public class UserService {
             throw new IllegalArgumentException("Email already exists.");
         }
     }
+
     @CacheEvict(value = "userCache", key = "#id")
     public void deleteUser(Long id) {
         if (!userRepository.existsById(id)) {
@@ -176,7 +190,7 @@ public class UserService {
             try {
                 storageService.delete(user.getProfilePicturePath());
             } catch (RuntimeException e) {
-
+                // Logga felet om det behövs, men fortsätt ändå med uppladdningen
             }
         }
 
@@ -207,12 +221,64 @@ public class UserService {
 
     private boolean isStrongPassword(String password) {
         return password != null && password.matches(
-                "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$"
+                "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*()_+\\-=\\[\\]{};':\",./<>?\\\\|]).*[A-Za-z\\d!@#$%^&*()_+\\-=\\[\\]{};':\",./<>?\\\\|]{8,}$"
         );
     }
-
     @CacheEvict(value = "userCache", key = "#user.id")
     public void save(User user) {
         userRepository.save(user);
+    }
+
+    public List<User> findUsersByRole(String roleName) {
+        Role role = roleRepository.findByName(roleName)
+                .orElse(null); // Hantera om rollen inte finns om det behövs
+        if (role != null) {
+            return userRepository.findByRolesContaining(role);
+        }
+        return List.of(); // Returnera en tom lista om rollen inte finns
+    }
+
+    public void togglePremiumRole(Long userId) {
+        User user = getOrElseThrow(userId);
+        Role premiumRole = roleRepository.findByName("ROLE_PREMIUM")
+                .orElseThrow(() -> new RuntimeException("ROLE_PREMIUM not found in database")); // Säkerställ att rollen finns
+
+        Set<Role> roles = user.getRoles();
+        if (roles.contains(premiumRole)) {
+            roles.remove(premiumRole);
+        } else {
+            roles.add(premiumRole);
+        }
+        userRepository.save(user);
+    }
+
+    public long getTotalUsersCount() {
+        return userRepository.count();
+    }
+
+    public long getPremiumUsersCount() {
+        Role premiumRole = roleRepository.findByName("ROLE_PREMIUM")
+                .orElse(null);
+        if (premiumRole != null) {
+            return userRepository.countByRolesContaining(premiumRole);
+        }
+        return 0;
+    }
+
+    public List<Role> getAllRoles() {
+        return roleRepository.findAll();
+    }
+
+    public Role createRole(Role role) {
+        return roleRepository.save(role);
+    }
+
+    public Role getRoleByName(String name) {
+        return roleRepository.findByName(name).orElse(null);
+    }
+
+    @Cacheable(value = "userCache", key = "#id")
+    public Optional<User> getUserByIdWithPets(Long id) {
+        return userRepository.findByIdWithPets(id);
     }
 }

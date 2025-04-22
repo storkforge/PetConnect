@@ -55,9 +55,10 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/login", "/register", "/register/**", "/css/**", "/js/**", "/images/**", "/graphql", "/error").permitAll()
+                        .requestMatchers("/admin", "/admin/**").hasRole("ADMIN") // <-- Lägg till denna för att kräva ADMIN-roll på URL-nivå
                         .requestMatchers("/premium/**").hasRole("PREMIUM")
                         .requestMatchers("/user-profile/**", "/profile/**", "/settings/**").authenticated()
-                        .anyRequest().authenticated()
+                        .anyRequest().authenticated() // Denna regel blir nu för alla *andra* autentiserade sidor
                 )
                 .formLogin(form -> form
                         .loginPage("/login")

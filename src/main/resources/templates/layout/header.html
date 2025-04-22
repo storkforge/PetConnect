@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="">
 <head th:fragment="title">
   <title>PetConnect</title>
 </head>
@@ -11,7 +12,6 @@
       <ul class="flex space-x-4 items-center">
         <li><a th:href="@{/}" class="hover:underline">Home</a></li>
 
-        <!-- Use name instead of username to support OAuth2 users -->
         <li th:if="${#authorization.expression('isAuthenticated()')}">
           <a th:href="@{/profile/{username}(username=${#authentication.name})}" class="hover:underline">
             Profile
@@ -22,6 +22,10 @@
           <a th:href="@{/dashboard}" class="hover:underline">Dashboard</a>
         </li>
 
+        <li sec:authorize="hasRole('ADMIN')">
+          <a th:href="@{/admin/dashboard}" class="hover:underline">Admin Panel</a>
+        </li>
+
         <li th:if="${#authorization.expression('!isAuthenticated()')}">
           <a th:href="@{/login}" class="hover:underline">Login</a>
         </li>
@@ -30,7 +34,6 @@
           <a th:href="@{/register}" class="hover:underline">Register</a>
         </li>
 
-        <!-- Logout button -->
         <li th:if="${#authorization.expression('isAuthenticated()')}">
           <form th:action="@{/logout}" method="post">
             <button type="submit" class="hover:underline bg-red-600 px-3 py-1 rounded">
