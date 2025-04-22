@@ -5,6 +5,7 @@ import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.MutationMapping;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestParam;
 import se.storkforge.petconnect.dto.PostInputDTO;
 import se.storkforge.petconnect.dto.PostResponseDTO;
 import se.storkforge.petconnect.service.PostService;
@@ -22,8 +23,9 @@ public class PostGraphQLController {
     }
 
     @QueryMapping
-    public List<PostResponseDTO> getAllPosts() {
-        return postService.getAllPosts(PageRequest.of(0, 50));
+    public List<PostResponseDTO> getAllPosts(@RequestParam(defaultValue = "0") int page,
+                                             @RequestParam(defaultValue = "10") int size) {
+        return postService.getAllPosts(PageRequest.of(page, size));
     }
 
     @QueryMapping
