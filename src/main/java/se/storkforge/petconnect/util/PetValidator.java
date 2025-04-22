@@ -9,21 +9,21 @@ import java.util.List;
 public class PetValidator {
 
     public static void validatePetInput(PetInputDTO petInput) {
-        if (petInput.name() == null || petInput.name().trim().isEmpty()) {
+        if (petInput.getName() == null || petInput.getName().trim().isEmpty()) {
             throw new IllegalArgumentException("Pet name cannot be empty");
         }
-        if (petInput.species() == null || petInput.species().trim().isEmpty()) {
+        if (petInput.getSpecies() == null || petInput.getSpecies().trim().isEmpty()) {
             throw new IllegalArgumentException("Pet species cannot be empty");
         }
-        if (petInput.age() < 0) {
+        if (petInput.getAge() < 0) {
             throw new IllegalArgumentException("Pet age cannot be negative");
         }
-        if (petInput.location() != null && petInput.location().trim().isEmpty()) {
+        if (petInput.getLocation() != null && petInput.getLocation().trim().isEmpty()) {
             throw new IllegalArgumentException("Pet location cannot be empty if provided");
         }
         List<String> allowedSpecies = Arrays.asList("dog", "cat", "bird", "rabbit", "fish");
-        if (!allowedSpecies.contains(petInput.species().toLowerCase())) {
-            throw new IllegalArgumentException("Invalid pet species: " + petInput.species());
+        if (!allowedSpecies.contains(petInput.getSpecies().toLowerCase())) {
+            throw new IllegalArgumentException("Invalid pet species: " + petInput.getSpecies());
         }
     }
 
