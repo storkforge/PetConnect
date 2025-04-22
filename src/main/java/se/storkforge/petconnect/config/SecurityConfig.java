@@ -2,6 +2,7 @@ package se.storkforge.petconnect.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -55,6 +56,10 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/login", "/register", "/register/**", "/css/**", "/js/**", "/images/**", "/graphql", "/error").permitAll()
+                        .requestMatchers("/api/posts/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/posts").hasAnyRole("USER", "PREMIUM")
+                        .requestMatchers(HttpMethod.PUT, "/api/posts/**").hasAnyRole("USER", "PREMIUM")
+                        .requestMatchers(HttpMethod.DELETE, "/api/posts/**").hasAnyRole("USER", "PREMIUM")
                         .requestMatchers("/premium/**").hasRole("PREMIUM")
                         .requestMatchers("/user-profile/**", "/profile/**", "/settings/**").authenticated()
                         .anyRequest().authenticated()

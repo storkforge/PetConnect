@@ -31,7 +31,7 @@ public class FileStorageService {
         createDir(root);
     }
 
-    String store(MultipartFile file, String dir) {
+    public String store(MultipartFile file, String dir) {
         createDir(root.resolve(dir));
         try {
             String contentType = file.getContentType();

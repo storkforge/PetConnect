@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import se.storkforge.petconnect.entity.Pet;
+import se.storkforge.petconnect.entity.Post;
 
 @Component
 public class OwnershipValidator {
@@ -30,6 +31,16 @@ public class OwnershipValidator {
 
         if (validationFailed) {
             logger.error("Ownership validation failed: pet={}, username={}", pet, username);
+            throw new SecurityException("You do not have permission to perform this action");
+        }
+    }
+
+    public void checkOwnership(Post post, String username) {
+
+        logger.debug("validateOwnership(Post) called with: post={}, username={}", post, username);
+
+        if (post == null || post.getAuthor() == null || !post.getAuthor().getUsername().equals(username)) {
+            logger.warn("Ownership validation failed for post: {}, user: {}", post, username);
             throw new SecurityException("You do not have permission to perform this action");
         }
     }
