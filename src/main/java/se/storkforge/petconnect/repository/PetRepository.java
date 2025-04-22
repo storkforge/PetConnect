@@ -12,4 +12,5 @@ import java.util.List;
 @Repository
 public interface PetRepository extends JpaRepository<Pet, Long>, JpaSpecificationExecutor<Pet> {
     List<Pet> findByOwner(User owner);
+    List<Pet> findByOwnerId(Long ownerId);
 }

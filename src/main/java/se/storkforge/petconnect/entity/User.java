@@ -31,13 +31,10 @@ public class User {
     @Email(message = "Email should be valid")
     private String email;
 
-    @NotBlank(message = "Password is required")
-    @Size(min = 8, message = "Password must be at least 8 characters")
+    @Column(nullable = true) // allow null in DB
     private String password;
 
-    @Column(nullable = false)
-    @NotBlank(message = "Phone number is required")
-    @Pattern(regexp = "^\\+?[0-9]{7,15}$", message = "Invalid phone number format")
+    @Column(nullable = true) // allow null in DB
     private String phoneNumber;
 
     // In User.java

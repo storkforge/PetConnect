@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.w3.org/1999/xhtml" lang="en">
 <head>
   <meta charset="UTF-8">
   <title th:text="${user.username + ' | PetConnect'}">Profile</title>
@@ -45,34 +45,49 @@
     <!-- Pets Section -->
     <div class="w-full md:w-2/3 lg:w-3/4">
       <div class="bg-white rounded-lg shadow p-6">
-        <h2 class="text-xl font-semibold mb-4">Pets</h2>
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-xl font-semibold">Pets</h2>
+          <div th:if="${isOwner and isUser}">
+            <a th:href="@{/pets/web/add}"
+               class="px-3 py-1 bg-green-500 text-white text-sm rounded hover:bg-green-600 transition">
+              + Add Pet
+            </a>
+          </div>
+        </div>
 
-        <div th:if="${pets == null or pets.isEmpty()}" class="text-gray-500"> <!-- Empty -->
+        <div th:if="${pets == null or pets.isEmpty()}" class="text-gray-500">
           No pets registered yet.
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div th:each="pet : ${pets}" class="border rounded-lg p-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" th:if="${pets != null}">
+          <div th:each="pet : ${pets}" class="border rounded-lg p-4 relative">
             <img th:src="${pet.profilePicturePath != null} ?
                  @{/pets/{id}/PFP(id=${pet.id})} :
                  'https://as2.ftcdn.net/v2/jpg/03/03/62/45/1000_F_303624505_u0bFT1Rnoj8CMUSs8wMCwoKlnWlh5Jiq.jpg'"
                  alt="Pet Image"
                  class="w-full h-32 object-cover rounded mb-2">
+
             <h3 class="font-medium" th:text="${pet.name}">Pet Name</h3>
             <p class="text-sm text-gray-600" th:text="${pet.species}">Species</p>
+
+            <!-- Delete Button (visible only to owner + role check) -->
+            <div th:if="${isOwner and isUser}" class="absolute top-2 right-2">
+              <form th:action="@{/pets/web/delete/{id}(id=${pet.id})}" method="post"
+                    onsubmit="return confirm('Are you sure you want to delete this pet?');">
+                <button type="submit" class="text-red-500 hover:text-red-700 text-xl">🗑</button>
+              </form>
+            </div>
           </div>
         </div>
+
       </div>
     </div>
   </div>
 
-  <!-- Posts Section (this does nothing, there is no way to post) -->
+  <!-- Posts Section (placeholder) -->
   <div class="bg-white rounded-lg shadow p-6">
     <h2 class="text-xl font-semibold mb-4">Recent Posts</h2>
-
-    <div class="text-gray-500">
-      No posts yet.
-    </div>
+    <div class="text-gray-500">No posts yet.</div>
   </div>
 
 </div>

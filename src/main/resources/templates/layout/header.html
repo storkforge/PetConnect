@@ -11,17 +11,24 @@
       <ul class="flex space-x-4 items-center">
         <li><a th:href="@{/}" class="hover:underline">Home</a></li>
 
-        <li><a th:href="@{/profile/{username}(username=${#authentication.principal.username})}"
-           class="hover:underline"
-               th:if="${#authorization.expression('isAuthenticated()')}">Profile</a></li>
+        <!-- Use name instead of username to support OAuth2 users -->
+        <li th:if="${#authorization.expression('isAuthenticated()')}">
+          <a th:href="@{/profile/{username}(username=${#authentication.name})}" class="hover:underline">
+            Profile
+          </a>
+        </li>
 
         <li th:if="${#authorization.expression('isAuthenticated()')}">
           <a th:href="@{/dashboard}" class="hover:underline">Dashboard</a>
         </li>
-        <li><a th:href="@{/login}" class="hover:underline"
-               th:if="${#authorization.expression('!isAuthenticated()')}">Login</a></li>
-        <li><a th:href="@{/register}" class="hover:underline"
-               th:if="${#authorization.expression('!isAuthenticated()')}">Register</a></li>
+
+        <li th:if="${#authorization.expression('!isAuthenticated()')}">
+          <a th:href="@{/login}" class="hover:underline">Login</a>
+        </li>
+
+        <li th:if="${#authorization.expression('!isAuthenticated()')}">
+          <a th:href="@{/register}" class="hover:underline">Register</a>
+        </li>
 
         <!-- Logout button -->
         <li th:if="${#authorization.expression('isAuthenticated()')}">

@@ -163,12 +163,13 @@ public class PetServiceTest {
 
     @Test
     void testCreatePet() {
+        testPetInputDTO.setOwnerId(testUser.getId());
+        when(userService.getUserByUsername(testUsername)).thenReturn(Optional.of(testUser));
         when(petRepository.save(any(Pet.class))).thenReturn(testPet);
 
         Pet result = petService.createPet(testPetInputDTO, testUsername);
 
         assertEquals(testPet, result);
-
         verify(petRepository).save(any(Pet.class));
     }
 
