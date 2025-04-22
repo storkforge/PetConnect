@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.w3.org/1999/xhtml" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${user.username + ' | PetConnect'}">Profile</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body th:replace="~{layout/layout :: layout}">
+<div th:fragment="content" class="container mx-auto px-4 py-8">
+    <div class="bg-white rounded-lg shadow p-6">
+        <h2 class="text-xl font-semibold mb-4">Meetups</h2>
+
+        <div th:if="${meetups.isEmpty()}" class="text-gray-500">
+            No meetups yet
+        </div>
+
+        <div class="space-y-4">
+            <div th:each="meetup : ${meetups}" class="border-b pb-4 last:border-b-0">
+                <div class="flex gap-4">
+                    <div>
+                        <!-- h3 class="font-medium" th:text="${meetup.participants}">With</h3 -->
+                        <!-- this show all the users information -->
+                        <p class="font-medium" th:text="${meetup.location}">location</p>
+                        <p class="text-sm text-gray-500" th:text="${#temporals.format(meetup.dateTime, 'MMM dd, yyyy')}">
+                            May 15, 2023
+                        </p>
+                        <p class="text-sm text-gray-500" th:text="${meetup.status}">status</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

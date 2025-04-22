@@ -8,7 +8,7 @@
     </appender>
 
     <!-- Suppress logging from RecommendationService in tests -->
-    <logger name="se.storkforge.petconnect.service.RecommendationService" level="ERROR" additivity="false">
+    <logger name="se.storkforge.petconnect.service.aiService.RecommendationService" level="ERROR" additivity="false">
         <appender-ref ref="CONSOLE"/>
     </logger>
 

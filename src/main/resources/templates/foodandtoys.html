@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.w3.org/1999/xhtml" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FoodAndToys</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body th:replace="~{layout/layout :: layout}">
+<div th:fragment="content" class="container mx-auto px-4 py-8">
+    <div class="bg-white rounded-lg shadow p-6">
+        <h2 class="text-xl font-semibold mb-4">Recommendations</h2>
+
+        <div th:if="${!role}" class="text-gray-500">
+            Please get PetConnect-Premium to see recommendations
+        </div>
+
+        <div class="space-y-4">
+            <div th:each="pet : ${pets}" class="border-b pb-4 last:border-b-0">
+                <div class="flex gap-4">
+                    <div>
+                        <h2 class="font-medium text-xl mb-4" th:text="${pet.name}">Name</h2>
+                        <p class="font-medium">Food recommendations</p>
+                        <p class="text-sm text-gray-500" th:text="${foodRecommendations.get(pet.name)}">Food</p>
+                        <p class="font-medium">Toy recommendations</p>
+                        <p class="text-sm text-gray-500" th:text="${toyRecommendations.get(pet.name)}">Toys</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

@@ -13,6 +13,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import se.storkforge.petconnect.entity.Pet;
 import se.storkforge.petconnect.entity.User;
+import se.storkforge.petconnect.service.aiService.AiRecommendationExecutor;
+import se.storkforge.petconnect.service.aiService.RecommendationService;
 
 import java.util.List;
 

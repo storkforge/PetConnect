@@ -30,8 +30,17 @@
                 <p th:text="${careTip}">Logga in för att se påminnelser och vårdtips.</p>
             </div>
 
-            <div class="p-4 bg-white rounded shadow">🧠 AI-powered toy & food suggestions</div>
+            <div class="p-4 bg-white rounded shadow">
+                <a th:href="@{/recommendations/foodandtoys}">🧠 AI-powered toy & food suggestions </a>
+                <div
+                     class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-semibold mt-2">
+                    PREMIUM FEATURE
+                </div>
+            </div>
             <div class="p-4 bg-white rounded shadow">📸 Your latest shared stories</div>
+            <div class="p-4 bg-white rounded shadow">
+                <a th:href="@{/profile/{username}/meetup(username=${#authentication.name})}">👥 My meetups</a>
+            </div>
         </div>
     </div>
 </div>
