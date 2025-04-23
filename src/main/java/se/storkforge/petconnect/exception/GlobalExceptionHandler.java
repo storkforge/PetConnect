@@ -2,13 +2,21 @@ package se.storkforge.petconnect.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
+
+    // Add this general exception handler
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<String> handleGeneralException(Exception ex) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("An error occurred: " + ex.getMessage());
+    }
 
     @ExceptionHandler(SecurityException.class)
     public ResponseEntity<String> handleSecurityException(SecurityException ex) {
@@ -31,12 +39,9 @@ public class GlobalExceptionHandler {
         return "redirect:/settings/profile";
     }
 
-    // Optional: catch-all fallback for multipart issues
     @ExceptionHandler(MultipartException.class)
     public String handleMultipartError(RedirectAttributes redirectAttributes) {
         redirectAttributes.addFlashAttribute("error", "An error occurred during file upload.");
         return "redirect:/settings/profile";
     }
-
-
 }
