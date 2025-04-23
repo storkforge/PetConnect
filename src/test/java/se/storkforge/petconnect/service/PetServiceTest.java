@@ -18,7 +18,6 @@ import se.storkforge.petconnect.entity.User;
 import se.storkforge.petconnect.exception.PetNotFoundException;
 import se.storkforge.petconnect.repository.PetRepository;
 import se.storkforge.petconnect.util.OwnershipValidator; // Import OwnershipValidator
-import se.storkforge.petconnect.util.PetOwnershipHelper;
 
 import java.util.Collections;
 import java.util.List;
@@ -39,10 +38,7 @@ public class PetServiceTest {
     private UserService userService;
 
     @Mock
-    private PetOwnershipHelper petOwnershipHelper;
-
-    @Mock
-    private OwnershipValidator ownershipValidator; // Mock OwnershipValidator
+    private OwnershipValidator ownershipValidator;
 
     @InjectMocks
     private PetService petService;
@@ -82,7 +78,6 @@ public class PetServiceTest {
     void testGetAllPetsWithoutFilter() {
         // Given
         Pageable pageable = PageRequest.of(0, 10);
-        PetFilter filter = null;
         Page<Pet> expectedPage = new PageImpl<>(List.of(new Pet()));
 
         // Mock the specification behavior
@@ -90,7 +85,7 @@ public class PetServiceTest {
         when(petRepository.findAll(spec, pageable)).thenReturn(expectedPage);
 
         // When
-        Page<Pet> result = petService.getAllPets(pageable, filter);
+        Page<Pet> result = petService.getAllPets(pageable, null);
 
         // Then
         assertNotNull(result);
@@ -195,7 +190,7 @@ public class PetServiceTest {
     @Test
     void testDeletePet() {
         when(petRepository.findById(testPet.getId())).thenReturn(Optional.of(testPet));
-        doNothing().when(ownershipValidator).validateOwnership(any(Pet.class), anyString()); // Mock ownership validation
+        doNothing().when(ownershipValidator).validateOwnership(any(Pet.class), anyString());
 
         assertDoesNotThrow(() -> petService.deletePet(testPet.getId(), testUsername));
         verify(petRepository).findById(testPet.getId());
@@ -209,8 +204,8 @@ public class PetServiceTest {
 
         assertThrows(PetNotFoundException.class, () -> petService.deletePet(testPet.getId(), testUsername));
         verify(petRepository).findById(testPet.getId());
-        verifyNoMoreInteractions(petRepository); // Ensure delete is not called
-        verifyNoInteractions(ownershipValidator); // Ownership validation won't happen if pet is not found
+        verifyNoMoreInteractions(petRepository);
+        verifyNoInteractions(ownershipValidator);
     }
 
     @Test
@@ -240,6 +235,6 @@ public class PetServiceTest {
 
         verify(petRepository).findById(1L);
         verify(ownershipValidator).validateOwnership(any(Pet.class), eq(nonOwnerUsername));
-        verifyNoMoreInteractions(petRepository); // Ensure save is not called
+        verifyNoMoreInteractions(petRepository);
     }
 }

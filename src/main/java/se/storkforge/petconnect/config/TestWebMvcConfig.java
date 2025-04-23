@@ -2,6 +2,7 @@ package se.storkforge.petconnect.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.HttpMessageConverter;
@@ -29,7 +30,7 @@ public class TestWebMvcConfig implements WebMvcConfigurer {
     }
 
     @Override
-    public void configureHandlerExceptionResolvers(List<HandlerExceptionResolver> resolvers) {
+    public void configureHandlerExceptionResolvers(@NotNull List<HandlerExceptionResolver> resolvers) {
         // You might need to customize exception resolvers if your error responses also use LocalDateTime
     }
 }

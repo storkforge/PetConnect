@@ -16,7 +16,6 @@ import se.storkforge.petconnect.repository.RoleRepository;
 import se.storkforge.petconnect.repository.UserRepository;
 import org.springframework.ui.Model;
 
-import java.util.Optional;
 import java.util.Set;
 
 @Controller

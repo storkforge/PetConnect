@@ -1,7 +1,6 @@
 package se.storkforge.petconnect.controller;
 
 import jakarta.validation.constraints.Email;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -11,8 +10,11 @@ import se.storkforge.petconnect.service.MailService;
 @RequestMapping("/mail")
 public class MailController {
 
-    @Autowired
-    private MailService mailService;
+    private final MailService mailService;
+
+    public MailController(MailService mailService) {
+        this.mailService = mailService;
+    }
 
     /**
      * Endpoint to send an email notification.

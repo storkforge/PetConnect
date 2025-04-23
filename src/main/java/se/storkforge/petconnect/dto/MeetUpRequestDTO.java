@@ -1,5 +1,6 @@
 package se.storkforge.petconnect.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.*;
 import se.storkforge.petconnect.entity.MeetUp;
 import se.storkforge.petconnect.entity.User;
@@ -22,6 +23,7 @@ public class MeetUpRequestDTO {
 
     @NotNull(message = "Date and time is required")
     @FutureOrPresent(message = "Date and time must be in the future or now")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime dateTime;
 
     @NotNull(message = "Participant list cannot be null")
@@ -32,29 +34,20 @@ public class MeetUpRequestDTO {
     private String status;
 
     // Getters and Setters
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public double getLatitude() {
+    public Double getLatitude() {
         return latitude;
     }
 
-    public void setLatitude(double latitude) {
+    public void setLatitude(Double latitude) {
         this.latitude = latitude;
     }
 
-    public List<Long> getParticipantIds() {
-        return participantIds;
+    public Double getLongitude() {
+        return longitude;
     }
 
-    public void setParticipantIds(List<Long> participantIds) {
-        this.participantIds = participantIds;
+    public void setLongitude(Double longitude) {
+        this.longitude = longitude;
     }
 
     public LocalDateTime getDateTime() {
@@ -65,15 +58,20 @@ public class MeetUpRequestDTO {
         this.dateTime = dateTime;
     }
 
-    public double getLongitude() {
-        return longitude;
+    public List<Long> getParticipantIds() {
+        return participantIds;
     }
 
-    public void setLongitude(double longitude) {
-        this.longitude = longitude;
+    public void setParticipantIds(List<Long> participantIds) {
+        this.participantIds = participantIds;
     }
 
-    public MeetUpRequestDTO() {
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 
     public static MeetUpRequestDTO fromEntity(MeetUp meetUp) {
@@ -82,14 +80,9 @@ public class MeetUpRequestDTO {
         dto.setLongitude(meetUp.getLocation().getPosition().getLon());
         dto.setDateTime(meetUp.getDateTime());
         dto.setStatus(meetUp.getStatus());
-
-        if (meetUp.getParticipants() != null) {
-            List<Long> ids = meetUp.getParticipants()
-                    .stream()
-                    .map(User::getId)
-                    .collect(Collectors.toList());
-            dto.setParticipantIds(ids);
-        }
+        dto.setParticipantIds(meetUp.getParticipants().stream()
+                .map(User::getId)
+                .collect(Collectors.toList()));
         return dto;
     }
 }

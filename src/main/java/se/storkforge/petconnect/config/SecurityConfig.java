@@ -56,13 +56,14 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/login", "/register", "/register/**", "/css/**", "/js/**", "/images/**", "/graphql", "/error").permitAll()
-                        .requestMatchers("/api/posts/**").authenticated()
-                        .requestMatchers(HttpMethod.POST, "/api/posts").hasAnyRole("USER", "PREMIUM")
-                        .requestMatchers(HttpMethod.PUT, "/api/posts/**").hasAnyRole("USER", "PREMIUM")
-                        .requestMatchers(HttpMethod.DELETE, "/api/posts/**").hasAnyRole("USER", "PREMIUM")
+                        .requestMatchers("/admin", "/admin/**").hasRole("ADMIN") // <-- Din ändring
+                        .requestMatchers("/api/posts/**").authenticated() // <-- Ändring från main
+                        .requestMatchers(HttpMethod.POST, "/api/posts").hasAnyRole("USER", "PREMIUM") // <-- Ändring från main
+                        .requestMatchers(HttpMethod.PUT, "/api/posts/**").hasAnyRole("USER", "PREMIUM") // <-- Ändring från main
+                        .requestMatchers(HttpMethod.DELETE, "/api/posts/**").hasAnyRole("USER", "PREMIUM") // <-- Ändring från main
                         .requestMatchers("/premium/**").hasRole("PREMIUM")
                         .requestMatchers("/user-profile/**", "/profile/**", "/settings/**").authenticated()
-                        .anyRequest().authenticated()
+                        .anyRequest().authenticated() // Denna regel blir nu för alla *andra* autentiserade sidor
                 )
                 .formLogin(form -> form
                         .loginPage("/login")

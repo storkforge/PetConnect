@@ -12,7 +12,6 @@ import se.storkforge.petconnect.repository.PetRepository;
 import se.storkforge.petconnect.repository.RoleRepository;
 import se.storkforge.petconnect.repository.UserRepository;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 

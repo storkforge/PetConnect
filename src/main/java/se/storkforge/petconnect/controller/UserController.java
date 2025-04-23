@@ -9,7 +9,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import se.storkforge.petconnect.entity.User;
-import se.storkforge.petconnect.exception.PetNotFoundException;
 import se.storkforge.petconnect.exception.UserNotFoundException;
 import se.storkforge.petconnect.service.UserService;
 

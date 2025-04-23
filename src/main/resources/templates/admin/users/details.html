@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <title>Användardetaljer</title>
+</head>
+<body>
+<div th:replace="~{layout/header :: header}"></div>
+
+<div th:fragment="content">
+    <div class="max-w-3xl mx-auto mt-12">
+        <h2 class="text-2xl font-bold mb-6">Användardetaljer</h2>
+        <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+            <div class="px-4 py-5 sm:px-6">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">Användarinformation</h3>
+                <p class="mt-1 max-w-2xl text-sm text-gray-500">Detaljer om den valda användaren.</p>
+            </div>
+            <div class="border-t border-gray-200">
+                <dl>
+                    <div class="bg-gray-50 px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4">
+                        <dt class="text-sm font-medium text-gray-500">ID</dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2" th:text="${user.id}"></dd>
+                    </div>
+                    <div class="bg-white px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4">
+                        <dt class="text-sm font-medium text-gray-500">Användarnamn</dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2" th:text="${user.username}"></dd>
+                    </div>
+                    <div class="bg-gray-50 px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4">
+                        <dt class="text-sm font-medium text-gray-500">E-postadress</dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2" th:text="${user.email}"></dd>
+                    </div>
+                    <div class="bg-white px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4">
+                        <dt class="text-sm font-medium text-gray-500">Roller</dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                            <span th:each="role : ${user.roles}" class="px-2 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-semibold mr-1" th:text="${role.name}"></span>
+                        </dd>
+                    </div>
+                    <div th:if="${user.phoneNumber}" class="bg-gray-50 px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4">
+                        <dt class="text-sm font-medium text-gray-500">Telefonnummer</dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2" th:text="${user.phoneNumber}"></dd>
+                    </div>
+                    <div th:if="${not #lists.isEmpty(user.pets)}" class="bg-white px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4">
+                        <dt class="text-sm font-medium text-gray-500">Hens husdjur</dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                            <ul class="list-disc pl-5">
+                                <li th:each="pet : ${user.pets}" th:text="${pet.name}"></li>
+                            </ul>
+                        </dd>
+                    </div>
+                </dl>
+            </div>
+        </div>
+        <div class="mt-6">
+            <a th:href="@{/admin/users/edit/{id}(id=${user.id})}" class="bg-indigo-500 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Redigera</a>
+            <a th:href="@{/admin/users}" class="ml-4 text-blue-500 hover:underline">Tillbaka till användarlistan</a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

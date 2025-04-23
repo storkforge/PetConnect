@@ -54,21 +54,19 @@ class MeetUpServiceTest {
         LocalDateTime inRangeDate = now.plusDays(1);
         LocalDateTime outOfRangeDate = now.plusDays(5);
 
-        LocalDateTime startDate = now;
         LocalDateTime endDate = now.plusDays(2);
 
         Point<G2D> location = DSL.point(WGS84, new G2D(testLongitude, testLatitude));
 
         MeetUp inRangeMeetUp = createMeetUp(location, inRangeDate, List.of());
-        MeetUp outOfRangeMeetUp = createMeetUp(location, outOfRangeDate, List.of());
 
         // ✅ Updated to match the new repository method
         when(meetUpRepository.findMeetUpsNearAndWithinTime(
-                eq(testLongitude), eq(testLatitude), eq(radiusInKm * 1000), eq(startDate), eq(endDate)
+                eq(testLongitude), eq(testLatitude), eq(radiusInKm * 1000), eq(now), eq(endDate)
         )).thenReturn(List.of(inRangeMeetUp));
 
         List<MeetUp> result = meetUpService.searchMeetUps(
-                testLongitude, testLatitude, radiusInKm, startDate, endDate
+                testLongitude, testLatitude, radiusInKm, now, endDate
         );
 
         assertNotNull(result);
@@ -149,7 +147,7 @@ class MeetUpServiceTest {
         Point<G2D> point = DSL.point(WGS84, new G2D(11.97, 57.70));
         MeetUp meetUp = createMeetUp(point, LocalDateTime.now().plusDays(1), new ArrayList<>());
 
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user)); // ✅ this line is now required
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(meetUpRepository.findById(anyLong())).thenReturn(Optional.of(meetUp));
         when(meetUpRepository.save(any(MeetUp.class))).thenReturn(meetUp);
 
@@ -243,7 +241,7 @@ class MeetUpServiceTest {
         double radiusInKm = 10.0;
 
         LocalDateTime start = LocalDateTime.of(2025, 4, 16, 12, 0);
-        LocalDateTime end = LocalDateTime.of(2025, 4, 14, 12, 0); // Start is after end
+        LocalDateTime end = LocalDateTime.of(2025, 4, 14, 12, 0);
 
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
                 meetUpService.searchMeetUps(longitude, latitude, radiusInKm, start, end)

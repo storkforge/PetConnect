@@ -70,7 +70,7 @@ class RestrictedFileStorageServiceTest {
     }
 
     @Test
-    void successfulReturn() throws IOException {
+    void successfulReturn() {
         String path = rfs.storeFile(file,"test");
         assertThat(rfs.loadFile(path).isReadable()).isTrue();
     }

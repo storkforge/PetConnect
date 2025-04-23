@@ -11,7 +11,6 @@ import org.springframework.test.util.ReflectionTestUtils;
 import se.storkforge.petconnect.entity.Pet;
 import se.storkforge.petconnect.entity.User;
 import se.storkforge.petconnect.repository.PetRepository;
-import se.storkforge.petconnect.service.storageService.FileStorageService;
 import se.storkforge.petconnect.service.storageService.RestrictedFileStorageService;
 import se.storkforge.petconnect.util.OwnershipValidator;
 import se.storkforge.petconnect.util.PetOwnershipHelper;
@@ -29,12 +28,10 @@ import static org.mockito.Mockito.when;
 class FileStorageServiceTest {
 
     private Pet pet;
-    private User owner;
-    private Optional<Pet> optionalPet;
+    // private Optional<Pet> optionalPet; // Removed Optional field
     private MockMultipartFile file;
     private RestrictedFileStorageService fileStorageService;
     private PetService petService;
-    private Path testDir;
 
     @Mock
     private PetRepository petRepository;
@@ -51,7 +48,7 @@ class FileStorageServiceTest {
     @BeforeEach
     void setUp() throws IOException {
         // Create test owner user
-        owner = new User("John", "john@example.com", "password");
+        User owner = new User("John", "john@example.com", "password");
         owner.setId(1L);
 
         // Create test pet with User owner
@@ -64,8 +61,8 @@ class FileStorageServiceTest {
         pet.setOwner(owner);
         pet.setLocation("New York");
 
-        this.testDir = Files.createTempDirectory("test-uploads");
-        this.optionalPet = Optional.of(pet);
+        Path testDir = Files.createTempDirectory("test-uploads");
+        // this.optionalPet = Optional.of(pet); // Removed Optional initialization
         this.file = new MockMultipartFile("file", "test.jpg", "image/jpeg", "test".getBytes());
 
         // ✅ Use RestrictedFileStorageService instead of FileStorageService
@@ -92,16 +89,16 @@ class FileStorageServiceTest {
     }
 
     @Test
-    void petProfilePicturePathNotNull() throws Exception {
-        when(petRepository.findById(1L)).thenReturn(optionalPet);
+    void petProfilePicturePathNotNull() {
+        when(petRepository.findById(1L)).thenReturn(Optional.of(pet)); // Return Optional.of(pet)
         petService.uploadProfilePicture(1L, file);
         assertThat(pet.getProfilePicturePath()).isNotNull();
         fileStorageService.delete(pet.getProfilePicturePath());
     }
 
     @Test
-    void uploadFileEvenIfOldFileIsGone() throws Exception {
-        when(petRepository.findById(1L)).thenReturn(optionalPet);
+    void uploadFileEvenIfOldFileIsGone() {
+        when(petRepository.findById(1L)).thenReturn(Optional.of(pet)); // Return Optional.of(pet)
         petService.uploadProfilePicture(1L, file);
         fileStorageService.delete(pet.getProfilePicturePath());
         petService.uploadProfilePicture(1L, file);
@@ -111,7 +108,7 @@ class FileStorageServiceTest {
 
     @Test
     void returnFile() throws Exception {
-        when(petRepository.findById(1L)).thenReturn(optionalPet);
+        when(petRepository.findById(1L)).thenReturn(Optional.of(pet)); // Return Optional.of(pet)
         petService.uploadProfilePicture(1L, file);
         Resource pfp = petService.getProfilePicture(1L);
         assertThat(pfp.getURL()).isNotNull();
